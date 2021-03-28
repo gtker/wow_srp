@@ -1,0 +1,335 @@
+use std::convert::TryFrom;
+
+use num_bigint::{BigInt, Sign};
+use rand::{thread_rng, RngCore};
+
+use crate::error::InvalidPublicKeyError;
+use crate::primes::LARGE_SAFE_PRIME_LENGTH;
+use crate::LARGE_SAFE_PRIME_LITTLE_ENDIAN;
+
+macro_rules! key_bigint {
+    ($name: ident) => {
+        impl $name {
+            pub(crate) fn to_bigint(&self) -> BigInt {
+                BigInt::from_bytes_le(Sign::Plus, &self.key)
+            }
+        }
+    };
+}
+
+macro_rules! key_new {
+    ($name: ident; $size: expr) => {
+        impl Default for $name {
+            fn default() -> Self {
+                let mut key = [0u8; $size];
+                thread_rng().fill_bytes(&mut key);
+                Self::from_le_bytes(&key)
+            }
+        }
+
+        impl $name {
+            pub(crate) fn randomized() -> Self {
+                Self::default()
+            }
+        }
+    };
+}
+
+fn check_public_key(key: &[u8; PUBLIC_KEY_LENGTH]) -> Result<(), InvalidPublicKeyError> {
+    for (i, value) in key.iter().enumerate() {
+        if *value != LARGE_SAFE_PRIME_LITTLE_ENDIAN[i] && *value != 0 {
+            return Ok(());
+        }
+    }
+
+    match key[0] {
+        0 => Err(InvalidPublicKeyError::PublicKeyIsZero),
+        _ => Err(InvalidPublicKeyError::PublicKeyModLargeSafePrimeIsZero),
+    }
+}
+
+macro_rules! key_check_not_zero_initialization {
+    ($name: ident; $size: expr) => {
+        impl $name {
+            /// Creates the struct from little endian bytes.
+            ///
+            /// Values are stored internally as little endian so no reversal occurs.
+            pub fn from_le_bytes(key: &[u8; $size]) -> Result<Self, InvalidPublicKeyError> {
+                let key_is_valid = check_public_key(key);
+                match key_is_valid {
+                    Ok(_) => Ok(Self { key: *key }),
+                    Err(e) => Err(e),
+                }
+            }
+
+            #[cfg(test)]
+            pub(crate) fn from_be_hex_str(s: &str) -> Result<Self, InvalidPublicKeyError> {
+                let mut key = hex::decode(&s).unwrap();
+                key.reverse();
+
+                while key.len() < $size {
+                    key.push(0);
+                }
+
+                let key = <[u8; $size]>::try_from(key).unwrap();
+
+                Self::from_le_bytes(&key)
+            }
+
+            // Doesn't use From<BigInt> because it shows up in the public interface with no way to hide it
+            pub(crate) fn try_from_bigint(b: BigInt) -> Result<Self, InvalidPublicKeyError> {
+                let mut key = [0u8; $size];
+
+                let b = b.to_bytes_le().1.to_vec();
+                key[0..b.len()].clone_from_slice(&b);
+
+                Self::from_le_bytes(&key)
+            }
+        }
+    };
+}
+
+macro_rules! key_no_checks_initialization {
+    ($name: ident; $size: expr) => {
+        impl $name {
+            #[allow(dead_code)]
+            pub fn from_le_bytes(key: &[u8; $size]) -> Self {
+                Self { key: key.clone() }
+            }
+
+            #[allow(dead_code)]
+            pub fn from_be_hex_str(s: &str) -> Self {
+                let mut key = hex::decode(&s).unwrap();
+                key.reverse();
+
+                while key.len() < $size {
+                    key.push(0);
+                }
+
+                let key = <[u8; $size]>::try_from(key).unwrap();
+
+                Self { key }
+            }
+        }
+
+        impl From<BigInt> for $name {
+            fn from(b: BigInt) -> Self {
+                let mut key = [0u8; $size];
+
+                let b = b.to_bytes_le().1.to_vec();
+                key[0..b.len()].clone_from_slice(&b);
+
+                Self { key }
+            }
+        }
+    };
+}
+
+macro_rules! key_wrapper {
+    ($name: ident; $size: expr) => {
+        /// Represents a public key for both the client and server.
+        ///
+        /// This is used instead of a raw array in order to move the error from verifying the key out
+        /// of the proof functions in order to increase readability.
+        ///
+        /// Will return an error if all elements are 0, or the bytes represented as an integer modulus
+        /// [the large safe prime](crate::LARGE_SAFE_PRIME_LITTLE_ENDIAN) is equal to 0.
+        /// Since the large safe prime multiplied by 2 results in a 33 byte value it is unrepresentable
+        /// as a public key and thus the only two failure opportunities are if the key is exactly zero
+        /// or if it is exactly equal to the large safe prime.
+        #[derive(Debug)]
+        pub struct $name {
+            key: [u8; $size],
+        }
+
+        impl $name {
+            /// Returns the value as little endian bytes.
+            ///
+            /// The bytes are stored internally as little endian, so this causes no reversal.
+            pub const fn as_le(&self) -> &[u8; $size] {
+                &self.key
+            }
+
+            #[allow(dead_code)]
+            #[cfg(test)]
+            pub(crate) fn to_be_hex_string(&self) -> String {
+                let mut key: Vec<u8> = self.key.to_vec();
+                key.reverse();
+
+                let mut s = hex::encode_upper(&key);
+                while s.len() < $size * 2 {
+                    s = "0".to_owned() + &s;
+                }
+                s
+            }
+
+            #[allow(dead_code)]
+            #[cfg(test)]
+            pub(crate) fn from_le_hex_str(s: &str) -> Self {
+                let key = hex::decode(&s).unwrap();
+
+                let key = <[u8; $size]>::try_from(key).unwrap();
+
+                Self { key }
+            }
+        }
+
+        impl Eq for $name {}
+        impl PartialEq for $name {
+            fn eq(&self, other: &Self) -> bool {
+                let other = other.as_le();
+
+                for (i, value) in self.key.iter().enumerate() {
+                    if *value != other[i] {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+        }
+    };
+}
+
+/// The salt is always 32 bytes since the client expects
+/// a 32 byte salt field and will use leading zeros in the calculation.
+#[doc(alias = "salt")]
+pub const SALT_LENGTH: usize = 32;
+key_wrapper!(Salt; SALT_LENGTH);
+key_new!(Salt; SALT_LENGTH);
+key_no_checks_initialization!(Salt; SALT_LENGTH);
+
+#[doc(alias = "a")]
+#[doc(alias = "b")]
+pub const PRIVATE_KEY_LENGTH: usize = LARGE_SAFE_PRIME_LENGTH;
+key_wrapper!(PrivateKey; PRIVATE_KEY_LENGTH);
+key_new!(PrivateKey; PRIVATE_KEY_LENGTH);
+key_bigint!(PrivateKey);
+key_no_checks_initialization!(PrivateKey; PRIVATE_KEY_LENGTH);
+
+/// Length in bytes for both client and server public key.
+///
+/// Public keys are always 32 bytes because of the fixed width in the packets.
+#[doc(alias = "A")]
+#[doc(alias = "B")]
+pub const PUBLIC_KEY_LENGTH: usize = LARGE_SAFE_PRIME_LENGTH;
+key_wrapper!(PublicKey; PUBLIC_KEY_LENGTH);
+key_bigint!(PublicKey);
+key_check_not_zero_initialization!(PublicKey; PUBLIC_KEY_LENGTH);
+
+/// A SHA1 hash is always 20 bytes (160 bits) as specified in [RFC3174](https://tools.ietf.org/html/rfc3174).
+pub const SHA1_HASH_LENGTH: usize = 20;
+key_wrapper!(Sha1Hash; SHA1_HASH_LENGTH);
+key_bigint!(Sha1Hash);
+key_no_checks_initialization!(Sha1Hash; SHA1_HASH_LENGTH);
+
+/// Password verifier size in bytes.
+///
+/// Is always the same size as the [large safe prime](LARGE_SAFE_PRIME_LENGTH) because the verifier
+/// is generated through modulo of the large safe prime.
+#[doc(alias = "v")]
+pub const PASSWORD_VERIFIER_LENGTH: usize = LARGE_SAFE_PRIME_LENGTH;
+key_wrapper!(Verifier; PASSWORD_VERIFIER_LENGTH);
+key_bigint!(Verifier);
+key_no_checks_initialization!(Verifier; PASSWORD_VERIFIER_LENGTH);
+
+/// Length of a proof in bytes.
+///
+/// Is always 20 bytes because proofs are SHA-1 hashes which have a fixed output size.
+#[doc(alias = "M1")]
+#[doc(alias = "M2")]
+#[doc(alias = "M")]
+pub const PROOF_LENGTH: usize = 20;
+key_wrapper!(Proof; PROOF_LENGTH);
+key_no_checks_initialization!(Proof; PROOF_LENGTH);
+
+pub const S_LENGTH: usize = LARGE_SAFE_PRIME_LENGTH;
+key_wrapper!(SKey; S_LENGTH);
+key_bigint!(SKey);
+key_no_checks_initialization!(SKey; S_LENGTH);
+impl SKey {
+    pub fn to_equal_vec(&self) -> Vec<u8> {
+        // TODO: Differences between directly creating a vec from key and doing this.
+        let mut s = self.to_bigint().to_bytes_le().1;
+        if s[0] == 0 {
+            s = s[1..].to_vec();
+        }
+        if s.len() % 2 != 0 {
+            s = s[1..].to_vec();
+        }
+        s
+    }
+}
+
+/// The size of the reconnect challenge data in bytes.
+///
+/// Statically always 16 since the packet field has a fixed width.
+pub const RECONNECT_CHALLENGE_DATA_LENGTH: usize = 16;
+key_wrapper!(ReconnectData; RECONNECT_CHALLENGE_DATA_LENGTH);
+key_new!(ReconnectData; RECONNECT_CHALLENGE_DATA_LENGTH);
+key_no_checks_initialization!(ReconnectData; RECONNECT_CHALLENGE_DATA_LENGTH);
+impl ReconnectData {
+    pub fn randomize_data(&mut self) {
+        thread_rng().fill_bytes(&mut self.key);
+    }
+}
+
+/// Size of the session key in bytes.
+///
+/// Always 40 bytes since it is the result of 2 SHA-1 [proofs](PROOF_LENGTH) concatenated.
+#[doc(alias = "K")]
+#[doc(alias = "S")]
+pub const SESSION_KEY_LENGTH: usize = PROOF_LENGTH * 2;
+key_wrapper!(SessionKey; SESSION_KEY_LENGTH);
+key_no_checks_initialization!(SessionKey; SESSION_KEY_LENGTH);
+
+#[cfg(test)]
+mod test {
+
+    use crate::key::{PrivateKey, PublicKey, PUBLIC_KEY_LENGTH};
+    use crate::LARGE_SAFE_PRIME_LITTLE_ENDIAN;
+    use num_bigint::{BigInt, Sign};
+
+    #[test]
+    fn double_large_safe_prime_is_unrepresentable() {
+        let p = BigInt::from_bytes_le(Sign::Plus, &LARGE_SAFE_PRIME_LITTLE_ENDIAN);
+        let p: BigInt = p * 2;
+        assert!(p.to_bytes_le().1.len() > PUBLIC_KEY_LENGTH);
+    }
+
+    #[test]
+    fn public_key_should_not_be_zero() {
+        let key = [0u8; PUBLIC_KEY_LENGTH];
+        let p = PublicKey::from_le_bytes(&key);
+        assert!(p.is_err());
+    }
+
+    #[test]
+    fn public_key_should_not_be_zero_from_hex() {
+        let p = PublicKey::from_be_hex_str("00");
+        assert!(p.is_err());
+    }
+
+    #[test]
+    fn public_key_should_not_be_mod_large_safe_prime() {
+        let p = PublicKey::from_le_bytes(&LARGE_SAFE_PRIME_LITTLE_ENDIAN);
+        assert!(p.is_err());
+    }
+
+    #[test]
+    fn public_key_should_not_be_mod_large_safe_prime_from_hex() {
+        let p = PublicKey::from_be_hex_str(
+            "894B645E89E1535BBDAD5B8B290650530801B18EBFBF5E8FAB3C82872A3E9BB7",
+        );
+        assert!(p.is_err());
+    }
+
+    #[test]
+    fn hex_to_hex() {
+        const PADDED_DEADBEEF: &str =
+            "00000000000000000000000000000000000000000000000000000000DEADBEEF";
+        const DEADBEEF: &str = "DEADBEEF";
+        let k = PrivateKey::from_be_hex_str(DEADBEEF);
+        assert_eq!(&k.to_be_hex_string(), PADDED_DEADBEEF);
+    }
+}
