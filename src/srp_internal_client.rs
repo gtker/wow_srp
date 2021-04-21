@@ -2,6 +2,7 @@ use crate::error::InvalidPublicKeyError;
 use crate::key::{PrivateKey, Proof, PublicKey, SKey, Salt, SessionKey, Sha1Hash};
 use crate::normalized_string::NormalizedString;
 use crate::primes::{Generator, KValue, LargeSafePrime, LARGE_SAFE_PRIME_LENGTH};
+use crate::srp_internal::calculate_xor_hash;
 use crate::{pad_little_endian_vec_to_array, PROOF_LENGTH};
 use sha1::{Digest, Sha1};
 
@@ -53,19 +54,12 @@ pub fn calculate_client_proof_with_custom_value(
     large_safe_prime: LargeSafePrime,
     generator: Generator,
 ) -> Proof {
-    let large_safe_prime_hash = Sha1::new().chain(large_safe_prime.as_le_bytes()).finalize();
-
-    let g_hash = Sha1::new().chain([generator.as_u8()]).finalize();
+    let xor_hash = calculate_xor_hash(&large_safe_prime, &generator);
 
     let username_hash = Sha1::new().chain(username.as_ref()).finalize();
 
-    let mut xor_hash = Vec::new();
-    for (i, n) in large_safe_prime_hash.iter().enumerate() {
-        xor_hash.push(*n as u8 ^ g_hash[i]);
-    }
-
     let out: [u8; PROOF_LENGTH] = Sha1::new()
-        .chain(xor_hash)
+        .chain(xor_hash.as_le())
         .chain(username_hash)
         .chain(salt.as_le())
         .chain(client_public_key.as_le())

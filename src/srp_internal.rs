@@ -14,13 +14,18 @@ use sha1::{Digest, Sha1};
 use crate::error::InvalidPublicKeyError;
 use crate::key::{
     PrivateKey, Proof, ReconnectData, SKey, Sha1Hash, Verifier, PROOF_LENGTH, SESSION_KEY_LENGTH,
+    SHA1_HASH_LENGTH,
 };
 use crate::key::{PublicKey, Salt};
 use crate::key::{SessionKey, PASSWORD_VERIFIER_LENGTH};
 use crate::normalized_string::NormalizedString;
-use crate::primes::{
-    Generator, LargeSafePrime, GENERATOR, K_VALUE, LARGE_SAFE_PRIME_LITTLE_ENDIAN,
-};
+use crate::primes::{Generator, LargeSafePrime, K_VALUE};
+
+/// Only used for the [`calculate_client_proof`] function. Since the large safe prime and generator are
+/// statically determined we can precalculate it. See also the [`calculate_xor_hash`] function.
+const PRECALCULATED_XOR_HASH: [u8; SHA1_HASH_LENGTH] = [
+    221, 123, 176, 58, 56, 172, 115, 17, 3, 152, 124, 90, 80, 111, 202, 150, 108, 123, 194, 167,
+];
 
 #[doc(hidden)]
 #[macro_export]
@@ -217,6 +222,22 @@ pub fn calculate_server_proof(
     Proof::from_le_bytes(&s.into())
 }
 
+pub(crate) fn calculate_xor_hash(
+    large_safe_prime: &LargeSafePrime,
+    generator: &Generator,
+) -> Sha1Hash {
+    let large_safe_prime_hash = Sha1::new().chain(large_safe_prime.as_le_bytes()).finalize();
+
+    let g_hash = Sha1::new().chain([generator.as_u8()]).finalize();
+
+    let mut xor_hash = Vec::new();
+    for (i, n) in large_safe_prime_hash.iter().enumerate() {
+        xor_hash.push(*n as u8 ^ g_hash[i]);
+    }
+    let xor_hash = <[u8; SHA1_HASH_LENGTH]>::try_from(xor_hash).unwrap();
+    Sha1Hash::from_le_bytes(&xor_hash)
+}
+
 pub fn calculate_client_proof(
     username: &NormalizedString,
     session_key: &SessionKey,
@@ -224,19 +245,10 @@ pub fn calculate_client_proof(
     server_public_key: &PublicKey,
     salt: &Salt,
 ) -> Proof {
-    let large_safe_prime_hash = Sha1::new().chain(LARGE_SAFE_PRIME_LITTLE_ENDIAN).finalize();
-
-    let g_hash = Sha1::new().chain([GENERATOR]).finalize();
-
     let username_hash = Sha1::new().chain(username.as_ref()).finalize();
 
-    let mut xor_hash = Vec::new();
-    for (i, n) in large_safe_prime_hash.iter().enumerate() {
-        xor_hash.push(*n as u8 ^ g_hash[i]);
-    }
-
     let out: [u8; PROOF_LENGTH] = Sha1::new()
-        .chain(xor_hash)
+        .chain(PRECALCULATED_XOR_HASH)
         .chain(username_hash)
         .chain(salt.as_le())
         .chain(client_public_key.as_le())
@@ -266,7 +278,10 @@ pub fn calculate_reconnect_proof(
 
 #[cfg(test)]
 mod test {
-    use crate::primes::{LARGE_SAFE_PRIME_BIG_ENDIAN, LARGE_SAFE_PRIME_LITTLE_ENDIAN};
+    use crate::primes::{
+        Generator, LargeSafePrime, LARGE_SAFE_PRIME_BIG_ENDIAN, LARGE_SAFE_PRIME_LITTLE_ENDIAN,
+    };
+    use crate::srp_internal::{calculate_xor_hash, PRECALCULATED_XOR_HASH};
 
     mod regression {
         use crate::key::{
@@ -626,5 +641,14 @@ mod test {
         let mut large_safe_prime_little_endian = LARGE_SAFE_PRIME_LITTLE_ENDIAN;
         large_safe_prime_little_endian.reverse();
         assert_eq!(large_safe_prime, large_safe_prime_little_endian);
+    }
+
+    #[test]
+    fn precalculated_xor_hash_is_correct() {
+        let large_safe_prime = LargeSafePrime::default();
+        let generator = Generator::default();
+        let xor_hash = calculate_xor_hash(&large_safe_prime, &generator);
+
+        assert_eq!(xor_hash.as_le(), &PRECALCULATED_XOR_HASH);
     }
 }
