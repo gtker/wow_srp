@@ -3,6 +3,20 @@
 A standalone Rust library for the World of Warcraft flavor of SRP6.
 Intended to be used for server emulation.
 
+# Usage
+
+Add the following to `Cargo.toml`:
+
+```
+[dependencies]
+wow_srp = "0.1"
+```
+
+Or install with [cargo edit](https://crates.io/crates/cargo-edit):
+```
+cargo add wow_srp
+```
+
 ## License
 
 Licensed under either of

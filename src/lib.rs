@@ -35,9 +35,8 @@
 //!
 //! ## Running the examples
 //!
-//! 1. Download the crate and go into the directory.
-// TODO: Add clone link.
-//! 2. Run the server with `cargo run --example server`.
+//! 1. Clone the repo with `git clone https://github.com/gtker/wow_srp`.
+//! 2. Run the server with `cargo run --example server` inside the directory.
 //! This runs a simple authentication server that accepts the username "a" and the password "a". Anything else panics.
 //! 3. Run a real client with the realmlist set to `localhost`
 //! or run the client example with `cargo run --example client`.
