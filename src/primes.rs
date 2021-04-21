@@ -68,6 +68,10 @@ impl LargeSafePrime {
         Self { prime: *prime }
     }
 
+    pub const fn as_le_bytes(&self) -> &[u8; LARGE_SAFE_PRIME_LENGTH] {
+        &self.prime
+    }
+
     pub fn to_bigint(&self) -> BigInt {
         BigInt::from_bytes_le(Sign::Plus, &self.prime)
     }
@@ -98,6 +102,9 @@ impl Default for Generator {
 impl Generator {
     pub fn to_bigint(&self) -> BigInt {
         BigInt::from(self.generator)
+    }
+    pub const fn as_u8(&self) -> u8 {
+        self.generator
     }
 }
 

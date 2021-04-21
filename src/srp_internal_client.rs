@@ -1,7 +1,9 @@
 use crate::error::InvalidPublicKeyError;
-use crate::key::{PrivateKey, PublicKey, SKey, Sha1Hash};
-use crate::pad_little_endian_vec_to_array;
+use crate::key::{PrivateKey, Proof, PublicKey, SKey, Salt, SessionKey, Sha1Hash};
+use crate::normalized_string::NormalizedString;
 use crate::primes::{Generator, KValue, LargeSafePrime, LARGE_SAFE_PRIME_LENGTH};
+use crate::{pad_little_endian_vec_to_array, PROOF_LENGTH};
+use sha1::{Digest, Sha1};
 
 pub(super) fn calculate_client_public_key(
     client_private_key: &PrivateKey,
@@ -42,12 +44,94 @@ pub fn calculate_client_S(
     SKey::from_le_bytes(&S)
 }
 
+pub fn calculate_client_proof_with_custom_value(
+    username: &NormalizedString,
+    session_key: &SessionKey,
+    client_public_key: &PublicKey,
+    server_public_key: &PublicKey,
+    salt: &Salt,
+    large_safe_prime: LargeSafePrime,
+    generator: Generator,
+) -> Proof {
+    let large_safe_prime_hash = Sha1::new().chain(large_safe_prime.as_le_bytes()).finalize();
+
+    let g_hash = Sha1::new().chain([generator.as_u8()]).finalize();
+
+    let username_hash = Sha1::new().chain(username.as_ref()).finalize();
+
+    let mut xor_hash = Vec::new();
+    for (i, n) in large_safe_prime_hash.iter().enumerate() {
+        xor_hash.push(*n as u8 ^ g_hash[i]);
+    }
+
+    let out: [u8; PROOF_LENGTH] = Sha1::new()
+        .chain(xor_hash)
+        .chain(username_hash)
+        .chain(salt.as_le())
+        .chain(client_public_key.as_le())
+        .chain(server_public_key.as_le())
+        .chain(session_key.as_le())
+        .finalize()
+        .into();
+
+    Proof::from_le_bytes(&out)
+}
+
 #[cfg(test)]
 mod test {
-    use crate::key::{PrivateKey, PublicKey, SKey, Sha1Hash};
+    use crate::key::{PrivateKey, Proof, PublicKey, SKey, Salt, SessionKey, Sha1Hash};
+    use crate::normalized_string::NormalizedString;
     use crate::primes::{Generator, LargeSafePrime};
-    use crate::srp_internal_client::{calculate_client_S, calculate_client_public_key};
+    use crate::srp_internal_client::{
+        calculate_client_S, calculate_client_proof_with_custom_value, calculate_client_public_key,
+    };
     use std::fs::read_to_string;
+
+    #[test]
+    fn verify_client_proof() {
+        let contents = read_to_string("tests/srp6_internal/calculate_M1_values.txt").unwrap();
+
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
+
+            let username = NormalizedString::new(line.next().unwrap()).unwrap();
+
+            let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
+
+            let client_public_key = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
+
+            let server_public_key = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
+
+            let salt = Salt::from_be_hex_str(line.next().unwrap());
+
+            let expected = Proof::from_be_hex_str(line.next().unwrap());
+
+            let client_proof = calculate_client_proof_with_custom_value(
+                &username,
+                &session_key,
+                &client_public_key,
+                &server_public_key,
+                &salt,
+                LargeSafePrime::default(),
+                Generator::default(),
+            );
+
+            // Normalize hex values to uppercase
+            assert_eq!(
+                expected,
+                client_proof,
+                "{}",
+                format!(
+                    "Username: '{}',\n session_key: '{}',\n client_public_key: '{}',\n server_public_key: '{}',\n salt: '{}'",
+                    username,
+                    &session_key.to_be_hex_string(),
+                    &client_public_key.to_be_hex_string(),
+                    &server_public_key.to_be_hex_string(),
+                    &salt.to_be_hex_string(),
+                )
+            );
+        }
+    }
 
     #[test]
     #[allow(non_snake_case)] // No better descriptor for it than 'S'

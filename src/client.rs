@@ -51,10 +51,9 @@ use crate::key::{
 use crate::normalized_string::NormalizedString;
 use crate::primes::{Generator, LargeSafePrime, LARGE_SAFE_PRIME_LENGTH};
 use crate::srp_internal::{
-    calculate_client_proof, calculate_interleaved, calculate_reconnect_proof,
-    calculate_server_proof, calculate_u,
+    calculate_interleaved, calculate_reconnect_proof, calculate_server_proof, calculate_u,
 };
-use crate::srp_internal_client::calculate_client_S;
+use crate::srp_internal_client::{calculate_client_S, calculate_client_proof_with_custom_value};
 use crate::{srp_internal, srp_internal_client};
 
 /// Contains the challenge data and proof for reconnection.
@@ -256,12 +255,14 @@ impl SrpClientUser {
         );
         let session_key = calculate_interleaved(&S);
 
-        let client_proof = calculate_client_proof(
+        let client_proof = calculate_client_proof_with_custom_value(
             &self.username,
             &session_key,
             &client_public_key,
             &server_public_key,
             &salt,
+            large_safe_prime,
+            generator,
         );
 
         SrpClientChallenge {
