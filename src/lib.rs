@@ -29,10 +29,6 @@
 //! and prevents the use of non-ASCII username/password strings.
 //! Further information can be found on the [`normalized_string`] page.
 //!
-//! ## Adding module
-//!
-// TODO: Add how to use the module.
-//!
 //! ## Running the examples
 //!
 //! 1. Clone the repo with `git clone https://github.com/gtker/wow_srp`.

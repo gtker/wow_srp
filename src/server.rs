@@ -672,21 +672,15 @@ impl SrpServer {
 #[cfg(test)]
 mod test {
 
-    use num_bigint::BigInt;
-    use num_traits::Num;
-
     use crate::key::{PrivateKey, Proof, PublicKey, Salt};
     use crate::normalized_string::NormalizedString;
     use crate::server::SrpVerifier;
 
     #[test]
     fn verify_known_client_values() {
-        let b = BigInt::from_str_radix(
-            "18593985542940560649451045851874319089347482848983190581196134045699448046190",
-            10,
-        )
-        .unwrap();
-        let server_private_key = PrivateKey::from(b);
+        let server_private_key = PrivateKey::from_be_hex_str(
+            "291BD2A76AAB9E7CDD702AFE1D07FDB316158BC2E4218FFDC32989AD3AF5026E",
+        );
 
         let salt = Salt::from_be_hex_str(
             "65771e13b30bea9f4ef6c8390a594e297c9739e38ab02316bf1522ed5571813c",

@@ -15,7 +15,6 @@ sha-1 = "0.9"
 num-bigint = "0.4"
 hex = "0.4.2"
 rand = "0.8"
-num-traits = "0.2"
 
 [dev-dependencies]
 hex-literal = "0.3"
