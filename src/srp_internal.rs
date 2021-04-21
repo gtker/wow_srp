@@ -191,13 +191,6 @@ pub fn calculate_session_key(
     password_verifier: &Verifier,
     server_private_key: &PrivateKey,
 ) -> SessionKey {
-    let large_safe_prime = LargeSafePrime::default().to_bigint();
-    if (client_public_key.to_bigint() % large_safe_prime == BigInt::from(0))
-        || client_public_key.to_bigint() < BigInt::from(0)
-    {
-        panic!("Clients A key is invalid!")
-    }
-
     let u = &calculate_u(client_public_key, server_public_key);
     #[allow(non_snake_case)]
     let S = calculate_S(
