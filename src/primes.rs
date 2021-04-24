@@ -83,7 +83,7 @@ impl LargeSafePrime {
 #[doc(alias = "g")]
 pub const GENERATOR: u8 = 7;
 
-/// The length in bytes for [g](GENERATOR).
+/// The length in bytes for [GENERATOR].
 /// Will always be 1, constant is provided here for clarity.
 #[doc(alias = "g")]
 pub const GENERATOR_LENGTH: u8 = 1;
