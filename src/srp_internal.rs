@@ -6,10 +6,8 @@
 //!
 //!
 
-use std::convert::TryFrom;
-
-use num_bigint::BigInt;
 use sha1::{Digest, Sha1};
+use std::convert::TryFrom;
 
 use crate::error::InvalidPublicKeyError;
 use crate::key::{
@@ -19,7 +17,7 @@ use crate::key::{
 use crate::key::{PublicKey, Salt};
 use crate::key::{SessionKey, PASSWORD_VERIFIER_LENGTH};
 use crate::normalized_string::NormalizedString;
-use crate::primes::{Generator, LargeSafePrime, K_VALUE};
+use crate::primes::{Generator, KValue, LargeSafePrime};
 
 /// Only used for the [`calculate_client_proof`] function. Since the large safe prime and generator are
 /// statically determined we can precalculate it. See also the [`calculate_xor_hash`] function.
@@ -126,7 +124,7 @@ pub fn calculate_server_public_key(
     let generator = Generator::default().to_bigint();
     let large_safe_prime = LargeSafePrime::default().to_bigint();
 
-    let server_public_key = (BigInt::from(K_VALUE) * password_verifier.to_bigint()
+    let server_public_key = (KValue::bigint() * password_verifier.to_bigint()
         + generator.modpow(&server_private_key.to_bigint(), &large_safe_prime))
         % large_safe_prime;
 

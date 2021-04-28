@@ -30,7 +30,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 *proof.salt(),
             );
 
-            let server = proof
+            let _server = proof
                 .into_server(
                     PublicKey::from_le_bytes(challenge.client_public_key()).unwrap(),
                     challenge.client_proof(),
