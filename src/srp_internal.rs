@@ -12,7 +12,7 @@ use std::convert::TryFrom;
 use crate::error::InvalidPublicKeyError;
 use crate::key::{
     PrivateKey, Proof, ReconnectData, SKey, Sha1Hash, Verifier, PROOF_LENGTH, SESSION_KEY_LENGTH,
-    SHA1_HASH_LENGTH,
+    SHA1_HASH_LENGTH, S_LENGTH,
 };
 use crate::key::{PublicKey, Salt};
 use crate::key::{SessionKey, PASSWORD_VERIFIER_LENGTH};
@@ -162,21 +162,21 @@ pub fn calculate_S(
 /// Return value is big endian??
 #[allow(non_snake_case)]
 pub fn calculate_interleaved(S: &SKey) -> SessionKey {
-    let S = S.to_equal_vec();
+    let S = S.to_equal_slice();
 
-    let mut E = Vec::new();
+    let mut E = Vec::with_capacity(S_LENGTH / 2);
     for e in S.iter().step_by(2) {
         E.push(*e);
     }
     let G = Sha1::new().chain(E).finalize();
 
-    let mut F = Vec::new();
+    let mut F = Vec::with_capacity(S_LENGTH / 2);
     for f in S.iter().skip(1).step_by(2) {
         F.push(*f);
     }
     let H = Sha1::new().chain(F).finalize();
 
-    let mut result = Vec::new();
+    let mut result = Vec::with_capacity(SESSION_KEY_LENGTH);
     let zip = G.iter().zip(H.iter());
     for r in zip {
         result.push(*r.0);

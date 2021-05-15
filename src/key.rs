@@ -245,17 +245,18 @@ key_no_checks_initialization!(Proof; PROOF_LENGTH);
 
 pub const S_LENGTH: usize = LARGE_SAFE_PRIME_LENGTH;
 key_wrapper!(SKey; S_LENGTH);
-key_bigint!(SKey);
 key_no_checks_initialization!(SKey; S_LENGTH);
 impl SKey {
-    pub fn to_equal_vec(&self) -> Vec<u8> {
-        // TODO: Differences between directly creating a vec from key and doing this.
-        let mut s = self.to_bigint().to_bytes_le().1;
-        if s[0] == 0 {
-            s = s[1..].to_vec();
+    pub fn to_equal_slice(&self) -> &[u8] {
+        let mut s = &self.key[..];
+        if *s.last().unwrap() == 0 {
+            s = &s[..s.len() - 1]
+        }
+        if *s.first().unwrap() == 0 {
+            s = &s[1..];
         }
         if s.len() % 2 != 0 {
-            s = s[1..].to_vec();
+            s = &s[1..];
         }
         s
     }
