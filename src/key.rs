@@ -249,14 +249,9 @@ key_no_checks_initialization!(SKey; S_LENGTH);
 impl SKey {
     pub fn to_equal_slice(&self) -> &[u8] {
         let mut s = &self.key[..];
-        if *s.last().unwrap() == 0 {
-            s = &s[..s.len() - 1]
-        }
+
         if *s.first().unwrap() == 0 {
-            s = &s[1..];
-        }
-        if s.len() % 2 != 0 {
-            s = &s[1..];
+            s = &s[2..];
         }
         s
     }
