@@ -153,7 +153,7 @@ macro_rules! key_wrapper {
             #[allow(dead_code)]
             #[cfg(test)]
             pub(crate) fn to_be_hex_string(&self) -> String {
-                let mut key: Vec<u8> = self.key.to_vec();
+                let mut key = self.key;
                 key.reverse();
 
                 let mut s = hex::encode_upper(&key);

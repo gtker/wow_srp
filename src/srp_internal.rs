@@ -7,7 +7,6 @@
 //!
 
 use sha1::{Digest, Sha1};
-use std::convert::TryFrom;
 
 use crate::error::InvalidPublicKeyError;
 use crate::key::{
@@ -164,17 +163,17 @@ pub fn calculate_S(
 pub fn calculate_interleaved(S: &SKey) -> SessionKey {
     let S = S.to_equal_slice();
 
-    let mut E = Vec::with_capacity(S_LENGTH / 2);
-    for e in S.iter().step_by(2) {
-        E.push(*e);
+    let mut E = [0u8; S_LENGTH / 2];
+    for (i, e) in S.iter().step_by(2).enumerate() {
+        E[i] = *e;
     }
-    let G = Sha1::new().chain(E).finalize();
+    let G = Sha1::new().chain(&E[..S.len() / 2]).finalize();
 
-    let mut F = Vec::with_capacity(S_LENGTH / 2);
-    for f in S.iter().skip(1).step_by(2) {
-        F.push(*f);
+    let mut F = [0u8; S_LENGTH / 2];
+    for (i, f) in S.iter().skip(1).step_by(2).enumerate() {
+        F[i] = *f;
     }
-    let H = Sha1::new().chain(F).finalize();
+    let H = Sha1::new().chain(&F[..S.len() / 2]).finalize();
 
     let mut result = [0u8; SESSION_KEY_LENGTH];
     let zip = G.iter().zip(H.iter());
@@ -227,11 +226,11 @@ pub(crate) fn calculate_xor_hash(
 
     let g_hash = Sha1::new().chain([generator.as_u8()]).finalize();
 
-    let mut xor_hash = Vec::new();
+    let mut xor_hash = [0u8; SHA1_HASH_LENGTH];
     for (i, n) in large_safe_prime_hash.iter().enumerate() {
-        xor_hash.push(*n as u8 ^ g_hash[i]);
+        xor_hash[i] = *n as u8 ^ g_hash[i];
     }
-    let xor_hash = <[u8; SHA1_HASH_LENGTH]>::try_from(xor_hash).unwrap();
+
     Sha1Hash::from_le_bytes(&xor_hash)
 }
 
