@@ -17,6 +17,11 @@ Or install with [cargo edit](https://crates.io/crates/cargo-edit):
 cargo add wow_srp
 ```
 
+Then read the documentation at [docs.rs](https://docs.rs/wow_srp).
+
+Client and server examples which will authenticate with a 1.12 server/client are located in the `examples/` directory.
+Run them with `cargo run --example server` or `cargo run --example client`.
+
 ## License
 
 Licensed under either of
