@@ -176,14 +176,13 @@ pub fn calculate_interleaved(S: &SKey) -> SessionKey {
     }
     let H = Sha1::new().chain(F).finalize();
 
-    let mut result = Vec::with_capacity(SESSION_KEY_LENGTH);
+    let mut result = [0u8; SESSION_KEY_LENGTH];
     let zip = G.iter().zip(H.iter());
-    for r in zip {
-        result.push(*r.0);
-        result.push(*r.1);
+    for (i, r) in zip.enumerate() {
+        result[i * 2] = *r.0;
+        result[(i * 2) + 1] = *r.1;
     }
 
-    let result = <[u8; SESSION_KEY_LENGTH]>::try_from(result).unwrap();
     SessionKey::from_le_bytes(&result)
 }
 
