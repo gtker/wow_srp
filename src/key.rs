@@ -1,6 +1,7 @@
+use rug::integer::Order;
+use rug::Integer;
 use std::convert::TryFrom;
 
-use num_bigint::{BigInt, Sign};
 use rand::{thread_rng, RngCore};
 
 use crate::error::InvalidPublicKeyError;
@@ -10,8 +11,8 @@ use crate::LARGE_SAFE_PRIME_LITTLE_ENDIAN;
 macro_rules! key_bigint {
     ($name: ident) => {
         impl $name {
-            pub(crate) fn to_bigint(&self) -> BigInt {
-                BigInt::from_bytes_le(Sign::Plus, &self.key)
+            pub(crate) fn to_bigint(&self) -> Integer {
+                Integer::from_digits(&self.key, Order::LsfLe)
             }
         }
     };
@@ -76,11 +77,11 @@ macro_rules! key_check_not_zero_initialization {
                 Self::from_le_bytes(&key)
             }
 
-            // Doesn't use From<BigInt> because it shows up in the public interface with no way to hide it
-            pub(crate) fn try_from_bigint(b: BigInt) -> Result<Self, InvalidPublicKeyError> {
+            // Doesn't use From<Integer> because it shows up in the public interface with no way to hide it
+            pub(crate) fn try_from_bigint(b: Integer) -> Result<Self, InvalidPublicKeyError> {
                 let mut key = [0u8; $size];
 
-                let b = b.to_bytes_le().1.to_vec();
+                let b = b.to_digits::<u8>(Order::LsfLe).to_vec();
                 key[0..b.len()].clone_from_slice(&b);
 
                 Self::from_le_bytes(&key)
@@ -112,11 +113,11 @@ macro_rules! key_no_checks_initialization {
             }
         }
 
-        impl From<BigInt> for $name {
-            fn from(b: BigInt) -> Self {
+        impl From<Integer> for $name {
+            fn from(b: Integer) -> Self {
                 let mut key = [0u8; $size];
 
-                let b = b.to_bytes_le().1.to_vec();
+                let b = b.to_digits(Order::LsfLe).to_vec();
                 key[0..b.len()].clone_from_slice(&b);
 
                 Self { key }

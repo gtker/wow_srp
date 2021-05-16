@@ -15,6 +15,7 @@ sha-1 = "0.9"
 num-bigint = "0.4"
 hex = "0.4.2"
 rand = "0.8"
+rug = { version = "1.12.0" , features = ["integer"]}
 
 [dev-dependencies]
 hex-literal = "0.3"

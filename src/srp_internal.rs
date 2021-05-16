@@ -17,6 +17,7 @@ use crate::key::{PublicKey, Salt};
 use crate::key::{SessionKey, PASSWORD_VERIFIER_LENGTH};
 use crate::normalized_string::NormalizedString;
 use crate::primes::{Generator, KValue, LargeSafePrime};
+use rug::integer::Order;
 
 /// Only used for the [`calculate_client_proof`] function. Since the large safe prime and generator are
 /// statically determined we can precalculate it. See also the [`calculate_xor_hash`] function.
@@ -110,7 +111,10 @@ pub fn calculate_password_verifier(
     let generator = Generator::default().to_bigint();
     let large_safe_prime = LargeSafePrime::default().to_bigint();
 
-    let password_verifier = generator.modpow(&x, &large_safe_prime).to_bytes_le().1;
+    let password_verifier = generator
+        .pow_mod(&x, &large_safe_prime)
+        .unwrap()
+        .to_digits::<u8>(Order::LsfLe);
 
     pad_little_endian_vec_to_array!(password_verifier; PASSWORD_VERIFIER_LENGTH)
 }
@@ -124,7 +128,9 @@ pub fn calculate_server_public_key(
     let large_safe_prime = LargeSafePrime::default().to_bigint();
 
     let server_public_key = (KValue::bigint() * password_verifier.to_bigint()
-        + generator.modpow(&server_private_key.to_bigint(), &large_safe_prime))
+        + generator
+            .pow_mod(&server_private_key.to_bigint(), &large_safe_prime)
+            .unwrap())
         % large_safe_prime;
 
     PublicKey::try_from_bigint(server_public_key)
@@ -153,8 +159,10 @@ pub fn calculate_S(
     (client_public_key.to_bigint()
         * password_verifier
             .to_bigint()
-            .modpow(&u.to_bigint(), &large_safe_prime))
-    .modpow(&server_private_key.to_bigint(), &large_safe_prime)
+            .pow_mod(&u.to_bigint(), &large_safe_prime)
+            .unwrap())
+    .pow_mod(&server_private_key.to_bigint(), &large_safe_prime)
+    .unwrap()
     .into()
 }
 

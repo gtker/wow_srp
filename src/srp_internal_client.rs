@@ -4,6 +4,7 @@ use crate::normalized_string::NormalizedString;
 use crate::primes::{Generator, KValue, LargeSafePrime, LARGE_SAFE_PRIME_LENGTH};
 use crate::srp_internal::calculate_xor_hash;
 use crate::{pad_little_endian_vec_to_array, PROOF_LENGTH};
+use rug::integer::Order;
 use sha1::{Digest, Sha1};
 
 pub(super) fn calculate_client_public_key(
@@ -12,10 +13,13 @@ pub(super) fn calculate_client_public_key(
     large_safe_prime: &LargeSafePrime,
 ) -> Result<PublicKey, InvalidPublicKeyError> {
     // `A = g^a % N`
-    let client_public_key = generator.to_bigint().modpow(
-        &client_private_key.to_bigint(),
-        &large_safe_prime.to_bigint(),
-    );
+    let client_public_key = generator
+        .to_bigint()
+        .pow_mod(
+            &client_private_key.to_bigint(),
+            &large_safe_prime.to_bigint(),
+        )
+        .unwrap();
 
     PublicKey::try_from_bigint(client_public_key)
 }
@@ -34,13 +38,15 @@ pub fn calculate_client_S(
     let S = (server_public_key.to_bigint()
         - k * generator
             .to_bigint()
-            .modpow(&x.to_bigint(), &large_safe_prime.to_bigint()))
-    .modpow(
+            .pow_mod(&x.to_bigint(), &large_safe_prime.to_bigint())
+            .unwrap())
+    .pow_mod(
         &(client_private_key.to_bigint() + u.to_bigint() * x.to_bigint()),
         &large_safe_prime.to_bigint(),
-    );
+    )
+    .unwrap();
 
-    let S = S.to_bytes_le().1;
+    let S = S.to_digits::<u8>(Order::LsfLe);
     let S = pad_little_endian_vec_to_array!(S; LARGE_SAFE_PRIME_LENGTH);
     SKey::from_le_bytes(&S)
 }

@@ -1,4 +1,5 @@
-use num_bigint::{BigInt, Sign};
+use rug::integer::Order;
+use rug::Integer;
 
 /// The size in bytes of the [large safe prime](LARGE_SAFE_PRIME_LITTLE_ENDIAN).
 ///
@@ -72,8 +73,8 @@ impl LargeSafePrime {
         &self.prime
     }
 
-    pub fn to_bigint(&self) -> BigInt {
-        BigInt::from_bytes_le(Sign::Plus, &self.prime)
+    pub fn to_bigint(&self) -> Integer {
+        Integer::from_digits(&self.prime, Order::LsfLe)
     }
 }
 
@@ -100,8 +101,8 @@ impl Default for Generator {
     }
 }
 impl Generator {
-    pub fn to_bigint(&self) -> BigInt {
-        BigInt::from(self.generator)
+    pub fn to_bigint(&self) -> Integer {
+        Integer::from(self.generator)
     }
     pub const fn as_u8(&self) -> u8 {
         self.generator
@@ -117,7 +118,7 @@ impl From<u8> for Generator {
 pub const K_VALUE: u8 = 3;
 pub struct KValue {}
 impl KValue {
-    pub fn bigint() -> BigInt {
-        BigInt::from(K_VALUE)
+    pub fn bigint() -> Integer {
+        Integer::from(K_VALUE)
     }
 }
