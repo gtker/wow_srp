@@ -10,10 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- BREAKING: `SrpProof::into_server` function now returns a tuple of `(SrpServer, [u8; PROOF_LENGTH)`.
+This makes for more ergonomic usage since the server proof does not need to be queried through a getter afterwards.
 
 ### Deprecated
 
 ### Removed
+- BREAKING: `SrpServer::server_proof` removed due to changes to `SrpProof::into_server`.
 
 ### Fixed
 

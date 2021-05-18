@@ -102,14 +102,14 @@ fn authentication_logon_challenge(
     let mut client_proof = [0u8; PROOF_LENGTH];
     client_proof.clone_from_slice(&buffer[33..33 + PROOF_LENGTH]);
 
-    let s = s.into_server(client_public_key, &client_proof).unwrap();
+    let (s, server_proof) = s.into_server(client_public_key, &client_proof).unwrap();
 
     // Send the proof to the client.
     // Packet name: AuthLogonProof_Server
     let mut send = [0u8; 26];
     const LOGIN_PROOF: u8 = 1;
     send[0] = LOGIN_PROOF;
-    send[2..=2 + 19].clone_from_slice(s.server_proof());
+    send[2..=2 + 19].clone_from_slice(&server_proof);
     stream.write_all(&send).unwrap();
 
     // Expect the client to send a 'Send Realmlist' packet header

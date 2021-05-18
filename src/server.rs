@@ -58,9 +58,12 @@
 //!
 //! When authenticating players attempting to connect to the server, we start from where we let go
 //! with the last example.
-//! First, an [`SrpVerifier`] is created using the database values,
-//! then [`SrpVerifier::into_proof`] is called to convert it into an [`SrpProof`],
-//! finally [`SrpProof::into_server`] is called to convert it into an [`SrpServer`].
+//!
+//! * First an [`SrpVerifier`] is created using the database values,
+//! * Then [`SrpVerifier::into_proof`] is called to convert it into an [`SrpProof`],
+//! * Finally [`SrpProof::into_server`] is called to convert it into an [`SrpServer`] and a
+//! server proof.
+//!
 //! The [`SrpServer`] means that the client has been correctly authenticated
 //! and can be sent the realmlist.
 //! The [`SrpServer`] also provides the possibility of authenticating reconnects.
@@ -71,8 +74,8 @@
 //! The state machine goes like this:
 //! ```text
 //! SrpVerifier -> SrpProof -> mut SrpServer -|
-//!                                    ^      |
-//!                                    |      |
+//!                   +                ^      |
+//!              server_proof          |      |
 //!                                    |------|
 //! ```
 //! Where you would keep a mutable [`SrpServer`] around for reconnects and using the session key.
@@ -104,11 +107,11 @@
 //!
 //!     // Can fail on proof comparison which means the password is incorrect.
 //!     // Send a failure packet and drop the connection.
-//!     let mut server = proof.into_server(client_public_key, &client_proof)?;
+//!     let (mut server, server_proof) = proof.into_server(client_public_key, &client_proof)?;
 //!     // If this passes the client is successfully authenticated.
 //!
 //!     // Send the proof to client to prove that the server also knows the correct password.
-//!     let server_proof = server.server_proof();
+//!
 //!     // Add the server object to e.g. a HashMap of authenticated users.
 //!     // Client will now send a 'Send Realmlist' packet
 //!
@@ -412,8 +415,19 @@ impl SrpProof {
         self.salt.as_le()
     }
 
-    /// Converts to an [`SrpServer`] by using the client supplied public key and proof,
+    /// Converts to an [`SrpServer`] and server proof by using the client supplied public key and proof,
     /// consuming the [`SrpProof`].
+    ///
+    /// The server proof value must be sent to the client in order to prove that the server knows the
+    /// same password as the client.
+    /// The server proof is called `M` in [RFC2945](https://tools.ietf.org/html/rfc2945),
+    /// and `M2` in other litterature.
+    /// This is different from the paramter to [`SrpProof::into_server`] which is referred to as `M1`
+    /// in other litterature, but both are referred to as `M` in
+    /// [RFC2945](https://tools.ietf.org/html/rfc2945).
+    ///
+    /// The server proof is a **little endian** array.
+    /// The server proof is always [20 bytes (160 bits)](crate::PROOF_LENGTH) because it's a SHA-1 hash.
     ///
     /// The [`PublicKey`] is used instead of an array in order to break the validation of the
     /// public key and the calculation of the proof into separate steps.
@@ -426,7 +440,7 @@ impl SrpProof {
     /// to the client _public_ key and not the private key.
     ///
     /// The client_proof is called `M` in [RFC2945](https://tools.ietf.org/html/rfc2945) and `M1` in other
-    /// literature. This is different from the server proof in [`SrpServer::server_proof`] which is often called
+    /// literature. This is different from the server proof returned from [`SrpProof::into_server`] which is often called
     /// `M2`, but is still referred to as `M` in [RFC2945](https://tools.ietf.org/html/rfc2945).
     /// The client_proof is always [20 bytes (160 bits)](PROOF_LENGTH) in length because it's a SHA-1 hash.
     ///
@@ -470,7 +484,7 @@ impl SrpProof {
         self,
         client_public_key: PublicKey,
         client_proof: &[u8; PROOF_LENGTH],
-    ) -> Result<SrpServer, MatchProofsError> {
+    ) -> Result<(SrpServer, [u8; PROOF_LENGTH]), MatchProofsError> {
         let session_key = srp_internal::calculate_session_key(
             &client_public_key,
             &self.server_public_key,
@@ -502,16 +516,18 @@ impl SrpProof {
 
         let reconnect_challenge_data = ReconnectData::randomized();
 
-        Ok(SrpServer {
-            username: self.username,
-            server_proof,
-            session_key,
-            reconnect_challenge_data,
-        })
+        Ok((
+            SrpServer {
+                username: self.username,
+                session_key,
+                reconnect_challenge_data,
+            },
+            *server_proof.as_le(),
+        ))
     }
 }
 
-/// The final step of the server. Contains the session key, server proof, and reconnect logic.
+/// The final step of authentication. Contains the session key, and reconnect logic.
 ///
 /// This represents the final struct used in authentication, if this struct is constructed,
 /// the client is correctly authenticated and should be allowed to connect to the server.
@@ -520,7 +536,7 @@ impl SrpProof {
 ///
 /// This struct should be saved in session storage to allow for clients to reconnect.
 /// If a client disconnects and reconnects properly again, the old struct should be replaced with
-/// the new one.
+/// the new one because the session key will be different.
 ///
 /// Created from [`SrpProof::into_server`].
 ///
@@ -540,12 +556,11 @@ impl SrpProof {
 /// let mut authenticated_clients = HashMap::new();
 ///
 /// // Server is created from unseen elements
-/// // Pretend there's error handling here, it's hidden to not bloat up the example
 /// let mut server = proof.into_server(client_public_key, &client_proof);
-/// # let server =  match server {
-/// #     Ok(s) => {s}
-/// #     Err(_) => return,
-/// # };
+///  let (server, server_proof) =  match server {
+///      Ok(s) => {s}
+///      Err(_) => return,
+///  };
 ///
 /// // Add the server to session storage, for example a HashMap
 /// authenticated_clients.insert(username, server);
@@ -581,27 +596,11 @@ impl SrpProof {
 /// ```
 pub struct SrpServer {
     username: NormalizedString,
-    server_proof: Proof,
     session_key: SessionKey,
     reconnect_challenge_data: ReconnectData,
 }
 
 impl SrpServer {
-    /// The server proof of knowing the password. Called `M` in
-    /// [RFC2945](https://tools.ietf.org/html/rfc2945) and `M2` in
-    /// other literature. This is different from the parameter for [`SrpProof::into_server`] which
-    /// is referred to as `M1` in literature, but both are just called `M` in
-    /// [RFC2945](https://tools.ietf.org/html/rfc2945).
-    ///
-    /// This value must be sent to the client in order to prove that the server also knows the correct
-    /// password.
-    ///
-    /// The proof is always [20 bytes (160 bits)](crate::PROOF_LENGTH) because it's a SHA-1 hash.
-    #[doc(alias = "M2")]
-    pub const fn server_proof(&self) -> &[u8; PROOF_LENGTH] {
-        self.server_proof.as_le()
-    }
-
     /// Called `S` in [RFC2945](https://tools.ietf.org/html/rfc2945) and sometimes `K` or `key`
     /// in other literature.
     ///
@@ -712,10 +711,10 @@ mod test {
         .unwrap();
         let client_proof = Proof::from_be_hex_str("b91e6e0c8c06969c44585d9f66d73454f60a43e6");
 
-        let s = s
+        let (_s, server_proof) = s
             .into_server(client_public_key, &client_proof.as_le())
             .unwrap();
-        let server_proof = Proof::from_le_bytes(&s.server_proof());
+        let server_proof = Proof::from_le_bytes(&server_proof);
 
         assert_eq!(
             server_proof,

@@ -119,7 +119,7 @@ fn authentication_logon_challenge(stream: &mut TcpStream, client: &mut Vec<SrpSe
     client_proof.clone_from_slice(&buffer[33..33 + PROOF_LENGTH]);
 
     let s = s.into_server(client_public_key, &client_proof);
-    let s = match s {
+    let (s, server_proof) = match s {
         Ok(s) => s,
         Err(_) => {
             println!(
@@ -130,11 +130,10 @@ fn authentication_logon_challenge(stream: &mut TcpStream, client: &mut Vec<SrpSe
             panic!("error in proof");
         }
     };
-    let proof = s.server_proof();
 
     let mut send = [0u8; 26];
     send[0] = 1;
-    send[2..=2 + 19].clone_from_slice(proof);
+    send[2..=2 + 19].clone_from_slice(&server_proof);
 
     stream.write_all(&send).unwrap();
 

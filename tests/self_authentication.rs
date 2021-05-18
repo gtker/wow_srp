@@ -29,7 +29,7 @@ fn authenticate_with_self() {
     );
     let client_public_key = *client.client_public_key();
 
-    let mut server = match server.into_server(
+    let (mut server, server_proof) = match server.into_server(
         PublicKey::from_le_bytes(&client_public_key).unwrap(),
         &client.client_proof(),
     ) {
@@ -52,7 +52,7 @@ fn authenticate_with_self() {
         }
     };
 
-    let e = client.verify_server_proof(&server.server_proof());
+    let e = client.verify_server_proof(&server_proof);
 
     let client = match e {
         Ok(s) => s,
