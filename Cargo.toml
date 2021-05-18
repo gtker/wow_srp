@@ -6,14 +6,14 @@ repository = "https://www.github.com/gtker/wow_srp"
 keywords = ["wow", "world-of-warcraft", "srp6", "authentication", "login"]
 categories = ["authentication", "cryptography", "game-development", "game-engines"]
 readme = "README.md"
-version = "0.1.1"
+version = "0.2.0" # Remember to update html_root_url in src/lib.rs
 authors = ["Gtker <github@gtker.com"]
 edition = "2018"
 
 [dependencies]
 sha-1 = "0.9"
 num-bigint = "0.4"
-hex = "0.4.2"
+hex = "0.4"
 rand = "0.8"
 
 [dev-dependencies]

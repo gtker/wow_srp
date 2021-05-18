@@ -45,6 +45,8 @@
 //!
 //! [archive]: https://web.archive.org/web/20210413221921/https://wowdev.wiki/Packets/Login/Vanilla
 
+#![doc(html_root_url = "https://docs.rs/wow_srp/0.2.0")]
+
 #![forbid(unsafe_code)]
 #![warn(
     clippy::perf,
