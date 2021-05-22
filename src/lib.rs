@@ -46,7 +46,6 @@
 //! [archive]: https://web.archive.org/web/20210413221921/https://wowdev.wiki/Packets/Login/Vanilla
 
 #![doc(html_root_url = "https://docs.rs/wow_srp/0.2.0")]
-
 #![forbid(unsafe_code)]
 #![warn(
     clippy::perf,
@@ -70,6 +69,7 @@ pub use primes::LARGE_SAFE_PRIME_LENGTH;
 pub use primes::LARGE_SAFE_PRIME_LITTLE_ENDIAN;
 
 pub mod client;
+pub mod encryption;
 pub mod error;
 mod key;
 pub mod normalized_string;

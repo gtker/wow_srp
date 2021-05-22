@@ -125,23 +125,6 @@ mod test {
     use std::io::Read;
     use std::net::{Ipv4Addr, SocketAddrV4, TcpListener};
 
-    #[ignore]
-    #[test]
-    fn test() {
-        let authentication_server_port = 3724;
-        let address = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), authentication_server_port);
-        let listener = TcpListener::bind(address).expect("unable to start TCP server on 3724");
-
-        for stream in listener.incoming() {
-            let mut buffer = [0u8; 100];
-            stream.unwrap().read(&mut buffer).unwrap();
-            println!("{:?}", buffer);
-            if buffer[34] == 0xc2 && buffer[35] == 0xa9 {
-                break;
-            }
-        }
-    }
-
     #[test]
     fn allows_all_ascii_chars() {
         let allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-,.<>/?[]{}'|=+~` ";

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added `Encryption` struct which allows for encryption/decryption of [World Packet](https://wowdev.wiki/World_Packet) headers.
 
 ### Changed
 - BREAKING: `SrpProof::into_server` function now returns a tuple of `(SrpServer, [u8; PROOF_LENGTH)`.
