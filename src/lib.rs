@@ -72,6 +72,7 @@ pub use primes::LARGE_SAFE_PRIME_LITTLE_ENDIAN;
 
 pub(crate) mod bigint;
 pub mod client;
+#[allow(missing_docs)]
 pub mod encryption;
 pub mod error;
 mod key;
