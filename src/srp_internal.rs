@@ -110,9 +110,9 @@ pub fn calculate_password_verifier(
     let generator = Generator::default().to_bigint();
     let large_safe_prime = LargeSafePrime::default().to_bigint();
 
-    let password_verifier = generator.modpow(&x, &large_safe_prime).to_bytes_le().1;
+    let password_verifier = generator.modpow(&x, &large_safe_prime);
 
-    pad_little_endian_vec_to_array!(password_verifier; PASSWORD_VERIFIER_LENGTH)
+    password_verifier.to_padded_32_byte_array_le()
 }
 
 /// Calculate the server public key `B`.

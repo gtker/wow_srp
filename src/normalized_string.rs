@@ -122,8 +122,6 @@ impl AsRef<str> for NormalizedString {
 mod test {
     use crate::error::NormalizedStringError;
     use crate::normalized_string::{NormalizedString, MAXIMUM_STRING_LENGTH_IN_BYTES};
-    use std::io::Read;
-    use std::net::{Ipv4Addr, SocketAddrV4, TcpListener};
 
     #[test]
     fn allows_all_ascii_chars() {

@@ -1,9 +1,9 @@
 use crate::error::InvalidPublicKeyError;
 use crate::key::{PrivateKey, Proof, PublicKey, SKey, Salt, SessionKey, Sha1Hash};
 use crate::normalized_string::NormalizedString;
-use crate::primes::{Generator, KValue, LargeSafePrime, LARGE_SAFE_PRIME_LENGTH};
+use crate::primes::{Generator, KValue, LargeSafePrime};
 use crate::srp_internal::calculate_xor_hash;
-use crate::{pad_little_endian_vec_to_array, PROOF_LENGTH};
+use crate::PROOF_LENGTH;
 use sha1::{Digest, Sha1};
 
 pub(super) fn calculate_client_public_key(
@@ -21,7 +21,7 @@ pub(super) fn calculate_client_public_key(
 }
 
 #[allow(non_snake_case)]
-pub fn calculate_client_S(
+pub(crate) fn calculate_client_S(
     server_public_key: &PublicKey,
     x: &Sha1Hash,
     client_private_key: &PrivateKey,
@@ -40,12 +40,10 @@ pub fn calculate_client_S(
         &large_safe_prime.to_bigint(),
     );
 
-    let S = S.to_bytes_le().1;
-    let S = pad_little_endian_vec_to_array!(S; LARGE_SAFE_PRIME_LENGTH);
-    SKey::from_le_bytes(&S)
+    SKey::from_le_bytes(&S.to_padded_32_byte_array_le())
 }
 
-pub fn calculate_client_proof_with_custom_value(
+pub(crate) fn calculate_client_proof_with_custom_value(
     username: &NormalizedString,
     session_key: &SessionKey,
     client_public_key: &PublicKey,

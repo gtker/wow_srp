@@ -1,4 +1,4 @@
-use num_bigint::{BigInt, Sign};
+use crate::bigint;
 
 /// The size in bytes of the [large safe prime](LARGE_SAFE_PRIME_LITTLE_ENDIAN).
 ///
@@ -52,7 +52,7 @@ pub const LARGE_SAFE_PRIME_LITTLE_ENDIAN: [u8; LARGE_SAFE_PRIME_LENGTH] = [
     83_u8, 225_u8, 137_u8, 94_u8, 100_u8, 75_u8, 137_u8,
 ];
 
-pub struct LargeSafePrime {
+pub(crate) struct LargeSafePrime {
     prime: [u8; LARGE_SAFE_PRIME_LENGTH],
 }
 
@@ -72,8 +72,8 @@ impl LargeSafePrime {
         &self.prime
     }
 
-    pub fn to_bigint(&self) -> BigInt {
-        BigInt::from_bytes_le(Sign::Plus, &self.prime)
+    pub fn to_bigint(&self) -> bigint::Integer {
+        bigint::Integer::from_bytes_le(&self.prime)
     }
 }
 
@@ -88,7 +88,7 @@ pub const GENERATOR: u8 = 7;
 #[doc(alias = "g")]
 pub const GENERATOR_LENGTH: u8 = 1;
 
-pub struct Generator {
+pub(crate) struct Generator {
     generator: u8,
 }
 
@@ -100,9 +100,10 @@ impl Default for Generator {
     }
 }
 impl Generator {
-    pub fn to_bigint(&self) -> BigInt {
-        BigInt::from(self.generator)
+    pub fn to_bigint(&self) -> bigint::Integer {
+        bigint::Integer::from(self.generator)
     }
+
     pub const fn as_u8(&self) -> u8 {
         self.generator
     }
@@ -115,9 +116,9 @@ impl From<u8> for Generator {
 }
 
 pub const K_VALUE: u8 = 3;
-pub struct KValue {}
+pub(crate) struct KValue {}
 impl KValue {
-    pub fn bigint() -> BigInt {
-        BigInt::from(K_VALUE)
+    pub fn bigint() -> bigint::Integer {
+        bigint::Integer::from(K_VALUE)
     }
 }
