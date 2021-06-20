@@ -56,7 +56,7 @@ pub(crate) fn calculate_client_proof_with_custom_value(
 
     let username_hash = Sha1::new().chain(username.as_ref()).finalize();
 
-    let out: [u8; PROOF_LENGTH] = Sha1::new()
+    let out: [u8; PROOF_LENGTH as usize] = Sha1::new()
         .chain(xor_hash.as_le())
         .chain(username_hash)
         .chain(salt.as_le())

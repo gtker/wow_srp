@@ -36,7 +36,7 @@ macro_rules! key_new {
     };
 }
 
-fn check_public_key(key: &[u8; PUBLIC_KEY_LENGTH]) -> Result<(), InvalidPublicKeyError> {
+fn check_public_key(key: &[u8; PUBLIC_KEY_LENGTH as usize]) -> Result<(), InvalidPublicKeyError> {
     for (i, value) in key.iter().enumerate() {
         if *value != LARGE_SAFE_PRIME_LITTLE_ENDIAN[i] && *value != 0 {
             return Ok(());
@@ -199,18 +199,18 @@ macro_rules! key_wrapper {
 /// [CMD_AUTH_LOGON_CHALLENGE_Server](https://wowdev.wiki/CMD_AUTH_LOGON_CHALLENGE_Server)
 /// packet and will use leading zeros in the calculation.
 #[doc(alias = "salt")]
-pub const SALT_LENGTH: usize = 32;
-key_wrapper!(Salt; SALT_LENGTH);
-key_new!(Salt; SALT_LENGTH);
-key_no_checks_initialization!(Salt; SALT_LENGTH);
+pub const SALT_LENGTH: u8 = 32;
+key_wrapper!(Salt; SALT_LENGTH as usize);
+key_new!(Salt; SALT_LENGTH as usize);
+key_no_checks_initialization!(Salt; SALT_LENGTH as usize);
 
 #[doc(alias = "a")]
 #[doc(alias = "b")]
-pub const PRIVATE_KEY_LENGTH: usize = LARGE_SAFE_PRIME_LENGTH;
-key_wrapper!(PrivateKey; PRIVATE_KEY_LENGTH);
-key_new!(PrivateKey; PRIVATE_KEY_LENGTH);
+pub const PRIVATE_KEY_LENGTH: u8 = LARGE_SAFE_PRIME_LENGTH;
+key_wrapper!(PrivateKey; PRIVATE_KEY_LENGTH as usize);
+key_new!(PrivateKey; PRIVATE_KEY_LENGTH as usize);
 key_bigint!(PrivateKey);
-key_no_checks_initialization!(PrivateKey; PRIVATE_KEY_LENGTH);
+key_no_checks_initialization!(PrivateKey; PRIVATE_KEY_LENGTH as usize);
 
 /// Length in bytes for both client and server public key.
 ///
@@ -221,26 +221,26 @@ key_no_checks_initialization!(PrivateKey; PRIVATE_KEY_LENGTH);
 /// packets.
 #[doc(alias = "A")]
 #[doc(alias = "B")]
-pub const PUBLIC_KEY_LENGTH: usize = LARGE_SAFE_PRIME_LENGTH;
-key_wrapper!(PublicKey; PUBLIC_KEY_LENGTH);
+pub const PUBLIC_KEY_LENGTH: u8 = LARGE_SAFE_PRIME_LENGTH;
+key_wrapper!(PublicKey; PUBLIC_KEY_LENGTH as usize);
 key_bigint!(PublicKey);
-key_check_not_zero_initialization!(PublicKey; PUBLIC_KEY_LENGTH);
+key_check_not_zero_initialization!(PublicKey; PUBLIC_KEY_LENGTH as usize);
 
 /// A SHA1 hash is always 20 bytes (160 bits) as specified in [RFC3174](https://tools.ietf.org/html/rfc3174).
-pub const SHA1_HASH_LENGTH: usize = 20;
-key_wrapper!(Sha1Hash; SHA1_HASH_LENGTH);
+pub const SHA1_HASH_LENGTH: u8 = 20;
+key_wrapper!(Sha1Hash; SHA1_HASH_LENGTH as usize);
 key_bigint!(Sha1Hash);
-key_no_checks_initialization!(Sha1Hash; SHA1_HASH_LENGTH);
+key_no_checks_initialization!(Sha1Hash; SHA1_HASH_LENGTH as usize);
 
 /// Password verifier size in bytes.
 ///
 /// Is always the same size as the [large safe prime](LARGE_SAFE_PRIME_LENGTH) because the verifier
 /// is generated through modulo of the large safe prime.
 #[doc(alias = "v")]
-pub const PASSWORD_VERIFIER_LENGTH: usize = LARGE_SAFE_PRIME_LENGTH;
-key_wrapper!(Verifier; PASSWORD_VERIFIER_LENGTH);
+pub const PASSWORD_VERIFIER_LENGTH: u8 = LARGE_SAFE_PRIME_LENGTH;
+key_wrapper!(Verifier; PASSWORD_VERIFIER_LENGTH as usize);
 key_bigint!(Verifier);
-key_no_checks_initialization!(Verifier; PASSWORD_VERIFIER_LENGTH);
+key_no_checks_initialization!(Verifier; PASSWORD_VERIFIER_LENGTH as usize);
 
 /// Length of a proof in bytes.
 ///
@@ -251,13 +251,13 @@ key_no_checks_initialization!(Verifier; PASSWORD_VERIFIER_LENGTH);
 #[doc(alias = "M1")]
 #[doc(alias = "M2")]
 #[doc(alias = "M")]
-pub const PROOF_LENGTH: usize = 20;
-key_wrapper!(Proof; PROOF_LENGTH);
-key_no_checks_initialization!(Proof; PROOF_LENGTH);
+pub const PROOF_LENGTH: u8 = 20;
+key_wrapper!(Proof; PROOF_LENGTH as usize);
+key_no_checks_initialization!(Proof; PROOF_LENGTH as usize);
 
-pub const S_LENGTH: usize = LARGE_SAFE_PRIME_LENGTH;
-key_wrapper!(SKey; S_LENGTH);
-key_no_checks_initialization!(SKey; S_LENGTH);
+pub const S_LENGTH: u8 = LARGE_SAFE_PRIME_LENGTH;
+key_wrapper!(SKey; S_LENGTH as usize);
+key_no_checks_initialization!(SKey; S_LENGTH as usize);
 impl SKey {
     pub fn to_equal_slice(&self) -> &[u8] {
         let mut s = &self.key[..];
@@ -274,10 +274,10 @@ impl SKey {
 /// Always 16 since the challenge field of
 /// [CMD_AUTH_RECONNECT_CHALLENGE_Server](https://wowdev.wiki/CMD_AUTH_RECONNECT_CHALLENGE_Server)
 /// has a fixed width.
-pub const RECONNECT_CHALLENGE_DATA_LENGTH: usize = 16;
-key_wrapper!(ReconnectData; RECONNECT_CHALLENGE_DATA_LENGTH);
-key_new!(ReconnectData; RECONNECT_CHALLENGE_DATA_LENGTH);
-key_no_checks_initialization!(ReconnectData; RECONNECT_CHALLENGE_DATA_LENGTH);
+pub const RECONNECT_CHALLENGE_DATA_LENGTH: u8 = 16;
+key_wrapper!(ReconnectData; RECONNECT_CHALLENGE_DATA_LENGTH as usize);
+key_new!(ReconnectData; RECONNECT_CHALLENGE_DATA_LENGTH as usize);
+key_no_checks_initialization!(ReconnectData; RECONNECT_CHALLENGE_DATA_LENGTH as usize);
 impl ReconnectData {
     pub fn randomize_data(&mut self) {
         thread_rng().fill_bytes(&mut self.key);
@@ -289,9 +289,9 @@ impl ReconnectData {
 /// Always 40 bytes since it is the result of 2 SHA-1 [proofs](PROOF_LENGTH) concatenated.
 #[doc(alias = "K")]
 #[doc(alias = "S")]
-pub const SESSION_KEY_LENGTH: usize = PROOF_LENGTH * 2;
-key_wrapper!(SessionKey; SESSION_KEY_LENGTH);
-key_no_checks_initialization!(SessionKey; SESSION_KEY_LENGTH);
+pub const SESSION_KEY_LENGTH: u8 = PROOF_LENGTH * 2;
+key_wrapper!(SessionKey; SESSION_KEY_LENGTH as usize);
+key_no_checks_initialization!(SessionKey; SESSION_KEY_LENGTH as usize);
 
 #[cfg(test)]
 mod test {
@@ -306,12 +306,12 @@ mod test {
         // This is dependent on multiples of the large safe prime being unrepresentable in 32 bytes.
         let p = BigInt::from_bytes_le(Sign::Plus, &LARGE_SAFE_PRIME_LITTLE_ENDIAN);
         let p: BigInt = p * 2;
-        assert!(p.to_bytes_le().1.len() > PUBLIC_KEY_LENGTH);
+        assert!(p.to_bytes_le().1.len() > PUBLIC_KEY_LENGTH as usize);
     }
 
     #[test]
     fn public_key_should_not_be_zero() {
-        let key = [0u8; PUBLIC_KEY_LENGTH];
+        let key = [0u8; PUBLIC_KEY_LENGTH as usize];
         let p = PublicKey::from_le_bytes(&key);
         assert!(p.is_err());
     }

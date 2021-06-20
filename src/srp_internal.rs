@@ -20,7 +20,7 @@ use crate::primes::{Generator, KValue, LargeSafePrime};
 
 /// Only used for the [`calculate_client_proof`] function. Since the large safe prime and generator are
 /// statically determined we can precalculate it. See also the [`calculate_xor_hash`] function.
-const PRECALCULATED_XOR_HASH: [u8; SHA1_HASH_LENGTH] = [
+const PRECALCULATED_XOR_HASH: [u8; SHA1_HASH_LENGTH as usize] = [
     221, 123, 176, 58, 56, 172, 115, 17, 3, 152, 124, 90, 80, 111, 202, 150, 108, 123, 194, 167,
 ];
 
@@ -104,7 +104,7 @@ pub fn calculate_password_verifier(
     password: &NormalizedString,
     salt: &Salt,
     // Return an array instead of Verifier because this is never directly used to create a Verifier
-) -> [u8; PASSWORD_VERIFIER_LENGTH] {
+) -> [u8; PASSWORD_VERIFIER_LENGTH as usize] {
     let x = calculate_x(username, password, &salt).to_bigint();
 
     let generator = Generator::default().to_bigint();
@@ -163,19 +163,19 @@ pub fn calculate_S(
 pub fn calculate_interleaved(S: &SKey) -> SessionKey {
     let S = S.to_equal_slice();
 
-    let mut E = [0u8; S_LENGTH / 2];
+    let mut E = [0u8; (S_LENGTH / 2) as usize];
     for (i, e) in S.iter().step_by(2).enumerate() {
         E[i] = *e;
     }
     let G = Sha1::new().chain(&E[..S.len() / 2]).finalize();
 
-    let mut F = [0u8; S_LENGTH / 2];
+    let mut F = [0u8; (S_LENGTH / 2) as usize];
     for (i, f) in S.iter().skip(1).step_by(2).enumerate() {
         F[i] = *f;
     }
     let H = Sha1::new().chain(&F[..S.len() / 2]).finalize();
 
-    let mut result = [0u8; SESSION_KEY_LENGTH];
+    let mut result = [0u8; SESSION_KEY_LENGTH as usize];
     let zip = G.iter().zip(H.iter());
     for (i, r) in zip.enumerate() {
         result[i * 2] = *r.0;
@@ -226,7 +226,7 @@ pub(crate) fn calculate_xor_hash(
 
     let g_hash = Sha1::new().chain([generator.as_u8()]).finalize();
 
-    let mut xor_hash = [0u8; SHA1_HASH_LENGTH];
+    let mut xor_hash = [0u8; SHA1_HASH_LENGTH as usize];
     for (i, n) in large_safe_prime_hash.iter().enumerate() {
         xor_hash[i] = *n as u8 ^ g_hash[i];
     }
@@ -243,7 +243,7 @@ pub fn calculate_client_proof(
 ) -> Proof {
     let username_hash = Sha1::new().chain(username.as_ref()).finalize();
 
-    let out: [u8; PROOF_LENGTH] = Sha1::new()
+    let out: [u8; PROOF_LENGTH as usize] = Sha1::new()
         .chain(PRECALCULATED_XOR_HASH)
         .chain(username_hash)
         .chain(salt.as_le())

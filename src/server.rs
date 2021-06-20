@@ -39,8 +39,8 @@
 //! }
 //!
 //! fn save_values_to_database(username: &str,
-//!                            password_verifier: &[u8; PASSWORD_VERIFIER_LENGTH],
-//!                            salt: &[u8; SALT_LENGTH]) {
+//!                            password_verifier: &[u8; PASSWORD_VERIFIER_LENGTH as usize],
+//!                            salt: &[u8; SALT_LENGTH as usize]) {
 //!     // DB specific stuff here.
 //!     // In real life database could fail
 //! }
@@ -185,8 +185,8 @@ use crate::{error::InvalidPublicKeyError, srp_internal};
 /// fn from_database() -> Result<(), NormalizedStringError> {
 ///     // Get these from the database
 ///     let username = NormalizedString::new("Alice")?;
-///     let password_verifier = [0u8; PASSWORD_VERIFIER_LENGTH];
-///     let salt = [0u8; SALT_LENGTH];
+///     let password_verifier = [0u8; PASSWORD_VERIFIER_LENGTH as usize];
+///     let salt = [0u8; SALT_LENGTH as usize];
 ///
 ///     let verifier = SrpVerifier::from_database_values(username, &password_verifier, &salt);
 ///
@@ -224,7 +224,7 @@ impl SrpVerifier {
     /// Always at most [32 bytes (256 bits)](crate::PASSWORD_VERIFIER_LENGTH) in length
     /// since the value is generated through
     /// the remainder of a [32 byte value](crate::LARGE_SAFE_PRIME_LENGTH).
-    pub const fn password_verifier(&self) -> &[u8; PASSWORD_VERIFIER_LENGTH] {
+    pub const fn password_verifier(&self) -> &[u8; PASSWORD_VERIFIER_LENGTH as usize] {
         self.password_verifier.as_le()
     }
 
@@ -235,7 +235,7 @@ impl SrpVerifier {
     /// Called `s`, `<salt from passwd file>` and `<salt>` in [RFC2945](https://tools.ietf.org/html/rfc2945).
     /// Always [32 bytes (256 bits)](crate::SALT_LENGTH) in length since the packet sent to
     /// the client has a fixed width.
-    pub const fn salt(&self) -> &[u8; SALT_LENGTH] {
+    pub const fn salt(&self) -> &[u8; SALT_LENGTH as usize] {
         self.salt.as_le()
     }
 
@@ -255,8 +255,8 @@ impl SrpVerifier {
     /// Both arrays are **little endian**.
     pub fn from_database_values(
         username: NormalizedString,
-        password_verifier: &[u8; PASSWORD_VERIFIER_LENGTH],
-        salt: &[u8; SALT_LENGTH],
+        password_verifier: &[u8; PASSWORD_VERIFIER_LENGTH as usize],
+        salt: &[u8; SALT_LENGTH as usize],
     ) -> Self {
         Self {
             username,
@@ -353,7 +353,7 @@ impl SrpVerifier {
 /// let large_safe_prime = LARGE_SAFE_PRIME_LITTLE_ENDIAN;
 /// let generator = GENERATOR;
 /// #
-/// # let client_public_key = [255u8; PUBLIC_KEY_LENGTH];
+/// # let client_public_key = [255u8; PUBLIC_KEY_LENGTH as usize];
 ///
 /// // Public key gotten from client
 /// let client_public_key = PublicKey::from_le_bytes(&client_public_key);
@@ -365,7 +365,7 @@ impl SrpVerifier {
 /// };
 ///
 /// // Proof gotten from client
-/// let client_proof = [255u8; PROOF_LENGTH];
+/// let client_proof = [255u8; PROOF_LENGTH as usize];
 /// let server = proof.into_server(client_public_key, &client_proof);
 /// let server = match server {
 ///     Ok(s) => {s}
@@ -401,7 +401,7 @@ impl SrpProof {
     /// Called `B` in [RFC2945](https://tools.ietf.org/html/rfc2945).
     /// Always [32 bytes (256 bits)](crate::PUBLIC_KEY_LENGTH) in length since the packet sent to the client has a fixed width.
     #[doc(alias = "B")]
-    pub const fn server_public_key(&self) -> &[u8; PUBLIC_KEY_LENGTH] {
+    pub const fn server_public_key(&self) -> &[u8; PUBLIC_KEY_LENGTH as usize] {
         self.server_public_key.as_le()
     }
 
@@ -411,7 +411,7 @@ impl SrpProof {
     /// Called `s`, `<salt from passwd file>` or `<salt>` in [RFC2945](https://tools.ietf.org/html/rfc2945).
     /// Always [32 bytes (256 bits)](crate::SALT_LENGTH) in length since the packet sent to the client has a fixed width.
     #[doc(alias = "s")]
-    pub const fn salt(&self) -> &[u8; SALT_LENGTH] {
+    pub const fn salt(&self) -> &[u8; SALT_LENGTH as usize] {
         self.salt.as_le()
     }
 
@@ -456,7 +456,7 @@ impl SrpProof {
     /// #
     /// #    let proof = verifier.into_proof();
     /// #
-    /// # let client_public_key = [255u8; PUBLIC_KEY_LENGTH];
+    /// # let client_public_key = [255u8; PUBLIC_KEY_LENGTH as usize];
     /// // This will panic because the public key, username, passwords and proofs are not related
     /// // Public key gotten from client
     /// let client_public_key = PublicKey::from_le_bytes(&client_public_key);
@@ -467,7 +467,7 @@ impl SrpProof {
     ///     }
     /// };
     /// // Proof gotten from client
-    /// let client_proof = [255u8; PROOF_LENGTH];
+    /// let client_proof = [255u8; PROOF_LENGTH as usize];
     ///
     /// let server = proof.into_server(client_public_key, &client_proof);
     /// let server = match server {
@@ -483,8 +483,8 @@ impl SrpProof {
     pub fn into_server(
         self,
         client_public_key: PublicKey,
-        client_proof: &[u8; PROOF_LENGTH],
-    ) -> Result<(SrpServer, [u8; PROOF_LENGTH]), MatchProofsError> {
+        client_proof: &[u8; PROOF_LENGTH as usize],
+    ) -> Result<(SrpServer, [u8; PROOF_LENGTH as usize]), MatchProofsError> {
         let session_key = srp_internal::calculate_session_key(
             &client_public_key,
             &self.server_public_key,
@@ -551,8 +551,8 @@ impl SrpProof {
 /// let username = "Alice";
 /// # let verifier = SrpVerifier::from_username_and_password(NormalizedString::new(username).unwrap(), NormalizedString::new("password123").unwrap());
 /// # let proof = verifier.into_proof();
-/// # let client_public_key = PublicKey::from_le_bytes(&[1u8; PUBLIC_KEY_LENGTH]).unwrap();
-/// # let client_proof = [1u8; PROOF_LENGTH];
+/// # let client_public_key = PublicKey::from_le_bytes(&[1u8; PUBLIC_KEY_LENGTH as usize]).unwrap();
+/// # let client_proof = [1u8; PROOF_LENGTH as usize];
 /// let mut authenticated_clients = HashMap::new();
 ///
 /// // Server is created from unseen elements
@@ -580,8 +580,8 @@ impl SrpProof {
 /// let server_challenge_data = client.reconnect_challenge_data();
 ///
 /// // Get client data and proof in the response
-/// # let client_challenge_data = [1u8; RECONNECT_CHALLENGE_DATA_LENGTH];
-/// # let client_proof = [1u8; PROOF_LENGTH];
+/// # let client_challenge_data = [1u8; RECONNECT_CHALLENGE_DATA_LENGTH as usize];
+/// # let client_proof = [1u8; PROOF_LENGTH as usize];
 ///
 /// let should_allow_connection = client.verify_reconnection_attempt(&client_challenge_data,
 ///                                                                  &client_proof);
@@ -611,7 +611,7 @@ impl SrpServer {
     /// created from 2 SHA-1 hashes of [20 bytes (160 bits)](PROOF_LENGTH).
     #[doc(alias = "K")]
     #[doc(alias = "S")]
-    pub const fn session_key(&self) -> &[u8; SESSION_KEY_LENGTH] {
+    pub const fn session_key(&self) -> &[u8; SESSION_KEY_LENGTH as usize] {
         self.session_key.as_le()
     }
 
@@ -625,7 +625,9 @@ impl SrpServer {
     /// Not mentioned in [RFC2945](https://tools.ietf.org/html/rfc2945) at all.
     ///
     /// See [`verify_reconnection_attempt`](SrpServer::verify_reconnection_attempt) for more.
-    pub const fn reconnect_challenge_data(&self) -> &[u8; RECONNECT_CHALLENGE_DATA_LENGTH] {
+    pub const fn reconnect_challenge_data(
+        &self,
+    ) -> &[u8; RECONNECT_CHALLENGE_DATA_LENGTH as usize] {
         self.reconnect_challenge_data.as_le()
     }
 
@@ -648,8 +650,8 @@ impl SrpServer {
     /// Not mentioned in [RFC2945](https://tools.ietf.org/html/rfc2945) at all.
     pub fn verify_reconnection_attempt(
         &mut self,
-        client_data: &[u8; RECONNECT_CHALLENGE_DATA_LENGTH],
-        client_proof: &[u8; PROOF_LENGTH],
+        client_data: &[u8; RECONNECT_CHALLENGE_DATA_LENGTH as usize],
+        client_proof: &[u8; PROOF_LENGTH as usize],
     ) -> bool {
         let server_proof = calculate_reconnect_proof(
             &self.username,

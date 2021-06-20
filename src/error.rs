@@ -69,9 +69,9 @@ impl From<NormalizedStringError> for SrpError {
 #[derive(Debug)]
 pub struct MatchProofsError {
     /// Clients calculated proof
-    pub client_proof: [u8; PROOF_LENGTH],
+    pub client_proof: [u8; PROOF_LENGTH as usize],
     /// Server calculated proof
-    pub server_proof: [u8; PROOF_LENGTH],
+    pub server_proof: [u8; PROOF_LENGTH as usize],
 }
 
 impl Error for MatchProofsError {}

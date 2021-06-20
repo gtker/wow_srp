@@ -1,8 +1,8 @@
 use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
 use sha1::{Digest, Sha1};
 
-pub const CLIENT_HEADER_LENGTH: usize = 6;
-pub const SERVER_HEADER_LENGTH: usize = 4;
+pub const CLIENT_HEADER_LENGTH: u8 = 6;
+pub const SERVER_HEADER_LENGTH: u8 = 4;
 
 #[derive(Debug)]
 pub struct ClientHeader {
@@ -25,7 +25,7 @@ impl ClientHeader {
 
 #[derive(Debug)]
 pub struct Encryption {
-    session_key: [u8; SESSION_KEY_LENGTH],
+    session_key: [u8; SESSION_KEY_LENGTH as usize],
     username: String,
     encrypt_index: u8,
     encrypt_previous_value: u8,
@@ -34,7 +34,7 @@ pub struct Encryption {
 }
 
 impl Encryption {
-    pub fn new(username: &str, session_key: &[u8; SESSION_KEY_LENGTH]) -> Self {
+    pub fn new(username: &str, session_key: &[u8; SESSION_KEY_LENGTH as usize]) -> Self {
         Self {
             session_key: *session_key,
             username: username.to_owned(),
@@ -48,10 +48,10 @@ impl Encryption {
     pub fn client_proof_is_correct(
         &self,
         server_seed: u32,
-        client_proof: &[u8; PROOF_LENGTH],
+        client_proof: &[u8; PROOF_LENGTH as usize],
         client_seed: u32,
     ) -> bool {
-        let server_proof: [u8; PROOF_LENGTH] = Sha1::new()
+        let server_proof: [u8; PROOF_LENGTH as usize] = Sha1::new()
             .chain(&self.username)
             .chain(0_u32.to_le_bytes())
             .chain(client_seed.to_le_bytes())
@@ -63,7 +63,11 @@ impl Encryption {
         server_proof == *client_proof
     }
 
-    pub fn encrypt_server_header(&mut self, size: u16, opcode: u16) -> [u8; SERVER_HEADER_LENGTH] {
+    pub fn encrypt_server_header(
+        &mut self,
+        size: u16,
+        opcode: u16,
+    ) -> [u8; SERVER_HEADER_LENGTH as usize] {
         let size = size.to_be_bytes();
         let opcode = opcode.to_le_bytes();
 
@@ -74,7 +78,10 @@ impl Encryption {
         header
     }
 
-    pub fn decrypt_client_header(&mut self, header: &[u8; CLIENT_HEADER_LENGTH]) -> ClientHeader {
+    pub fn decrypt_client_header(
+        &mut self,
+        header: &[u8; CLIENT_HEADER_LENGTH as usize],
+    ) -> ClientHeader {
         let mut header = *header;
         self.decrypt(&mut header);
         let size: u16 = u16::from_be_bytes([header[0], header[1]]);

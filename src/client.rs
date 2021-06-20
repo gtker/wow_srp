@@ -64,9 +64,9 @@ use crate::{srp_internal, srp_internal_client};
 /// Both arrays are **little endian**.
 pub struct SrpClientReconnection {
     /// Random data used in the reconnect challenge.
-    pub challenge_data: [u8; RECONNECT_CHALLENGE_DATA_LENGTH],
+    pub challenge_data: [u8; RECONNECT_CHALLENGE_DATA_LENGTH as usize],
     /// Proof that the client knows the session key.
-    pub proof: [u8; PROOF_LENGTH],
+    pub proof: [u8; PROOF_LENGTH as usize],
 }
 
 /// Represents a connection with the server.
@@ -90,7 +90,7 @@ impl SrpClient {
     /// created from 2 SHA-1 hashes of [20 bytes (160 bits)](PROOF_LENGTH).
     #[doc(alias = "S")]
     #[doc(alias = "K")]
-    pub const fn session_key(&self) -> [u8; SESSION_KEY_LENGTH] {
+    pub const fn session_key(&self) -> [u8; SESSION_KEY_LENGTH as usize] {
         *self.session_key.as_le()
     }
 
@@ -99,7 +99,7 @@ impl SrpClient {
     /// The client challenge, and therefore also the proof, is changed every time this is called.
     pub fn calculate_reconnect_values(
         &self,
-        server_challenge_data: &[u8; RECONNECT_CHALLENGE_DATA_LENGTH],
+        server_challenge_data: &[u8; RECONNECT_CHALLENGE_DATA_LENGTH as usize],
     ) -> SrpClientReconnection {
         let client_challenge = ReconnectData::randomized();
 
@@ -138,7 +138,7 @@ impl SrpClientChallenge {
     #[doc(alias = "M")]
     #[doc(alias = "M1")]
     #[doc(alias = "M2")]
-    pub const fn client_proof(&self) -> &[u8; PROOF_LENGTH] {
+    pub const fn client_proof(&self) -> &[u8; PROOF_LENGTH as usize] {
         self.client_proof.as_le()
     }
 
@@ -146,7 +146,7 @@ impl SrpClientChallenge {
     /// Also sometimes referred to as `a`, although this is the canonical name of the private key.
     /// If the lowercase version appears in a packet table it is referring to the public key.
     #[doc(alias = "A")]
-    pub const fn client_public_key(&self) -> &[u8; PUBLIC_KEY_LENGTH] {
+    pub const fn client_public_key(&self) -> &[u8; PUBLIC_KEY_LENGTH as usize] {
         self.client_public_key.as_le()
     }
 
@@ -155,7 +155,7 @@ impl SrpClientChallenge {
     /// or the packet has been read incorrectly.
     pub fn verify_server_proof(
         self,
-        server_proof: &[u8; PROOF_LENGTH],
+        server_proof: &[u8; PROOF_LENGTH as usize],
     ) -> Result<SrpClient, MatchProofsError> {
         let client_server_proof = calculate_server_proof(
             &self.client_public_key,
@@ -202,7 +202,7 @@ impl SrpClientUser {
     pub(crate) fn with_specific_private_key(
         username: NormalizedString,
         password: NormalizedString,
-        client_private_key: &[u8; PRIVATE_KEY_LENGTH],
+        client_private_key: &[u8; PRIVATE_KEY_LENGTH as usize],
     ) -> Self {
         let client_private_key = PrivateKey::from_le_bytes(&client_private_key);
 
@@ -225,9 +225,9 @@ impl SrpClientUser {
     pub fn into_challenge(
         self,
         generator: u8,
-        large_safe_prime: [u8; LARGE_SAFE_PRIME_LENGTH],
+        large_safe_prime: [u8; LARGE_SAFE_PRIME_LENGTH as usize],
         server_public_key: PublicKey,
-        salt: [u8; SALT_LENGTH],
+        salt: [u8; SALT_LENGTH as usize],
     ) -> SrpClientChallenge {
         let generator = Generator::from(generator);
         let large_safe_prime = LargeSafePrime::from_le_bytes(&large_safe_prime);

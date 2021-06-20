@@ -97,15 +97,16 @@ fn authentication_logon_challenge(stream: &mut TcpStream, client: &mut Vec<SrpSe
     send[35] = LOGIN_PROOF;
     send[36] = GENERATOR;
     send[37] = LARGE_SAFE_PRIME_LENGTH as u8;
-    send[38..38 + LARGE_SAFE_PRIME_LENGTH].clone_from_slice(&LARGE_SAFE_PRIME_LITTLE_ENDIAN);
-    send[70..70 + SALT_LENGTH].clone_from_slice(s.salt());
+    send[38..38 + LARGE_SAFE_PRIME_LENGTH as usize]
+        .clone_from_slice(&LARGE_SAFE_PRIME_LITTLE_ENDIAN);
+    send[70..70 + SALT_LENGTH as usize].clone_from_slice(s.salt());
 
     stream.write_all(&send).unwrap();
 
     let mut buffer = [0; 100];
     stream.read(&mut buffer).unwrap();
-    let mut client_public_key = [0u8; PUBLIC_KEY_LENGTH];
-    client_public_key.clone_from_slice(&buffer[1..1 + PUBLIC_KEY_LENGTH]);
+    let mut client_public_key = [0u8; PUBLIC_KEY_LENGTH as usize];
+    client_public_key.clone_from_slice(&buffer[1..1 + PUBLIC_KEY_LENGTH as usize]);
     let client_public_key = PublicKey::from_le_bytes(&client_public_key);
     let client_public_key = match client_public_key {
         Ok(p) => p,
@@ -115,8 +116,8 @@ fn authentication_logon_challenge(stream: &mut TcpStream, client: &mut Vec<SrpSe
     };
     let client_public_key_hex = hex::encode(client_public_key.as_le());
 
-    let mut client_proof = [0u8; PROOF_LENGTH];
-    client_proof.clone_from_slice(&buffer[33..33 + PROOF_LENGTH]);
+    let mut client_proof = [0u8; PROOF_LENGTH as usize];
+    client_proof.clone_from_slice(&buffer[33..33 + PROOF_LENGTH as usize]);
 
     let s = s.into_server(client_public_key, &client_proof);
     let (s, server_proof) = match s {

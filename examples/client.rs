@@ -37,8 +37,8 @@ fn main() {
     s.read(&mut buffer).unwrap();
 
     // Server public key is ALWAYS 32 bytes due to how the packet is structured.
-    let mut server_public_key = [0u8; PUBLIC_KEY_LENGTH];
-    server_public_key.clone_from_slice(&buffer[3..3 + PUBLIC_KEY_LENGTH]);
+    let mut server_public_key = [0u8; PUBLIC_KEY_LENGTH as usize];
+    server_public_key.clone_from_slice(&buffer[3..3 + PUBLIC_KEY_LENGTH as usize]);
 
     // RFC5054 does not specify any generator above one byte, and it is unlikely to happen.
     // The library does not support anything other than 1 byte generators.
@@ -51,8 +51,8 @@ fn main() {
     let large_safe_prime: [u8; 32] = large_safe_prime.try_into().unwrap();
 
     // Salt is ALWAYS 32 bytes due to how the packet is structured
-    let mut salt = [0u8; SALT_LENGTH];
-    salt.clone_from_slice(&buffer[70..70 + SALT_LENGTH]);
+    let mut salt = [0u8; SALT_LENGTH as usize];
+    salt.clone_from_slice(&buffer[70..70 + SALT_LENGTH as usize]);
 
     let client = SrpClientUser::new(
         NormalizedString::new("A").unwrap(),
@@ -65,16 +65,16 @@ fn main() {
     // Packet name: AuthLogonProof_Client
     let mut send = [0u8; 0x50];
     send[0] = 1;
-    send[1..1 + PUBLIC_KEY_LENGTH].clone_from_slice(client.client_public_key());
-    send[33..33 + PROOF_LENGTH].clone_from_slice(client.client_proof());
+    send[1..1 + PUBLIC_KEY_LENGTH as usize].clone_from_slice(client.client_public_key());
+    send[33..33 + PROOF_LENGTH as usize].clone_from_slice(client.client_proof());
     s.write(&send).unwrap();
 
     // Receive the server proof and verify
     // Packet name: AuthLogonProof_Server
     let mut buffer = [0u8; 0x20];
     s.read(&mut buffer).unwrap();
-    let mut server_proof = [0u8; PROOF_LENGTH];
-    server_proof.clone_from_slice(&buffer[2..2 + PROOF_LENGTH]);
+    let mut server_proof = [0u8; PROOF_LENGTH as usize];
+    server_proof.clone_from_slice(&buffer[2..2 + PROOF_LENGTH as usize]);
 
     let client = client.verify_server_proof(&server_proof).unwrap();
 
@@ -104,8 +104,9 @@ fn main() {
     let mut buffer = [0u8; 34];
     s.read(&mut buffer).unwrap();
 
-    let mut server_challenge_data = [0u8; RECONNECT_CHALLENGE_DATA_LENGTH];
-    server_challenge_data.clone_from_slice(&buffer[2..2 + RECONNECT_CHALLENGE_DATA_LENGTH]);
+    let mut server_challenge_data = [0u8; RECONNECT_CHALLENGE_DATA_LENGTH as usize];
+    server_challenge_data
+        .clone_from_slice(&buffer[2..2 + RECONNECT_CHALLENGE_DATA_LENGTH as usize]);
 
     let reconnection_data = client.calculate_reconnect_values(&server_challenge_data);
 
@@ -113,9 +114,9 @@ fn main() {
     // Packet name: AuthReconnectionProof_Client
     let mut send = [0u8; 64];
     send[0] = 3;
-    send[1..1 + RECONNECT_CHALLENGE_DATA_LENGTH]
+    send[1..1 + RECONNECT_CHALLENGE_DATA_LENGTH as usize]
         .clone_from_slice(&reconnection_data.challenge_data);
-    send[17..17 + PROOF_LENGTH].clone_from_slice(&reconnection_data.proof);
+    send[17..17 + PROOF_LENGTH as usize].clone_from_slice(&reconnection_data.proof);
     s.write(&send).unwrap();
 
     // Receive validation of reconnect

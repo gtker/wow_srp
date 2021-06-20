@@ -77,9 +77,10 @@ fn authentication_logon_challenge(
     send[3..=3 + 31].clone_from_slice(s.server_public_key());
     send[35] = GENERATOR_LENGTH;
     send[36] = GENERATOR;
-    send[37] = LARGE_SAFE_PRIME_LENGTH as u8;
-    send[38..38 + LARGE_SAFE_PRIME_LENGTH].clone_from_slice(&LARGE_SAFE_PRIME_LITTLE_ENDIAN);
-    send[70..70 + SALT_LENGTH].clone_from_slice(s.salt());
+    send[37] = LARGE_SAFE_PRIME_LENGTH;
+    send[38..38 + LARGE_SAFE_PRIME_LENGTH as usize]
+        .clone_from_slice(&LARGE_SAFE_PRIME_LITTLE_ENDIAN);
+    send[70..70 + SALT_LENGTH as usize].clone_from_slice(s.salt());
     stream.write_all(&send).unwrap();
 
     // Read client reply
@@ -87,8 +88,8 @@ fn authentication_logon_challenge(
     let mut buffer = [0; 100];
     stream.read(&mut buffer).unwrap();
 
-    let mut client_public_key = [0u8; PUBLIC_KEY_LENGTH];
-    client_public_key.clone_from_slice(&buffer[1..1 + PUBLIC_KEY_LENGTH]);
+    let mut client_public_key = [0u8; PUBLIC_KEY_LENGTH as usize];
+    client_public_key.clone_from_slice(&buffer[1..1 + PUBLIC_KEY_LENGTH as usize]);
     let client_public_key = PublicKey::from_le_bytes(&client_public_key);
     // Protect against losing connection and reading the unmodified buffer
     // If this happens try restarting the server and client
@@ -99,8 +100,8 @@ fn authentication_logon_challenge(
         }
     };
 
-    let mut client_proof = [0u8; PROOF_LENGTH];
-    client_proof.clone_from_slice(&buffer[33..33 + PROOF_LENGTH]);
+    let mut client_proof = [0u8; PROOF_LENGTH as usize];
+    client_proof.clone_from_slice(&buffer[33..33 + PROOF_LENGTH as usize]);
 
     let (s, server_proof) = s.into_server(client_public_key, &client_proof).unwrap();
 

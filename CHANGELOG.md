@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - BREAKING: `SrpProof::into_server` function now returns a tuple of `(SrpServer, [u8; PROOF_LENGTH)`.
 This makes for more ergonomic usage since the server proof does not need to be queried through a getter afterwards.
+- BREAKING: Public constants have been turned from `usize`s to `u8`s.
+This is because casting from a larger integer to a smaller one will possibly truncate, while casting from a smaller integer to a larger one will zero extend (on unsigned).
+The smaller integer size indicates that the value fits into a u8 without truncation.
 
 ### Deprecated
 
