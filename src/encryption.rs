@@ -1,3 +1,4 @@
+use crate::normalized_string::NormalizedString;
 use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
 use sha1::{Digest, Sha1};
 
@@ -26,7 +27,7 @@ impl ClientHeader {
 #[derive(Debug)]
 pub struct Encryption {
     session_key: [u8; SESSION_KEY_LENGTH as usize],
-    username: String,
+    username: NormalizedString,
     encrypt_index: u8,
     encrypt_previous_value: u8,
     decrypt_index: u8,
@@ -34,10 +35,13 @@ pub struct Encryption {
 }
 
 impl Encryption {
-    pub fn new(username: &str, session_key: &[u8; SESSION_KEY_LENGTH as usize]) -> Self {
+    pub fn new(
+        username: NormalizedString,
+        session_key: &[u8; SESSION_KEY_LENGTH as usize],
+    ) -> Self {
         Self {
             session_key: *session_key,
-            username: username.to_owned(),
+            username,
             encrypt_index: 0,
             encrypt_previous_value: 0,
             decrypt_index: 0,
@@ -52,7 +56,7 @@ impl Encryption {
         client_seed: u32,
     ) -> bool {
         let server_proof: [u8; PROOF_LENGTH as usize] = Sha1::new()
-            .chain(&self.username)
+            .chain(&self.username.as_ref())
             .chain(0_u32.to_le_bytes())
             .chain(client_seed.to_le_bytes())
             .chain(server_seed.to_le_bytes())
@@ -123,6 +127,7 @@ impl Encryption {
 mod test {
     use crate::encryption::Encryption;
     use crate::key::SessionKey;
+    use crate::normalized_string::NormalizedString;
     use std::fs::read_to_string;
 
     #[test]
@@ -134,7 +139,7 @@ mod test {
             1, 201, 202, 137, 231, 87, 203, 23, 62, 17, 7, 169, 178, 1, 51, 208, 202, 223, 26, 216,
             250, 9,
         ];
-        let mut encryption = Encryption::new("A", &session_key);
+        let mut encryption = Encryption::new(NormalizedString::new("A").unwrap(), &session_key);
 
         let header = encryption.encrypt_server_header(12, 494);
         let expected_header = [239, 86, 206, 186];
@@ -162,7 +167,7 @@ mod test {
             126, 216, 48, 38, 40, 234, 116, 174, 149, 133, 20, 193, 51, 103, 223, 194, 141, 4, 191,
             161, 96,
         ];
-        let mut encryption = Encryption::new("A", &session_key);
+        let mut encryption = Encryption::new(NormalizedString::new("A").unwrap(), &session_key);
 
         let header = [9, 96, 220, 67, 72, 254];
         let c = encryption.decrypt_client_header(&header);
@@ -194,7 +199,7 @@ mod test {
             73, 190, 142, 14, 89, 44, 235, 153, 190, 103, 206, 34, 88, 45, 199, 104, 175, 79, 108,
             93, 48,
         ];
-        let username = "A";
+        let username = NormalizedString::new("A").unwrap();
         let server_seed = 0xDEADBEEF;
         let client_seed = 1266519981;
         let client_proof = [
@@ -202,7 +207,7 @@ mod test {
             7,
         ];
 
-        let encryption = Encryption::new(&username, &session_key);
+        let encryption = Encryption::new(username, &session_key);
         assert!(encryption.client_proof_is_correct(server_seed, &client_proof, client_seed));
     }
 
@@ -217,7 +222,8 @@ mod test {
             let original_data = data.clone();
             let expected = hex::decode(line.next().unwrap()).unwrap();
 
-            let mut encryption = Encryption::new("A", &session_key.as_le());
+            let mut encryption =
+                Encryption::new(NormalizedString::new("A").unwrap(), &session_key.as_le());
             encryption.encrypt(&mut data);
             assert_eq!(
                 hex::encode(&expected),
@@ -241,7 +247,8 @@ mod test {
             let original_data = data.clone();
             let expected = hex::decode(line.next().unwrap()).unwrap();
 
-            let mut encryption = Encryption::new("A", &session_key.as_le());
+            let mut encryption =
+                Encryption::new(NormalizedString::new("A").unwrap(), &session_key.as_le());
             encryption.decrypt(&mut data);
 
             assert_eq!(
