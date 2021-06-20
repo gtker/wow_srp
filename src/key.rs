@@ -77,7 +77,7 @@ macro_rules! key_check_not_zero_initialization {
                 Self::from_le_bytes(&key)
             }
 
-            // Doesn't use From<BigInt> because it shows up in the public interface with no way to hide it
+            // Doesn't use TryFrom<BigInt> because it shows up in the public interface with no way to hide it
             pub(crate) fn try_from_bigint(
                 b: bigint::Integer,
             ) -> Result<Self, InvalidPublicKeyError> {
@@ -132,7 +132,7 @@ macro_rules! key_wrapper {
     ($name: ident; $size: expr) => {
         /// Represents a public key for both the client and server.
         ///
-        /// This is used instead of a raw array in order to move the error from verifying the key out
+        /// This is used instead of a raw array in order to move the error of verifying the key out
         /// of the proof functions in order to increase readability.
         ///
         /// Will return an error if all elements are 0, or the bytes represented as an integer modulus
@@ -195,7 +195,9 @@ macro_rules! key_wrapper {
 }
 
 /// The salt is always 32 bytes since the client expects
-/// a 32 byte salt field and will use leading zeros in the calculation.
+/// a 32 byte salt field in the
+/// [CMD_AUTH_LOGON_CHALLENGE_Server](https://wowdev.wiki/CMD_AUTH_LOGON_CHALLENGE_Server)
+/// packet and will use leading zeros in the calculation.
 #[doc(alias = "salt")]
 pub const SALT_LENGTH: usize = 32;
 key_wrapper!(Salt; SALT_LENGTH);
@@ -212,7 +214,11 @@ key_no_checks_initialization!(PrivateKey; PRIVATE_KEY_LENGTH);
 
 /// Length in bytes for both client and server public key.
 ///
-/// Public keys are always 32 bytes because of the fixed width in the packets.
+/// Public keys are always 32 bytes because of the fixed width in the
+/// [CMD_AUTH_LOGON_PROOF](https://wowdev.wiki/CMD_AUTH_LOGON_PROOF_Client)
+/// and
+/// [CMD_AUTH_LOGON_PROOF_Server](https://wowdev.wiki/CMD_AUTH_LOGON_CHALLENGE_Server)
+/// packets.
 #[doc(alias = "A")]
 #[doc(alias = "B")]
 pub const PUBLIC_KEY_LENGTH: usize = LARGE_SAFE_PRIME_LENGTH;
@@ -238,7 +244,10 @@ key_no_checks_initialization!(Verifier; PASSWORD_VERIFIER_LENGTH);
 
 /// Length of a proof in bytes.
 ///
-/// Is always 20 bytes because proofs are SHA-1 hashes which have a fixed output size.
+/// Is always 20 bytes because proofs are [SHA-1 hashes](https://en.wikipedia.org/wiki/SHA-1)
+/// which have a fixed output size.
+///
+/// The proof size is the same for all proofs, including reconnect proofs.
 #[doc(alias = "M1")]
 #[doc(alias = "M2")]
 #[doc(alias = "M")]
@@ -262,7 +271,9 @@ impl SKey {
 
 /// The size of the reconnect challenge data in bytes.
 ///
-/// Statically always 16 since the packet field has a fixed width.
+/// Always 16 since the challenge field of
+/// [CMD_AUTH_RECONNECT_CHALLENGE_Server](https://wowdev.wiki/CMD_AUTH_RECONNECT_CHALLENGE_Server)
+/// has a fixed width.
 pub const RECONNECT_CHALLENGE_DATA_LENGTH: usize = 16;
 key_wrapper!(ReconnectData; RECONNECT_CHALLENGE_DATA_LENGTH);
 key_new!(ReconnectData; RECONNECT_CHALLENGE_DATA_LENGTH);
@@ -291,6 +302,8 @@ mod test {
 
     #[test]
     fn double_large_safe_prime_is_unrepresentable() {
+        // Only the exact values of the large safe prime and 0 are checked for increased speed.
+        // This is dependent on multiples of the large safe prime being unrepresentable in 32 bytes.
         let p = BigInt::from_bytes_le(Sign::Plus, &LARGE_SAFE_PRIME_LITTLE_ENDIAN);
         let p: BigInt = p * 2;
         assert!(p.to_bytes_le().1.len() > PUBLIC_KEY_LENGTH);

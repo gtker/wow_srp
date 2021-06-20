@@ -2,11 +2,15 @@ use crate::bigint;
 
 /// The size in bytes of the [large safe prime](LARGE_SAFE_PRIME_LITTLE_ENDIAN).
 ///
-/// This is statically set to 32 because the [public key](crate::PUBLIC_KEY_LENGTH) is limited to 32 bytes
-/// due to a non variable packet field.
+/// The client does not work with sizes greater than 32 for unknown reasons,
+/// despite the field in the
+/// [CMD_AUTH_LOGON_CHALLENGE](https://wowdev.wiki/CMD_AUTH_LOGON_CHALLENGE_Server)
+/// packet being variable size.
 ///
-/// Since the public keys are generated from the large safe prime via modulus, having a value larger
-/// than 32 bytes might lead to unrepresentable public key values.
+/// The [public key](crate::PUBLIC_KEY_LENGTH) field in the same packet is also statically 32 bytes
+/// wide and since the public key is generated modulo the large safe prime, large safe prime lengths
+/// of greater than 32 could lead to public keys that were unable to be sent over the network.
+///
 #[doc(alias = "N")]
 pub const LARGE_SAFE_PRIME_LENGTH: usize = 32;
 
@@ -34,7 +38,9 @@ pub const LARGE_SAFE_PRIME_BIG_ENDIAN: [u8; LARGE_SAFE_PRIME_LENGTH] = [
 
 /// Static large safe prime (`N`) value.
 /// The little endian version of [LARGE_SAFE_PRIME_BIG_ENDIAN].
-/// This is the version that should be sent over the network.
+/// This is the version that should be sent over the network in the
+/// [CMD_AUTH_LOGON_CHALLENGE_Server](https://wowdev.wiki/CMD_AUTH_LOGON_CHALLENGE_Server)
+/// packet.
 ///
 /// Always has the static size of [32 bytes](LARGE_SAFE_PRIME_LENGTH).
 ///
@@ -80,11 +86,15 @@ impl LargeSafePrime {
 /// Called `g` in [RFC2945](https://tools.ietf.org/html/rfc2945).
 /// Statically set to 7.
 /// Used for generating the public keys for both server and client, and the session key.
+/// The [length in bytes](GENERATOR_LENGTH) is always 1 since there are no generators greater than 255.
 #[doc(alias = "g")]
 pub const GENERATOR: u8 = 7;
 
 /// The length in bytes for [GENERATOR].
-/// Will always be 1, constant is provided here for clarity.
+/// Will always be 1 since there are no generators greater than 255.
+/// Constant is provided here since the
+/// [CMD_AUTH_LOGON_CHALLENGE](https://wowdev.wiki/CMD_AUTH_LOGON_CHALLENGE_Server)
+/// packet requires it.
 #[doc(alias = "g")]
 pub const GENERATOR_LENGTH: u8 = 1;
 

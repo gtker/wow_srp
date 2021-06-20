@@ -1,4 +1,5 @@
-//! An implementation of the World of Warcraft flavor of SRP6 used for authentication on the 1.12 client.
+//! An implementation of the World of Warcraft flavor of SRP6 used for authentication with the Login Server.
+//! It is only tested and verified on 1.12.1, but should work for other versions.
 //!
 //! The implementation is intended to abstract away as much of the protocol as possible,
 //! and limits itself to the specific requirements of the World of Warcraft implementation.
@@ -39,9 +40,10 @@
 //!
 //! # Other implementations
 //!
-//! * [Ember](https://github.com/EmberEmu/Ember/tree/development/src/libs/srp6) is a C++ implementation with a clean, tested implementation of the protocol.
-//! * [ArcEmu](https://github.com/arcemu/arcemu/blob/00355000cac5d0b9bce42bf6d03d4aeda9e396ea/src/logon/Auth/AuthSocket.cpp#L74) is a C++ implementation.
+//! * [Ember](https://github.com/EmberEmu/Ember/tree/development/src/libs/srp6) is a C++ implementation for 1.12 with a clean, tested implementation of the protocol.
+//! * [ArcEmu](https://github.com/arcemu/arcemu/blob/00355000cac5d0b9bce42bf6d03d4aeda9e396ea/src/logon/Auth/AuthSocket.cpp#L74) is a C++ implementation for 3.3.5.
 //! * [vMangos](https://github.com/vmangos/core/blob/fa9351de7e832510309209351c17f5c53f3155ef/src/realmd/AuthSocket.cpp#L350) is a C++ implementation.
+//! * [WoWCore](https://github.com/RomanRom2/WoWCore/blob/92b7646c2bafb22ad6dca0acc9496a35561292c4/05875_1.12.1/pas/sandbox/AuthServer.pas#L133) is a Pascal implementation that has 1.12, 2.4.3 and 3.3.5 versions.
 //!
 //! [archive]: https://web.archive.org/web/20210413221921/https://wowdev.wiki/Packets/Login/Vanilla
 
