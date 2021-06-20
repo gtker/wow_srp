@@ -11,7 +11,7 @@
 //!
 //! The letter `ń`, Unicode code point `U+0144`, name `LATIN SMALL LETTER N WITH ACUTE` for example,
 //! appears as a capital `N` in the client, and sends the byte `0x4E` which is ASCII N. This is
-//! despite the letter `Ň`, Unicode code point `U+0147`, name `LATIN CAPITAL LETTER N WITH CARON`
+//! despite the letter `Ń`, Unicode code point `U+0144`, name `LATIN CAPITAL LETTER N WITH ACUTE`
 //! existing.
 //!
 //! The letter `ž`, Unicode code point `U+017E`, name `LATIN SMALL LETTER Z WITH CARON` appears as
@@ -47,13 +47,13 @@
 //! getting an "Account does not exist" message.
 //!
 //! Another user creates an account named `ńacho` and gets through registration. Since the letter `ń` is
-//! represented as the letter `N` in the client, the server but not the sign up service
+//! represented as the letter `N` in the client, the sign up service
 //! makes this transformation in order to stay in sync with the client.
 //! This might allow the user to log into the account named `Nacho`, depending on which
 //! verifier/salt pair is fetched from the database.
 //!
-//! Authentication relies on the signup service, authentication server and client to have the exact
-//! same behavior, otherwise vulnerabilities will appear and users might be unable to log in.
+//! Authentication relies on the signup service, server and client to have the exact
+//! same behavior, otherwise vulnerabilities will appear or users might be unable to log in.
 //!
 //! # Solution
 //!
@@ -61,8 +61,7 @@
 //! characters.
 //! This greatly reduces the complexity of every link in the chain and decreases possible vulnerabilities.
 //!
-//! This also means that the server can reject any packets which purport to have a username of more than
-//! 16 bytes, setting an explicit limit on the length of a username.
+//! This also provides the benefit of knowing exactly how large an account name can be.
 //!
 
 use crate::error::NormalizedStringError;
@@ -72,6 +71,8 @@ use std::fmt::{Display, Formatter};
 /// Represents usernames and passwords containing only allowed characters.
 ///
 /// Ownership is always taken by the function requiring it in order to prevent any cloning and reallocation.
+///
+/// See [`normalized_string`](`crate::normalized_string`) for more information.
 #[derive(Debug)]
 pub struct NormalizedString {
     s: String,

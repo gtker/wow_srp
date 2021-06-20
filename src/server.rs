@@ -12,7 +12,7 @@
 //! This allows you to get the username, password verifier and salt values.
 //! The [`SrpVerifier`] page contains specifics.
 //! The [`SrpVerifier`] struct is created using [`NormalizedString`]s, the reasoning is
-//! explained on the [`NormalizedString`] page.
+//! explained on the [`normalized_string`](`crate::normalized_string`) page.
 //!
 //! This could look something like this:
 //! ```
@@ -42,7 +42,6 @@
 //!                            password_verifier: &[u8; PASSWORD_VERIFIER_LENGTH as usize],
 //!                            salt: &[u8; SALT_LENGTH as usize]) {
 //!     // DB specific stuff here.
-//!     // In real life database could fail
 //! }
 //! ```
 //!
@@ -52,7 +51,7 @@
 //! This text focuses on a high level overview and important notices.
 //!
 //! The [Typestate](https://yoric.github.io/post/rust-typestate/) pattern is used
-//! in order to prevent accidental incorrect use.
+//! in order to prevent incorrect use.
 //! This means that whenever the next step of computation takes place, you call a function
 //! taking `self`, consuming the old object, and returning the new object.
 //!
@@ -208,10 +207,10 @@ pub struct SrpVerifier {
 
 impl SrpVerifier {
     #[doc(alias = "U")]
-    /// The [`NormalizedString`] representation of the username, see that for more details.
+    /// The [`normalized_string`](`crate::normalized_string`) representation of the username,
+    /// see that for more details.
     ///
     /// Called `U` and `<username>` in [RFC2945](https://tools.ietf.org/html/rfc2945).
-    /// Specific constraints can be found at [`NormalizedString`].
     pub fn username(&self) -> &str {
         self.username.as_ref()
     }
@@ -221,7 +220,7 @@ impl SrpVerifier {
     /// Array is **little endian**.
     ///
     /// Called `v` and `<password verifier>` in [RFC2945](https://tools.ietf.org/html/rfc2945).
-    /// Always at most [32 bytes (256 bits)](crate::PASSWORD_VERIFIER_LENGTH) in length
+    /// Always [32 bytes (256 bits)](crate::PASSWORD_VERIFIER_LENGTH) in length
     /// since the value is generated through
     /// the remainder of a [32 byte value](crate::LARGE_SAFE_PRIME_LENGTH).
     pub const fn password_verifier(&self) -> &[u8; PASSWORD_VERIFIER_LENGTH as usize] {
@@ -239,7 +238,7 @@ impl SrpVerifier {
         self.salt.as_le()
     }
 
-    /// See [`NormalizedString`] for more information on the format.
+    /// See [`normalized_string`](`crate::normalized_string`) for more information on the format.
     /// Only use this for generating verifiers and salts to save to the database.
     /// Never use this by saving raw usernames and passwords on the database.
     pub fn from_username_and_password(
@@ -251,7 +250,7 @@ impl SrpVerifier {
         Self::with_specific_salt(username, password, &salt)
     }
 
-    /// See [`NormalizedString`] for more information on the format.
+    /// See [`normalized_string`](`crate::normalized_string`) for more information on the string format.
     /// Both arrays are **little endian**.
     pub fn from_database_values(
         username: NormalizedString,
@@ -272,11 +271,14 @@ impl SrpVerifier {
     /// * Panics if the RNG returns an error. If RNG does not work the authentication server
     /// should not continue functioning and therefore panics.
     /// * _Very_ rarely panic if the server generated public key is invalid.
-    /// This is so unlikely that it is many times more likely that something has been compromised
-    /// so that the program can not safely continue operations.
-    /// Specifically the public key is generated from
-    /// `(password_verifier + 7^private_key) % large_safe_prime`
-    /// and it is invalid if either `public_key == 0` or `public_key % large_safe_prime == 0`.
+    ///
+    /// There are only two invalid states for the randomly generated server public key:
+    /// * All zeros.
+    /// * Exactly the same as [the large safe prime](`crate::LARGE_SAFE_PRIME_LITTLE_ENDIAN`).
+    ///
+    /// This is 2 out of `2^256` possible states. The chances of this occurring naturally are very slim.
+    /// It is significantly more likely that the RNG of the system has been compromised in which case
+    /// authentication is not possible.
     #[doc(alias = "M")]
     #[doc(alias = "M1")]
     #[doc(alias = "M2")]
@@ -284,8 +286,7 @@ impl SrpVerifier {
         let server_private_key = PrivateKey::randomized();
 
         Self::with_specific_private_key(self, server_private_key)
-            // TODO: Add please report this to github at ...
-            .expect("The generated public key was invalid. This is insanely unlikely and even if you only see this error once you should probably check that your random number generation has not been compromised in some way. See documentation for SrpVerifier.")
+            .expect("The generated public key was invalid. This is insanely unlikely and even if you only see this error once you should probably check that your random number generation has not been compromised in some way. See documentation for SrpVerifier. Please report this on Github at 'https://github.com/gtker/wow_srp'.")
     }
 
     fn with_specific_salt(

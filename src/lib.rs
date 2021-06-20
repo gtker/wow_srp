@@ -8,7 +8,7 @@
 //! and key sizes of any other sizes are not possible.
 //!
 //! This crate does not deal with parsing the network packets necessary to obtain the required parameters.
-//! The [WoWDev wiki](https://wowdev.wiki/Packets/Login/Vanilla) ([archive]) contains a reference list of packets
+//! The [WoWDev wiki](https://wowdev.wiki/Login_Packet) ([archive]) contains a reference list of packets
 //! and the examples implement the required functionality.
 //!
 //! **THIS SHOULD NOT BE USED FOR ANYTHING OTHER THAN WORLD OF WARCRAFT EMULATION.
@@ -21,12 +21,12 @@
 //! an [`error`] module, and a [`normalized_string`] module.
 //! A server example can be found in `examples/server.rs`
 //! and a client example can be found in `examples/client.rs`.
-//! These example will perform the full SRP6 protocol and reconnect.
-//! The server will work with a 1.12 client,
+//! These examples will perform the full SRP6 connection and reconnection.
+//! The server will work with a 1.12.1 client,
 //! using the username and password `a` and `a`.
 //! The client will work not with anything else since it ignores everything
 //! that is not absolutely necessary for SRP6.
-//! The normalized string module is used for both the client and server
+//! The [`normalized_string`] module is used for both the client and server
 //! and prevents the use of non-ASCII username/password strings.
 //! Further information can be found on the [`normalized_string`] page.
 //!
@@ -38,6 +38,17 @@
 //! 3. Run a real client with the realmlist set to `localhost`
 //! or run the client example with `cargo run --example client`.
 //!
+//! ## Usage
+//!
+//! Add the following to your `Cargo.toml`:
+//!
+//! ```toml
+//! [dependencies]
+//! wow_srp = "0.2"
+//! ```
+//!
+//! Then go to either the [`client`] module or [`server`] module for specific instructions.
+//!
 //! # Other implementations
 //!
 //! * [Ember](https://github.com/EmberEmu/Ember/tree/development/src/libs/srp6) is a C++ implementation for 1.12 with a clean, tested implementation of the protocol.
@@ -45,7 +56,7 @@
 //! * [vMangos](https://github.com/vmangos/core/blob/fa9351de7e832510309209351c17f5c53f3155ef/src/realmd/AuthSocket.cpp#L350) is a C++ implementation.
 //! * [WoWCore](https://github.com/RomanRom2/WoWCore/blob/92b7646c2bafb22ad6dca0acc9496a35561292c4/05875_1.12.1/pas/sandbox/AuthServer.pas#L133) is a Pascal implementation that has 1.12, 2.4.3 and 3.3.5 versions.
 //!
-//! [archive]: https://web.archive.org/web/20210413221921/https://wowdev.wiki/Packets/Login/Vanilla
+//! [archive]: https://web.archive.org/web/20210620154707/https://wowdev.wiki/Login_Packet
 
 #![doc(html_root_url = "https://docs.rs/wow_srp/0.2.0")]
 #![forbid(unsafe_code)]

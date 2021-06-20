@@ -6,7 +6,7 @@
 //! # Usage
 //!
 //! The [Typestate](https://yoric.github.io/post/rust-typestate/) pattern is used
-//! in order to prevent accidental incorrect use for every type except for [`SrpClient`].
+//! in order to prevent incorrect use.
 //! This means that whenever the next step of computation takes place, you call a function
 //! taking `self`, consuming the old object, and returning the new object.
 //!
@@ -16,11 +16,12 @@
 //!                                            ^      |
 //!                                            |------|
 //! ```
-//! Where an [`SrpClientReconnection`] object is the result of [`SrpClient::calculate_reconnect_values`]
-//! that contains the necessary reconnect values.
+//! Where an [`SrpClientReconnection`] object is a temporary data struct from
+//! [`SrpClient::calculate_reconnect_values`]
+//! that contains only the necessary reconnect values.
 //!
-//! When reaching [`SrpClient`] the client has fully connected to the server and should be
-//! send the 'Send Realmlist' packet.
+//! When reaching [`SrpClient`] the client has fully authenticated with the server and should be able to
+//! send the [`CMD_REALM_LIST_Client`](https://wowdev.wiki/CMD_REALM_LIST_Client) packet.
 //!
 //! # Example
 //!
@@ -34,12 +35,14 @@
 //! The client has some limitations that enable a simpler overall design:
 //!
 //! * Fixed [32 byte](`LARGE_SAFE_PRIME_LENGTH`) large safe prime length.
-//! Despite the field in the packet being variable this is made possible because of the fact that
-//! even the oldest emulators are using 32 byte values.
+//! Despite the field in the packet being variable the client is unable
+//! to use values greater than 32 bytes.
 //! * Only accepting valid [`NormalizedString`] values.
 //! This is done to unify the server and client implementations.
-//! * [GENERATOR](crate::GENERATOR) can be maximum 1 byte.
-//! This is done because occurrences of multi byte generators is extremely low.
+//! * [GENERATOR](crate::GENERATOR) can be only be a u8 despite the
+//! [`CMD_AUTH_LOGON_CHALLENGE_Server`](https://wowdev.wiki/CMD_AUTH_LOGON_CHALLENGE_Server)
+//! packet having a variable sized generator field.
+//! This is done because there are no generator values larger than 255.
 //!
 
 use crate::error::MatchProofsError;
@@ -69,15 +72,18 @@ pub struct SrpClientReconnection {
     pub proof: [u8; PROOF_LENGTH as usize],
 }
 
-/// Represents a connection with the server.
+/// Represents a connection with the server. The final part of the state machine, previous was
+/// [`SrpClientChallenge`].
 ///
 /// Once this struct has been created the client and server have proven to each other that they
-/// both have the same password, and that they now have an identical session key.
+/// both have the same password, and that they have an identical session key.
 ///
 /// This is also used to prove to the server during reconnection that the client knows the
 /// session key.
 ///
 /// The session key is used later for encrypting/decrypting traffic.
+///
+/// All arrays are **little endian**.
 pub struct SrpClient {
     username: NormalizedString,
     session_key: SessionKey,
@@ -95,6 +101,10 @@ impl SrpClient {
     }
 
     /// Calculates the client challenge data and proof found in [`SrpClientReconnection`].
+    ///
+    /// The server challenge data is sent in the
+    /// [`CMD_AUTH_RECONNECT_CHALLENGE_Server`](https://wowdev.wiki/CMD_AUTH_RECONNECT_CHALLENGE_Server)
+    /// packet.
     ///
     /// The client challenge, and therefore also the proof, is changed every time this is called.
     pub fn calculate_reconnect_values(
@@ -117,9 +127,11 @@ impl SrpClient {
     }
 }
 
-/// Second step of the client connection. First is [`SrpClientUser`].
+/// Second step of the client connection. First is [`SrpClientUser`]. Next is [`SrpClient`].
 ///
-/// The client proof and public key must be sent to the server and before the server proof is available.
+/// The client proof and public key must be sent to the server in the
+/// [`CMD_AUTH_LOGON_PROOF_Client`](https://wowdev.wiki/CMD_AUTH_LOGON_PROOF_Client)
+/// packet before the server proof is available.
 ///
 /// All arrays are **little endian**.
 ///
@@ -143,7 +155,7 @@ impl SrpClientChallenge {
     }
 
     /// Called `A` in [RFC2945](https://tools.ietf.org/html/rfc2945).
-    /// Also sometimes referred to as `a`, although this is the canonical name of the private key.
+    /// Also sometimes referred to as `a`, although this is the abbreviation of the private key.
     /// If the lowercase version appears in a packet table it is referring to the public key.
     #[doc(alias = "A")]
     pub const fn client_public_key(&self) -> &[u8; PUBLIC_KEY_LENGTH as usize] {
@@ -178,7 +190,7 @@ impl SrpClientChallenge {
     }
 }
 
-/// Starting point of the client.
+/// Starting point of the client. Next step is [`SrpClientChallenge`].
 ///
 /// Uses [`NormalizedString`]s for the reasons described there.
 ///
@@ -215,12 +227,22 @@ impl SrpClientUser {
 
     /// Takes the server supplied variables and computes the next step.
     ///
+    /// The generator and large safe prime are **not** checked for validity.
+    ///
     /// All arrays are **little endian**.
     ///
     /// # Panics
     ///
     /// Panics on the extremely unlikely chance that the generated public key is invalid.
     /// See [PublicKey] for details on validity.
+    ///
+    /// There are only two invalid states for the randomly generated server public key:
+    /// * All zeros.
+    /// * Exactly the same as [the large safe prime](`crate::LARGE_SAFE_PRIME_LITTLE_ENDIAN`).
+    ///
+    /// This is 2 out of `2^256` possible states. The chances of this occurring naturally are very slim.
+    /// It is significantly more likely that the RNG of the system has been compromised in which case
+    /// authentication is not possible.
     ///
     pub fn into_challenge(
         self,
