@@ -5,7 +5,9 @@ use wow_srp::server::SrpVerifier;
 use wow_srp::{PublicKey, GENERATOR, LARGE_SAFE_PRIME_LITTLE_ENDIAN};
 
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("benchmark", |b| {
+    let mut group = c.benchmark_group("server");
+    group.sample_size(1000);
+    group.bench_function("authentication", |b| {
         b.iter(|| {
             let username = NormalizedString::new(black_box("A")).unwrap();
             let password_verifier = black_box([
@@ -20,6 +22,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             let verifier = SrpVerifier::from_database_values(username, password_verifier, salt);
             let proof = verifier.into_proof();
 
+            // Client does not have black boxes since that not who we're measuring
             let username = NormalizedString::new("A").unwrap();
             let password = NormalizedString::new("A").unwrap();
             let client = SrpClientUser::new(username, password);
@@ -38,6 +41,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 .unwrap();
         })
     });
+    group.finish();
 }
 
 criterion_group!(benches, criterion_benchmark);
