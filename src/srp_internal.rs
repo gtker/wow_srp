@@ -24,16 +24,6 @@ const PRECALCULATED_XOR_HASH: [u8; SHA1_HASH_LENGTH as usize] = [
     221, 123, 176, 58, 56, 172, 115, 17, 3, 152, 124, 90, 80, 111, 202, 150, 108, 123, 194, 167,
 ];
 
-#[doc(hidden)]
-#[macro_export]
-macro_rules! pad_little_endian_vec_to_array {
-    ($name: ident; $size: expr) => {{
-        let mut c = [0u8; $size];
-        c[0..$name.len()].clone_from_slice(&$name);
-        c
-    }};
-}
-
 /// Calculate the `x` value which is used for generating the password verifier `v`. See [calculate_password_verifier].
 ///
 /// `x` is calculated as `H( salt | H( upper( username | : |  password ) ) )` as described on page 3 of [RFC2945] and page 8 of [RFC5054].
