@@ -76,7 +76,7 @@ fn main() {
     let mut server_proof = [0u8; PROOF_LENGTH as usize];
     server_proof.clone_from_slice(&buffer[2..2 + PROOF_LENGTH as usize]);
 
-    let client = client.verify_server_proof(&server_proof).unwrap();
+    let client = client.verify_server_proof(server_proof).unwrap();
 
     // Reply with 'Send Realmlist' as server expects
     // Packet name: RealmList_Client
@@ -108,7 +108,7 @@ fn main() {
     server_challenge_data
         .clone_from_slice(&buffer[2..2 + RECONNECT_CHALLENGE_DATA_LENGTH as usize]);
 
-    let reconnection_data = client.calculate_reconnect_values(&server_challenge_data);
+    let reconnection_data = client.calculate_reconnect_values(server_challenge_data);
 
     // Send the proof and client challenge data
     // Packet name: AuthReconnectionProof_Client

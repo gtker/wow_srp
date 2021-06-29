@@ -52,7 +52,7 @@ fn authenticate_with_self() {
         }
     };
 
-    let e = client.verify_server_proof(&server_proof);
+    let e = client.verify_server_proof(server_proof);
 
     let client = match e {
         Ok(s) => s,
@@ -75,7 +75,7 @@ fn authenticate_with_self() {
     };
 
     assert_eq!(*server.session_key(), client.session_key());
-    let reconnection_data = client.calculate_reconnect_values(&server.reconnect_challenge_data());
+    let reconnection_data = client.calculate_reconnect_values(*server.reconnect_challenge_data());
 
     let verified = server
         .verify_reconnection_attempt(&reconnection_data.challenge_data, &reconnection_data.proof);

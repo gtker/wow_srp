@@ -109,7 +109,7 @@ impl SrpClient {
     /// The client challenge, and therefore also the proof, is changed every time this is called.
     pub fn calculate_reconnect_values(
         &self,
-        server_challenge_data: &[u8; RECONNECT_CHALLENGE_DATA_LENGTH as usize],
+        server_challenge_data: [u8; RECONNECT_CHALLENGE_DATA_LENGTH as usize],
     ) -> SrpClientReconnection {
         let client_challenge = ReconnectData::randomized();
 
@@ -167,7 +167,7 @@ impl SrpClientChallenge {
     /// or the packet has been read incorrectly.
     pub fn verify_server_proof(
         self,
-        server_proof: &[u8; PROOF_LENGTH as usize],
+        server_proof: [u8; PROOF_LENGTH as usize],
     ) -> Result<SrpClient, MatchProofsError> {
         let client_server_proof = calculate_server_proof(
             &self.client_public_key,
@@ -208,13 +208,13 @@ impl SrpClientUser {
     pub fn new(username: NormalizedString, password: NormalizedString) -> Self {
         let client_private_key = PrivateKey::randomized();
 
-        Self::with_specific_private_key(username, password, client_private_key.as_le())
+        Self::with_specific_private_key(username, password, *client_private_key.as_le())
     }
 
     pub(crate) fn with_specific_private_key(
         username: NormalizedString,
         password: NormalizedString,
-        client_private_key: &[u8; PRIVATE_KEY_LENGTH as usize],
+        client_private_key: [u8; PRIVATE_KEY_LENGTH as usize],
     ) -> Self {
         let client_private_key = PrivateKey::from_le_bytes(&client_private_key);
 
