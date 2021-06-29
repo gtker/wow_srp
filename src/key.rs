@@ -70,7 +70,11 @@ macro_rules! key_check_not_zero_initialization {
                 key.reverse();
 
                 if key.len() > $size {
-                    panic!("Key length is greater than {}", $size);
+                    panic!(
+                        "{} from_be_hex_str length is greater than {}",
+                        stringify!($name),
+                        $size
+                    );
                 }
 
                 while key.len() < $size {
