@@ -78,11 +78,12 @@ impl Error for MatchProofsError {}
 
 impl Display for MatchProofsError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let client_proof = format!("{:x?}", self.client_proof);
+        let server_proof = format!("{:x?}", self.server_proof);
         write!(
             f,
             "Proofs do not match. Client proof: '{}', server proof: '{}'",
-            hex::encode(self.client_proof),
-            hex::encode(self.server_proof),
+            client_proof, server_proof,
         )
     }
 }

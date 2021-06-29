@@ -1,3 +1,4 @@
+#[cfg(test)]
 use std::convert::TryFrom;
 
 use crate::bigint;
@@ -68,6 +69,10 @@ macro_rules! key_check_not_zero_initialization {
                 let mut key = hex::decode(&s).unwrap();
                 key.reverse();
 
+                if key.len() > $size {
+                    panic!("Key length is greater than {}", $size);
+                }
+
                 while key.len() < $size {
                     key.push(0);
                 }
@@ -100,6 +105,7 @@ macro_rules! key_no_checks_initialization {
                 Self { key: key.clone() }
             }
 
+            #[cfg(test)]
             #[allow(dead_code)]
             pub fn from_be_hex_str(s: &str) -> Self {
                 let mut key = hex::decode(&s).unwrap();
