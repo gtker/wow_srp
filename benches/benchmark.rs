@@ -17,7 +17,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 65, 189, 153, 244, 143, 13, 214, 200, 160, 94, 217, 112, 206, 125,
             ]);
 
-            let verifier = SrpVerifier::from_database_values(username, &password_verifier, &salt);
+            let verifier = SrpVerifier::from_database_values(username, password_verifier, salt);
             let proof = verifier.into_proof();
 
             let username = NormalizedString::new("A").unwrap();
@@ -33,7 +33,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             let _server = proof
                 .into_server(
                     PublicKey::from_le_bytes(challenge.client_public_key()).unwrap(),
-                    challenge.client_proof(),
+                    *challenge.client_proof(),
                 )
                 .unwrap();
         })

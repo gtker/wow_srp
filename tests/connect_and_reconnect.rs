@@ -66,7 +66,7 @@ fn handle_reconnect(stream: &mut TcpStream, client: &mut Vec<SrpServer>) {
     client_proof.clone_from_slice(&buffer[0x11..0x11 + 20]);
     println!("proof_data: {:?}", &proof_data);
     println!("client_proof: {:?}", client_proof);
-    let verified = s.verify_reconnection_attempt(&proof_data, &client_proof);
+    let verified = s.verify_reconnection_attempt(proof_data, client_proof);
     assert_eq!(verified, true);
     let mut send = [0u8; 2];
     send[0] = 3;
@@ -119,7 +119,7 @@ fn authentication_logon_challenge(stream: &mut TcpStream, client: &mut Vec<SrpSe
     let mut client_proof = [0u8; PROOF_LENGTH as usize];
     client_proof.clone_from_slice(&buffer[33..33 + PROOF_LENGTH as usize]);
 
-    let s = s.into_server(client_public_key, &client_proof);
+    let s = s.into_server(client_public_key, client_proof);
     let (s, server_proof) = match s {
         Ok(s) => s,
         Err(_) => {

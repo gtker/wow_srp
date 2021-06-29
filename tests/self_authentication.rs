@@ -31,7 +31,7 @@ fn authenticate_with_self() {
 
     let (mut server, server_proof) = match server.into_server(
         PublicKey::from_le_bytes(&client_public_key).unwrap(),
-        &client.client_proof(),
+        *client.client_proof(),
     ) {
         Ok(s) => s,
         Err(e) => {
@@ -78,7 +78,7 @@ fn authenticate_with_self() {
     let reconnection_data = client.calculate_reconnect_values(*server.reconnect_challenge_data());
 
     let verified = server
-        .verify_reconnection_attempt(&reconnection_data.challenge_data, &reconnection_data.proof);
+        .verify_reconnection_attempt(reconnection_data.challenge_data, reconnection_data.proof);
 
     assert!(verified);
 }

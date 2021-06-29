@@ -116,7 +116,7 @@ impl SrpClient {
         let client_proof = calculate_reconnect_proof(
             &self.username,
             &client_challenge,
-            &ReconnectData::from_le_bytes(&server_challenge_data),
+            &ReconnectData::from_le_bytes(server_challenge_data),
             &self.session_key,
         );
 
@@ -175,7 +175,7 @@ impl SrpClientChallenge {
             &self.session_key,
         );
 
-        let server_proof = Proof::from_le_bytes(&server_proof);
+        let server_proof = Proof::from_le_bytes(server_proof);
         if server_proof != client_server_proof {
             return Err(MatchProofsError {
                 client_proof: *client_server_proof.as_le(),
@@ -216,7 +216,7 @@ impl SrpClientUser {
         password: NormalizedString,
         client_private_key: [u8; PRIVATE_KEY_LENGTH as usize],
     ) -> Self {
-        let client_private_key = PrivateKey::from_le_bytes(&client_private_key);
+        let client_private_key = PrivateKey::from_le_bytes(client_private_key);
 
         Self {
             username,
@@ -262,7 +262,7 @@ impl SrpClientUser {
         )
         .expect("Invalid public key generated for client. This is extremely unlikely.");
 
-        let salt = Salt::from_le_bytes(&salt);
+        let salt = Salt::from_le_bytes(salt);
         let x = srp_internal::calculate_x(&self.username, &self.password, &salt);
 
         let u = &calculate_u(&client_public_key, &server_public_key);

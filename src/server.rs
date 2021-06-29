@@ -94,7 +94,7 @@
 //!     let password_verifier = [ 106, 6, 11, 113, 103, 55, 49, 130, 210, 249, 178, 176, 73, 77, 229, 163, 127, 223, 122, 163, 245, 174, 60, 217, 151, 142, 169, 173, 208, 8, 152, 31, ];
 //!     let salt = [ 120, 156, 208, 137, 73, 108, 21, 91, 28, 22, 13, 255, 99, 116, 71, 102, 158, 70, 65, 189, 153, 244, 143, 13, 214, 200, 160, 94, 217, 112, 206, 125, ];
 //!
-//!     let verifier = SrpVerifier::from_database_values(username, &password_verifier, &salt);
+//!     let verifier = SrpVerifier::from_database_values(username, password_verifier, salt);
 //!     let proof = verifier.into_proof();
 //!
 //!     // Gotten from client
@@ -106,7 +106,7 @@
 //!
 //!     // Can fail on proof comparison which means the password is incorrect.
 //!     // Send a failure packet and drop the connection.
-//!     let (mut server, server_proof) = proof.into_server(client_public_key, &client_proof)?;
+//!     let (mut server, server_proof) = proof.into_server(client_public_key, client_proof)?;
 //!     // If this passes the client is successfully authenticated.
 //!
 //!     // Send the proof to client to prove that the server also knows the correct password.
@@ -123,7 +123,7 @@
 //!     let client_proof = [ 37, 167, 41, 153, 253, 156, 41, 174, 225, 125, 246, 158, 106, 248, 158, 232, 146, 8, 242, 164, ];
 //!
 //!     // Returns true if the proofs match, client is allowed to reconnect
-//!     assert!(server.verify_reconnection_attempt(&client_data, &client_proof));
+//!     assert!(server.verify_reconnection_attempt(client_data, client_proof));
 //!
 //!     Ok(())
 //! }
@@ -187,7 +187,7 @@ use crate::{error::InvalidPublicKeyError, srp_internal};
 ///     let password_verifier = [0u8; PASSWORD_VERIFIER_LENGTH as usize];
 ///     let salt = [0u8; SALT_LENGTH as usize];
 ///
-///     let verifier = SrpVerifier::from_database_values(username, &password_verifier, &salt);
+///     let verifier = SrpVerifier::from_database_values(username, password_verifier, salt);
 ///
 ///     // Next step is continuing into the state machine, see into_proof() and SrpProof for more.
 ///     let proof = verifier.into_proof();
@@ -254,8 +254,8 @@ impl SrpVerifier {
     /// Both arrays are **little endian**.
     pub fn from_database_values(
         username: NormalizedString,
-        password_verifier: &[u8; PASSWORD_VERIFIER_LENGTH as usize],
-        salt: &[u8; SALT_LENGTH as usize],
+        password_verifier: [u8; PASSWORD_VERIFIER_LENGTH as usize],
+        salt: [u8; SALT_LENGTH as usize],
     ) -> Self {
         Self {
             username,
@@ -297,7 +297,7 @@ impl SrpVerifier {
         let password_verifier =
             srp_internal::calculate_password_verifier(&username, &password, salt);
 
-        Self::from_database_values(username, &password_verifier, salt.as_le())
+        Self::from_database_values(username, password_verifier, *salt.as_le())
     }
 
     fn with_specific_private_key(
@@ -367,7 +367,7 @@ impl SrpVerifier {
 ///
 /// // Proof gotten from client
 /// let client_proof = [255u8; PROOF_LENGTH as usize];
-/// let server = proof.into_server(client_public_key, &client_proof);
+/// let server = proof.into_server(client_public_key, client_proof);
 /// let server = match server {
 ///     Ok(s) => {s}
 ///     Err(_) => {
@@ -470,7 +470,7 @@ impl SrpProof {
     /// // Proof gotten from client
     /// let client_proof = [255u8; PROOF_LENGTH as usize];
     ///
-    /// let server = proof.into_server(client_public_key, &client_proof);
+    /// let server = proof.into_server(client_public_key, client_proof);
     /// let server = match server {
     ///     Ok(s) => {s}
     ///     Err(_) => {
@@ -484,7 +484,7 @@ impl SrpProof {
     pub fn into_server(
         self,
         client_public_key: PublicKey,
-        client_proof: &[u8; PROOF_LENGTH as usize],
+        client_proof: [u8; PROOF_LENGTH as usize],
     ) -> Result<(SrpServer, [u8; PROOF_LENGTH as usize]), MatchProofsError> {
         let session_key = srp_internal::calculate_session_key(
             &client_public_key,
@@ -557,7 +557,7 @@ impl SrpProof {
 /// let mut authenticated_clients = HashMap::new();
 ///
 /// // Server is created from unseen elements
-/// let mut server = proof.into_server(client_public_key, &client_proof);
+/// let mut server = proof.into_server(client_public_key, client_proof);
 ///  let (server, server_proof) =  match server {
 ///      Ok(s) => {s}
 ///      Err(_) => return,
@@ -584,8 +584,8 @@ impl SrpProof {
 /// # let client_challenge_data = [1u8; RECONNECT_CHALLENGE_DATA_LENGTH as usize];
 /// # let client_proof = [1u8; PROOF_LENGTH as usize];
 ///
-/// let should_allow_connection = client.verify_reconnection_attempt(&client_challenge_data,
-///                                                                  &client_proof);
+/// let should_allow_connection = client.verify_reconnection_attempt(client_challenge_data,
+///                                                                  client_proof);
 /// if should_allow_connection {
 ///     // The client has proven that it knows the session key,
 ///     // continue with the connection
@@ -651,8 +651,8 @@ impl SrpServer {
     /// Not mentioned in [RFC2945](https://tools.ietf.org/html/rfc2945) at all.
     pub fn verify_reconnection_attempt(
         &mut self,
-        client_data: &[u8; RECONNECT_CHALLENGE_DATA_LENGTH as usize],
-        client_proof: &[u8; PROOF_LENGTH as usize],
+        client_data: [u8; RECONNECT_CHALLENGE_DATA_LENGTH as usize],
+        client_proof: [u8; PROOF_LENGTH as usize],
     ) -> bool {
         let server_proof = calculate_reconnect_proof(
             &self.username,
@@ -661,7 +661,7 @@ impl SrpServer {
             &self.session_key,
         );
 
-        let client_proof = Proof::from_le_bytes(&client_proof);
+        let client_proof = Proof::from_le_bytes(client_proof);
 
         let reconnect_verified = server_proof == client_proof;
 
@@ -715,9 +715,9 @@ mod test {
         let client_proof = Proof::from_be_hex_str("b91e6e0c8c06969c44585d9f66d73454f60a43e6");
 
         let (_s, server_proof) = s
-            .into_server(client_public_key, &client_proof.as_le())
+            .into_server(client_public_key, *client_proof.as_le())
             .unwrap();
-        let server_proof = Proof::from_le_bytes(&server_proof);
+        let server_proof = Proof::from_le_bytes(server_proof);
 
         assert_eq!(
             server_proof,

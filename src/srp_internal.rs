@@ -73,7 +73,7 @@ pub fn calculate_x(
 
     let x = Sha1::new().chain(salt.as_le()).chain(p).finalize();
 
-    Sha1Hash::from_le_bytes(&x.into())
+    Sha1Hash::from_le_bytes(x.into())
 }
 
 /// Calculate the password verifier `v` used for generating the server public key `B` and the session key intermediate value `S`.
@@ -136,7 +136,7 @@ pub fn calculate_u(client_public_key: &PublicKey, server_public_key: &PublicKey)
         .chain(client_public_key.as_le())
         .chain(server_public_key.as_le())
         .finalize();
-    Sha1Hash::from_le_bytes(&s.into())
+    Sha1Hash::from_le_bytes(s.into())
 }
 
 /// Calculate the `S` value used for generating the session key.
@@ -182,7 +182,7 @@ pub fn calculate_interleaved(S: &SKey) -> SessionKey {
         result[(i * 2) + 1] = *r.1;
     }
 
-    SessionKey::from_le_bytes(&result)
+    SessionKey::from_le_bytes(result)
 }
 
 // Returns a 40 byte big endian array.
@@ -215,7 +215,7 @@ pub fn calculate_server_proof(
         .chain(session_key.as_le())
         .finalize();
 
-    Proof::from_le_bytes(&s.into())
+    Proof::from_le_bytes(s.into())
 }
 
 pub(crate) fn calculate_xor_hash(
@@ -231,7 +231,7 @@ pub(crate) fn calculate_xor_hash(
         xor_hash[i] = *n as u8 ^ g_hash[i];
     }
 
-    Sha1Hash::from_le_bytes(&xor_hash)
+    Sha1Hash::from_le_bytes(xor_hash)
 }
 
 pub fn calculate_client_proof(
@@ -253,7 +253,7 @@ pub fn calculate_client_proof(
         .finalize()
         .into();
 
-    Proof::from_le_bytes(&out)
+    Proof::from_le_bytes(out)
 }
 
 pub fn calculate_reconnect_proof(
@@ -269,7 +269,7 @@ pub fn calculate_reconnect_proof(
         .chain(session_key.as_le())
         .finalize();
 
-    Proof::from_le_bytes(&s.into())
+    Proof::from_le_bytes(s.into())
 }
 
 #[cfg(test)]
@@ -373,7 +373,7 @@ mod test {
 
                 let expected = Verifier::from_be_hex_str(line.next().unwrap());
 
-                let v = Verifier::from_le_bytes(&calculate_password_verifier(
+                let v = Verifier::from_le_bytes(calculate_password_verifier(
                     &username, &password, &salt,
                 ));
 

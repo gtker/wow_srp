@@ -25,7 +25,7 @@ macro_rules! key_new {
             fn default() -> Self {
                 let mut key = [0u8; $size];
                 thread_rng().fill_bytes(&mut key);
-                Self::from_le_bytes(&key)
+                Self::from_le_bytes(key)
             }
         }
 
@@ -105,8 +105,8 @@ macro_rules! key_no_checks_initialization {
     ($name: ident; $size: expr) => {
         impl $name {
             #[allow(dead_code)]
-            pub fn from_le_bytes(key: &[u8; $size]) -> Self {
-                Self { key: key.clone() }
+            pub fn from_le_bytes(key: [u8; $size]) -> Self {
+                Self { key: key }
             }
 
             #[cfg(test)]

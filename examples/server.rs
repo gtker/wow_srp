@@ -103,7 +103,7 @@ fn authentication_logon_challenge(
     let mut client_proof = [0u8; PROOF_LENGTH as usize];
     client_proof.clone_from_slice(&buffer[33..33 + PROOF_LENGTH as usize]);
 
-    let (s, server_proof) = s.into_server(client_public_key, &client_proof).unwrap();
+    let (s, server_proof) = s.into_server(client_public_key, client_proof).unwrap();
 
     // Send the proof to the client.
     // Packet name: AuthLogonProof_Server
@@ -154,7 +154,7 @@ fn handle_reconnect(stream: &mut TcpStream, active_clients: &mut HashMap<String,
     client_proof.clone_from_slice(&buffer[0x11..0x11 + 20]);
 
     // Verify that the proof is correct.
-    let verified = s.verify_reconnection_attempt(&proof_data, &client_proof);
+    let verified = s.verify_reconnection_attempt(proof_data, client_proof);
     assert_eq!(verified, true);
 
     // Send the result
@@ -189,5 +189,5 @@ fn get_database_values(username: &str) -> SrpVerifier {
     ];
 
     let username = NormalizedString::new(username).unwrap();
-    SrpVerifier::from_database_values(username, &password_verifier, &salt)
+    SrpVerifier::from_database_values(username, password_verifier, salt)
 }

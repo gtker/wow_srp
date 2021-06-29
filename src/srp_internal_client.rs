@@ -40,7 +40,7 @@ pub(crate) fn calculate_client_S(
         &large_safe_prime.to_bigint(),
     );
 
-    SKey::from_le_bytes(&S.to_padded_32_byte_array_le())
+    SKey::from_le_bytes(S.to_padded_32_byte_array_le())
 }
 
 pub(crate) fn calculate_client_proof_with_custom_value(
@@ -66,7 +66,7 @@ pub(crate) fn calculate_client_proof_with_custom_value(
         .finalize()
         .into();
 
-    Proof::from_le_bytes(&out)
+    Proof::from_le_bytes(out)
 }
 
 #[cfg(test)]
