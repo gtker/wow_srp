@@ -1,3 +1,7 @@
+//! Functionality for encrypting/decrypting [World Packet] headers.
+//!
+//! [World Packet]: https://wowdev.wiki/World_Packet
+
 use crate::normalized_string::NormalizedString;
 use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
 use sha1::{Digest, Sha1};
@@ -35,12 +39,9 @@ pub struct Encryption {
 }
 
 impl Encryption {
-    pub fn new(
-        username: NormalizedString,
-        session_key: &[u8; SESSION_KEY_LENGTH as usize],
-    ) -> Self {
+    pub fn new(username: NormalizedString, session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
         Self {
-            session_key: *session_key,
+            session_key,
             username,
             encrypt_index: 0,
             encrypt_previous_value: 0,
@@ -52,7 +53,7 @@ impl Encryption {
     pub fn client_proof_is_correct(
         &self,
         server_seed: u32,
-        client_proof: &[u8; PROOF_LENGTH as usize],
+        client_proof: [u8; PROOF_LENGTH as usize],
         client_seed: u32,
     ) -> bool {
         let server_proof: [u8; PROOF_LENGTH as usize] = Sha1::new()
@@ -64,7 +65,7 @@ impl Encryption {
             .finalize()
             .into();
 
-        server_proof == *client_proof
+        server_proof == client_proof
     }
 
     pub fn encrypt_server_header(
@@ -84,9 +85,8 @@ impl Encryption {
 
     pub fn decrypt_client_header(
         &mut self,
-        header: &[u8; CLIENT_HEADER_LENGTH as usize],
+        mut header: [u8; CLIENT_HEADER_LENGTH as usize],
     ) -> ClientHeader {
-        let mut header = *header;
         self.decrypt(&mut header);
         let size: u16 = u16::from_be_bytes([header[0], header[1]]);
         let opcode: u32 = u32::from_le_bytes([header[2], header[3], header[4], header[5]]);
@@ -139,7 +139,7 @@ mod test {
             1, 201, 202, 137, 231, 87, 203, 23, 62, 17, 7, 169, 178, 1, 51, 208, 202, 223, 26, 216,
             250, 9,
         ];
-        let mut encryption = Encryption::new(NormalizedString::new("A").unwrap(), &session_key);
+        let mut encryption = Encryption::new(NormalizedString::new("A").unwrap(), session_key);
 
         let header = encryption.encrypt_server_header(12, 494);
         let expected_header = [239, 86, 206, 186];
@@ -167,10 +167,10 @@ mod test {
             126, 216, 48, 38, 40, 234, 116, 174, 149, 133, 20, 193, 51, 103, 223, 194, 141, 4, 191,
             161, 96,
         ];
-        let mut encryption = Encryption::new(NormalizedString::new("A").unwrap(), &session_key);
+        let mut encryption = Encryption::new(NormalizedString::new("A").unwrap(), session_key);
 
         let header = [9, 96, 220, 67, 72, 254];
-        let c = encryption.decrypt_client_header(&header);
+        let c = encryption.decrypt_client_header(header);
         let expected_size = 4;
         let expected_opcode = 55; // CMSG_CHAR_ENUM
         assert_eq!(c.opcode(), expected_opcode);
@@ -186,7 +186,7 @@ mod test {
             [190, 48, 52, 101, 139, 179],
         ];
         for header in headers.iter() {
-            let c = encryption.decrypt_client_header(&header);
+            let c = encryption.decrypt_client_header(*header);
             assert_eq!(c.opcode(), expected_opcode);
             assert_eq!(c.size(), expected_size);
         }
@@ -207,8 +207,8 @@ mod test {
             7,
         ];
 
-        let encryption = Encryption::new(username, &session_key);
-        assert!(encryption.client_proof_is_correct(server_seed, &client_proof, client_seed));
+        let encryption = Encryption::new(username, session_key);
+        assert!(encryption.client_proof_is_correct(server_seed, client_proof, client_seed));
     }
 
     #[test]
@@ -223,7 +223,7 @@ mod test {
             let expected = hex::decode(line.next().unwrap()).unwrap();
 
             let mut encryption =
-                Encryption::new(NormalizedString::new("A").unwrap(), &session_key.as_le());
+                Encryption::new(NormalizedString::new("A").unwrap(), *session_key.as_le());
             encryption.encrypt(&mut data);
             assert_eq!(
                 hex::encode(&expected),
@@ -248,7 +248,7 @@ mod test {
             let expected = hex::decode(line.next().unwrap()).unwrap();
 
             let mut encryption =
-                Encryption::new(NormalizedString::new("A").unwrap(), &session_key.as_le());
+                Encryption::new(NormalizedString::new("A").unwrap(), *session_key.as_le());
             encryption.decrypt(&mut data);
 
             assert_eq!(
