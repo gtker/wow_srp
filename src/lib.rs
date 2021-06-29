@@ -17,18 +17,19 @@
 //!
 //! # Usage
 //!
-//! The crate is split into a [`server`] module, a [`client`] module,
-//! an [`error`] module, and a [`normalized_string`] module.
+//! The crate is split into:
+//! * A [`server`] module containing structs for use on the server.
+//! * A [`client`] module containing structs for use on the client.
+//! * An [`error`] module for errors that are shared by all modules.
+//! * A [`normalized_string`] module used for all modules to correctly handle strings.
+//!
 //! A server example can be found in `examples/server.rs`
 //! and a client example can be found in `examples/client.rs`.
 //! These examples will perform the full SRP6 connection and reconnection.
 //! The server will work with a 1.12.1 client,
 //! using the username and password `a` and `a`.
-//! The client will work not with anything else since it ignores everything
-//! that is not absolutely necessary for SRP6.
-//! The [`normalized_string`] module is used for both the client and server
-//! and prevents the use of non-ASCII username/password strings.
-//! Further information can be found on the [`normalized_string`] page.
+//! The client will work not with any other server since it ignores everything
+//! that is not absolutely necessary for showcasing the crate.
 //!
 //! ## Running the examples
 //!
@@ -83,9 +84,9 @@ pub use primes::LARGE_SAFE_PRIME_LITTLE_ENDIAN;
 
 pub(crate) mod bigint;
 pub mod client;
-#[allow(missing_docs)]
-pub mod encryption;
 pub mod error;
+#[allow(missing_docs)]
+pub mod header_crypto;
 mod key;
 pub mod normalized_string;
 pub(crate) mod primes;

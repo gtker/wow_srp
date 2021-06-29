@@ -125,7 +125,7 @@ impl HeaderCrypto {
 
 #[cfg(test)]
 mod test {
-    use crate::encryption::HeaderCrypto;
+    use crate::header_crypto::HeaderCrypto;
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
     use std::fs::read_to_string;
