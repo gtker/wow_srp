@@ -29,7 +29,7 @@ impl ClientHeader {
 }
 
 #[derive(Debug)]
-pub struct Encryption {
+pub struct HeaderCrypto {
     session_key: [u8; SESSION_KEY_LENGTH as usize],
     username: NormalizedString,
     encrypt_index: u8,
@@ -38,7 +38,7 @@ pub struct Encryption {
     decrypt_previous_value: u8,
 }
 
-impl Encryption {
+impl HeaderCrypto {
     pub fn new(username: NormalizedString, session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
         Self {
             session_key,
@@ -125,7 +125,7 @@ impl Encryption {
 
 #[cfg(test)]
 mod test {
-    use crate::encryption::Encryption;
+    use crate::encryption::HeaderCrypto;
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
     use std::fs::read_to_string;
@@ -139,7 +139,7 @@ mod test {
             1, 201, 202, 137, 231, 87, 203, 23, 62, 17, 7, 169, 178, 1, 51, 208, 202, 223, 26, 216,
             250, 9,
         ];
-        let mut encryption = Encryption::new(NormalizedString::new("A").unwrap(), session_key);
+        let mut encryption = HeaderCrypto::new(NormalizedString::new("A").unwrap(), session_key);
 
         let header = encryption.encrypt_server_header(12, 494);
         let expected_header = [239, 86, 206, 186];
@@ -167,7 +167,7 @@ mod test {
             126, 216, 48, 38, 40, 234, 116, 174, 149, 133, 20, 193, 51, 103, 223, 194, 141, 4, 191,
             161, 96,
         ];
-        let mut encryption = Encryption::new(NormalizedString::new("A").unwrap(), session_key);
+        let mut encryption = HeaderCrypto::new(NormalizedString::new("A").unwrap(), session_key);
 
         let header = [9, 96, 220, 67, 72, 254];
         let c = encryption.decrypt_client_header(header);
@@ -207,7 +207,7 @@ mod test {
             7,
         ];
 
-        let encryption = Encryption::new(username, session_key);
+        let encryption = HeaderCrypto::new(username, session_key);
         assert!(encryption.client_proof_is_correct(server_seed, client_proof, client_seed));
     }
 
@@ -223,7 +223,7 @@ mod test {
             let expected = hex::decode(line.next().unwrap()).unwrap();
 
             let mut encryption =
-                Encryption::new(NormalizedString::new("A").unwrap(), *session_key.as_le());
+                HeaderCrypto::new(NormalizedString::new("A").unwrap(), *session_key.as_le());
             encryption.encrypt(&mut data);
             assert_eq!(
                 hex::encode(&expected),
@@ -248,7 +248,7 @@ mod test {
             let expected = hex::decode(line.next().unwrap()).unwrap();
 
             let mut encryption =
-                Encryption::new(NormalizedString::new("A").unwrap(), *session_key.as_le());
+                HeaderCrypto::new(NormalizedString::new("A").unwrap(), *session_key.as_le());
             encryption.decrypt(&mut data);
 
             assert_eq!(
