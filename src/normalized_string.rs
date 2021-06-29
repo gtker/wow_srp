@@ -81,7 +81,7 @@ pub struct NormalizedString {
 /// The highest amount of letters that the client will allow in both the username
 /// and password fields.
 /// Always 16.
-pub const MAXIMUM_STRING_LENGTH_IN_BYTES: usize = 16;
+pub const MAXIMUM_STRING_LENGTH_IN_BYTES: u8 = 16;
 
 impl NormalizedString {
     /// Checks for non-ASCII characters and too large of a string
@@ -91,7 +91,7 @@ impl NormalizedString {
     pub fn new(s: impl Into<String>) -> Result<Self, NormalizedStringError> {
         let s = s.into();
 
-        if s.len() > MAXIMUM_STRING_LENGTH_IN_BYTES {
+        if s.len() > MAXIMUM_STRING_LENGTH_IN_BYTES as usize {
             return Err(NormalizedStringError::StringTooLong);
         }
 

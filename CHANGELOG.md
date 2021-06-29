@@ -21,6 +21,7 @@ The smaller integer size indicates that the value fits into a u8 without truncat
 
 ### Removed
 - BREAKING: `SrpServer::server_proof` removed due to changes to `SrpProof::into_server`.
+- `hex` dependency for normal builds.
 
 ### Fixed
 
