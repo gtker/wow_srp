@@ -5,9 +5,42 @@
 use crate::normalized_string::NormalizedString;
 use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
 use sha1::{Digest, Sha1};
+use std::io::Write;
 
-pub const CLIENT_HEADER_LENGTH: u8 = 6;
-pub const SERVER_HEADER_LENGTH: u8 = 4;
+pub const CLIENT_HEADER_LENGTH: u8 =
+    (std::mem::size_of::<u32>() + std::mem::size_of::<u16>()) as u8;
+pub const SERVER_HEADER_LENGTH: u8 =
+    (std::mem::size_of::<u16>() + std::mem::size_of::<u16>()) as u8;
+
+pub trait Encryptor {
+    fn write_encrypted_server_header<W: Write>(
+        &mut self,
+        write: &mut W,
+        size: u16,
+        opcode: u16,
+    ) -> std::io::Result<()>;
+
+    fn write_encrypted_client_header<W: Write>(
+        &mut self,
+        write: &mut W,
+        size: u16,
+        opcode: u32,
+    ) -> std::io::Result<()>;
+
+    fn encrypt_server_header(
+        &mut self,
+        size: u16,
+        opcode: u16,
+    ) -> [u8; SERVER_HEADER_LENGTH as usize];
+
+    fn encrypt_client_header(
+        &mut self,
+        size: u16,
+        opcode: u32,
+    ) -> [u8; CLIENT_HEADER_LENGTH as usize];
+
+    fn encrypt(&mut self, data: &mut [u8]);
+}
 
 #[derive(Debug)]
 pub struct ClientHeader {
@@ -23,6 +56,7 @@ impl ClientHeader {
     pub fn size(&self) -> u16 {
         self.size
     }
+
     pub fn opcode(&self) -> u32 {
         self.opcode
     }
@@ -36,6 +70,77 @@ pub struct HeaderCrypto {
     encrypt_previous_value: u8,
     decrypt_index: u8,
     decrypt_previous_value: u8,
+}
+
+impl Encryptor for HeaderCrypto {
+    fn write_encrypted_server_header<W: Write>(
+        &mut self,
+        write: &mut W,
+        size: u16,
+        opcode: u16,
+    ) -> std::io::Result<()> {
+        let buf = self.encrypt_server_header(size, opcode);
+
+        write.write_all(&buf)?;
+
+        Ok(())
+    }
+
+    fn write_encrypted_client_header<W: Write>(
+        &mut self,
+        write: &mut W,
+        size: u16,
+        opcode: u32,
+    ) -> std::io::Result<()> {
+        let buf = self.encrypt_client_header(size, opcode);
+
+        write.write_all(&buf)?;
+
+        Ok(())
+    }
+
+    fn encrypt_server_header(
+        &mut self,
+        size: u16,
+        opcode: u16,
+    ) -> [u8; SERVER_HEADER_LENGTH as usize] {
+        let size = size.to_be_bytes();
+        let opcode = opcode.to_le_bytes();
+
+        let mut header = [size[0], size[1], opcode[0], opcode[1]];
+
+        self.encrypt(&mut header);
+
+        header
+    }
+
+    fn encrypt_client_header(
+        &mut self,
+        size: u16,
+        opcode: u32,
+    ) -> [u8; CLIENT_HEADER_LENGTH as usize] {
+        let size = size.to_be_bytes();
+        let opcode = opcode.to_le_bytes();
+
+        let mut header = [size[0], size[1], opcode[0], opcode[1], opcode[2], opcode[3]];
+        self.encrypt(&mut header);
+
+        header
+    }
+
+    fn encrypt(&mut self, data: &mut [u8]) {
+        for unencrypted in data {
+            // x = (d ^ session_key[index]) + previous_value
+            let encrypted = (*unencrypted ^ self.session_key[self.encrypt_index as usize])
+                .wrapping_add(self.encrypt_previous_value);
+
+            // Use the session key as a circular buffer
+            self.encrypt_index = (self.encrypt_index + 1) % SESSION_KEY_LENGTH as u8;
+
+            *unencrypted = encrypted;
+            self.encrypt_previous_value = encrypted;
+        }
+    }
 }
 
 impl HeaderCrypto {
@@ -68,21 +173,6 @@ impl HeaderCrypto {
         server_proof == client_proof
     }
 
-    pub fn encrypt_server_header(
-        &mut self,
-        size: u16,
-        opcode: u16,
-    ) -> [u8; SERVER_HEADER_LENGTH as usize] {
-        let size = size.to_be_bytes();
-        let opcode = opcode.to_le_bytes();
-
-        let mut header = [size[0], size[1], opcode[0], opcode[1]];
-
-        self.encrypt(&mut header);
-
-        header
-    }
-
     pub fn decrypt_client_header(
         &mut self,
         mut header: [u8; CLIENT_HEADER_LENGTH as usize],
@@ -92,20 +182,6 @@ impl HeaderCrypto {
         let opcode: u32 = u32::from_le_bytes([header[2], header[3], header[4], header[5]]);
 
         ClientHeader::new(size, opcode)
-    }
-
-    pub fn encrypt(&mut self, data: &mut [u8]) {
-        for unencrypted in data {
-            // x = (d ^ session_key[index]) + previous_value
-            let encrypted = (*unencrypted ^ self.session_key[self.encrypt_index as usize])
-                .wrapping_add(self.encrypt_previous_value);
-
-            // Use the session key as a circular buffer
-            self.encrypt_index = (self.encrypt_index + 1) % SESSION_KEY_LENGTH as u8;
-
-            *unencrypted = encrypted;
-            self.encrypt_previous_value = encrypted;
-        }
     }
 
     pub fn decrypt(&mut self, data: &mut [u8]) {
@@ -125,7 +201,7 @@ impl HeaderCrypto {
 
 #[cfg(test)]
 mod test {
-    use crate::header_crypto::HeaderCrypto;
+    use crate::header_crypto::{Encryptor, HeaderCrypto};
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
     use std::fs::read_to_string;
