@@ -1,3 +1,4 @@
+use crate::primes::LargeSafePrime;
 use num_bigint::{BigInt, Sign};
 use std::ops;
 
@@ -22,6 +23,16 @@ impl Integer {
         };
 
         value
+    }
+
+    #[inline(always)]
+    pub fn is_zero(&self) -> bool {
+        self.value == BigInt::from(0)
+    }
+
+    #[inline(always)]
+    pub fn mod_large_safe_prime_is_zero(&self, large_safe_prime: &LargeSafePrime) -> bool {
+        (&self.value % large_safe_prime.to_bigint().value) == BigInt::from(0)
     }
 
     #[inline(always)]

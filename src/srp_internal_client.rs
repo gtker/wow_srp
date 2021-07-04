@@ -17,7 +17,7 @@ pub(super) fn calculate_client_public_key(
         &large_safe_prime.to_bigint(),
     );
 
-    PublicKey::try_from_bigint(client_public_key)
+    PublicKey::client_try_from_bigint(client_public_key, large_safe_prime)
 }
 
 #[allow(non_snake_case)]

@@ -6,7 +6,7 @@ use crate::bigint;
 use rand::{thread_rng, RngCore};
 
 use crate::error::InvalidPublicKeyError;
-use crate::primes::LARGE_SAFE_PRIME_LENGTH;
+use crate::primes::{LargeSafePrime, LARGE_SAFE_PRIME_LENGTH};
 use crate::LARGE_SAFE_PRIME_LITTLE_ENDIAN;
 
 macro_rules! key_bigint {
@@ -86,6 +86,29 @@ macro_rules! key_check_not_zero_initialization {
                 Self::from_le_bytes(&key)
             }
 
+            // Keep a separate validation function for clients because the large safe prime
+            // can't be known ahead of time, meaning we don't have the guarantees for it
+            // that we do for the server prime.
+            pub(crate) fn client_try_from_bigint(
+                b: bigint::Integer,
+                large_safe_prime: &LargeSafePrime,
+            ) -> Result<Self, InvalidPublicKeyError> {
+                if b.is_zero() {
+                    return Err(InvalidPublicKeyError::PublicKeyIsZero);
+                }
+                if b.mod_large_safe_prime_is_zero(&large_safe_prime) {
+                    return Err(InvalidPublicKeyError::PublicKeyModLargeSafePrimeIsZero);
+                }
+
+                let mut key = [0u8; $size];
+
+                let b = b.to_bytes_le().to_vec();
+                key[0..b.len()].clone_from_slice(&b);
+
+                Ok(Self { key })
+            }
+
+            // This should be used on the server.
             // Doesn't use TryFrom<BigInt> because it shows up in the public interface with no way to hide it
             pub(crate) fn try_from_bigint(
                 b: bigint::Integer,
@@ -306,7 +329,9 @@ key_no_checks_initialization!(SessionKey; SESSION_KEY_LENGTH as usize);
 #[cfg(test)]
 mod test {
 
+    use crate::bigint::Integer;
     use crate::key::{PrivateKey, PublicKey, PUBLIC_KEY_LENGTH};
+    use crate::primes::LargeSafePrime;
     use crate::LARGE_SAFE_PRIME_LITTLE_ENDIAN;
     use num_bigint::{BigInt, Sign};
 
@@ -323,6 +348,22 @@ mod test {
     fn public_key_should_not_be_zero() {
         let key = [0u8; PUBLIC_KEY_LENGTH as usize];
         let p = PublicKey::from_le_bytes(&key);
+        assert!(p.is_err());
+    }
+
+    #[test]
+    fn client_public_key_should_not_be_mod_zero() {
+        let key = Integer::from_bytes_le(&LARGE_SAFE_PRIME_LITTLE_ENDIAN);
+        let large_safe_prime = LargeSafePrime::default();
+        let p = PublicKey::client_try_from_bigint(key, &large_safe_prime);
+        assert!(p.is_err());
+    }
+
+    #[test]
+    fn client_public_key_should_not_be_zero() {
+        let key = Integer::from_bytes_le(&[0u8; PUBLIC_KEY_LENGTH as usize]);
+        let large_safe_prime = LargeSafePrime::default();
+        let p = PublicKey::client_try_from_bigint(key, &large_safe_prime);
         assert!(p.is_err());
     }
 

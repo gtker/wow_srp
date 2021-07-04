@@ -26,6 +26,7 @@ The smaller integer size indicates that the value fits into a u8 without truncat
 ### Fixed
 
 ### Security
+- Fixed Client public key not being correctly verified against a custom large safe prime.
 
 
 ## [0.1.1] - 2021-05-17

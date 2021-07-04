@@ -69,6 +69,7 @@ impl Default for LargeSafePrime {
         }
     }
 }
+
 impl LargeSafePrime {
     pub const fn from_le_bytes(prime: &[u8; LARGE_SAFE_PRIME_LENGTH as usize]) -> Self {
         Self { prime: *prime }
