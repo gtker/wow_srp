@@ -31,9 +31,8 @@ pub const LARGE_SAFE_PRIME_LENGTH: u8 = 32;
 /// ```
 #[doc(alias = "N")]
 pub const LARGE_SAFE_PRIME_BIG_ENDIAN: [u8; LARGE_SAFE_PRIME_LENGTH as usize] = [
-    137_u8, 75_u8, 100_u8, 94_u8, 137_u8, 225_u8, 83_u8, 91_u8, 189_u8, 173_u8, 91_u8, 139_u8,
-    41_u8, 6_u8, 80_u8, 83_u8, 8_u8, 1_u8, 177_u8, 142_u8, 191_u8, 191_u8, 94_u8, 143_u8, 171_u8,
-    60_u8, 130_u8, 135_u8, 42_u8, 62_u8, 155_u8, 183_u8,
+    0x89, 0x4b, 0x64, 0x5e, 0x89, 0xe1, 0x53, 0x5b, 0xbd, 0xad, 0x5b, 0x8b, 0x29, 0x6, 0x50, 0x53, 0x8, 0x1, 0xb1, 0x8e, 0xbf, 0xbf,
+    0x5e, 0x8f, 0xab, 0x3c, 0x82, 0x87, 0x2a, 0x3e, 0x9b, 0xb7,
 ];
 
 /// Static large safe prime (`N`) value.
@@ -53,9 +52,8 @@ pub const LARGE_SAFE_PRIME_BIG_ENDIAN: [u8; LARGE_SAFE_PRIME_LENGTH as usize] = 
 /// ```
 #[doc(alias = "N")]
 pub const LARGE_SAFE_PRIME_LITTLE_ENDIAN: [u8; LARGE_SAFE_PRIME_LENGTH as usize] = [
-    183_u8, 155_u8, 62_u8, 42_u8, 135_u8, 130_u8, 60_u8, 171_u8, 143_u8, 94_u8, 191_u8, 191_u8,
-    142_u8, 177_u8, 1_u8, 8_u8, 83_u8, 80_u8, 6_u8, 41_u8, 139_u8, 91_u8, 173_u8, 189_u8, 91_u8,
-    83_u8, 225_u8, 137_u8, 94_u8, 100_u8, 75_u8, 137_u8,
+    0xb7, 0x9b, 0x3e, 0x2a, 0x87, 0x82, 0x3c, 0xab, 0x8f, 0x5e, 0xbf, 0xbf, 0x8e, 0xb1, 0x1, 0x8, 0x53, 0x50, 0x6, 0x29, 0x8b, 0x5b,
+    0xad, 0xbd, 0x5b, 0x53, 0xe1, 0x89, 0x5e, 0x64, 0x4b, 0x89,
 ];
 
 pub(crate) struct LargeSafePrime {
