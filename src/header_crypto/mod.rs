@@ -1,64 +1,25 @@
 //! Functionality for encrypting/decrypting [World Packet] headers.
+//! For unknown reasons the session key obtained during the SRP6
+//! exchange is used to "encrypt" packet headers.
+//!
+//! The packet headers are different length depending on if they are
+//! [client](traits::CLIENT_HEADER_LENGTH) or [server](traits::SERVER_HEADER_LENGTH).
 //!
 //! [World Packet]: https://wowdev.wiki/World_Packet
 
-use crate::normalized_string::NormalizedString;
-use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
-use sha1::{Digest, Sha1};
 use std::io::{Read, Write};
 
-pub const CLIENT_HEADER_LENGTH: u8 =
-    (std::mem::size_of::<u32>() + std::mem::size_of::<u16>()) as u8;
-pub const SERVER_HEADER_LENGTH: u8 =
-    (std::mem::size_of::<u16>() + std::mem::size_of::<u16>()) as u8;
+use sha1::{Digest, Sha1};
 
-pub trait Encryptor {
-    fn write_encrypted_server_header<W: Write>(
-        &mut self,
-        write: &mut W,
-        size: u16,
-        opcode: u16,
-    ) -> std::io::Result<()>;
+pub use traits::Decryptor;
+pub use traits::Encryptor;
+pub use traits::CLIENT_HEADER_LENGTH;
+pub use traits::SERVER_HEADER_LENGTH;
 
-    fn write_encrypted_client_header<W: Write>(
-        &mut self,
-        write: &mut W,
-        size: u16,
-        opcode: u32,
-    ) -> std::io::Result<()>;
+use crate::normalized_string::NormalizedString;
+use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
 
-    fn encrypt_server_header(
-        &mut self,
-        size: u16,
-        opcode: u16,
-    ) -> [u8; SERVER_HEADER_LENGTH as usize];
-
-    fn encrypt_client_header(
-        &mut self,
-        size: u16,
-        opcode: u32,
-    ) -> [u8; CLIENT_HEADER_LENGTH as usize];
-
-    fn encrypt(&mut self, data: &mut [u8]);
-}
-
-pub trait Decryptor {
-    fn read_decrypted_server_header<R: Read>(
-        &mut self,
-        reader: &mut R,
-    ) -> std::io::Result<ServerHeader>;
-
-    fn read_decrypted_client_header<R: Read>(
-        &mut self,
-        reader: &mut R,
-    ) -> std::io::Result<ClientHeader>;
-
-    fn decrypt_server_header(&mut self, data: [u8; SERVER_HEADER_LENGTH as usize]) -> ServerHeader;
-
-    fn decrypt_client_header(&mut self, data: [u8; CLIENT_HEADER_LENGTH as usize]) -> ClientHeader;
-
-    fn decrypt(&mut self, data: &mut [u8]);
-}
+pub(crate) mod traits;
 
 #[derive(Debug)]
 pub struct ServerHeader {
@@ -246,10 +207,12 @@ impl HeaderCrypto {
 
 #[cfg(test)]
 mod test {
-    use crate::header_crypto::{Decryptor, Encryptor, HeaderCrypto};
+    use std::fs::read_to_string;
+
+    use crate::header_crypto::traits::{Decryptor, Encryptor};
+    use crate::header_crypto::HeaderCrypto;
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
-    use std::fs::read_to_string;
 
     #[test]
     fn verify_server_header() {
