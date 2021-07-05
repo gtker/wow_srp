@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+
+## [0.2.0] - 2021-07-05
+
+### Added
 - Added `Encryption` struct which allows for encryption/decryption of [World Packet](https://wowdev.wiki/World_Packet) headers.
 
 ### Changed
@@ -17,17 +32,12 @@ This makes for more ergonomic usage since the server proof does not need to be q
 This is because casting from a larger integer to a smaller one will possibly truncate, while casting from a smaller integer to a larger one will zero extend (on unsigned).
 The smaller integer size indicates that the value fits into a u8 without truncation.
 
-### Deprecated
-
 ### Removed
 - BREAKING: `SrpServer::server_proof` removed due to changes to `SrpProof::into_server`.
 - `hex` dependency for normal builds.
 
-### Fixed
-
 ### Security
 - Fixed Client public key not being correctly verified against a custom large safe prime.
-
 
 ## [0.1.1] - 2021-05-17
 
@@ -46,5 +56,6 @@ The smaller integer size indicates that the value fits into a u8 without truncat
 ### Added
 - Initial release
 
+[0.2.0]: https://github.com/gtker/wow_srp/releases/tag/0.2.0
 [0.1.1]: https://github.com/gtker/wow_srp/releases/tag/v0.1.1
 [0.1.0]: https://github.com/gtker/wow_srp/tree/39f5ef7ce9e17dd85381b2c48c06b174777469c1
