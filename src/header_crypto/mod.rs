@@ -3,7 +3,11 @@
 //! exchange is used to "encrypt" packet headers.
 //!
 //! The packet headers are different length depending on if they are
-//! [client](traits::CLIENT_HEADER_LENGTH) or [server](traits::SERVER_HEADER_LENGTH).
+//! [client](traits::CLIENT_HEADER_LENGTH) or [server](traits::SERVER_HEADER_LENGTH) headers.
+//!
+//! The sending party will encrypt the packets they send using an [Encryptor] and the receiving
+//! party will decrypt with a [Decryptor].
+//! The [HeaderCrypto] struct contains both.
 //!
 //! [World Packet]: https://wowdev.wiki/World_Packet
 
