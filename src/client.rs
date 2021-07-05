@@ -211,7 +211,7 @@ impl SrpClientUser {
         Self::with_specific_private_key(username, password, *client_private_key.as_le())
     }
 
-    pub(crate) fn with_specific_private_key(
+    pub(crate) const fn with_specific_private_key(
         username: NormalizedString,
         password: NormalizedString,
         client_private_key: [u8; PRIVATE_KEY_LENGTH as usize],

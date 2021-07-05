@@ -252,7 +252,7 @@ impl SrpVerifier {
 
     /// See [`normalized_string`](`crate::normalized_string`) for more information on the string format.
     /// Both arrays are **little endian**.
-    pub fn from_database_values(
+    pub const fn from_database_values(
         username: NormalizedString,
         password_verifier: [u8; PASSWORD_VERIFIER_LENGTH as usize],
         salt: [u8; SALT_LENGTH as usize],

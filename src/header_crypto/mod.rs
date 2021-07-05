@@ -179,7 +179,10 @@ impl Decryptor for HeaderCrypto {
 }
 
 impl HeaderCrypto {
-    pub fn new(username: NormalizedString, session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
+    pub const fn new(
+        username: NormalizedString,
+        session_key: [u8; SESSION_KEY_LENGTH as usize],
+    ) -> Self {
         Self {
             session_key,
             username,

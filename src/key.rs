@@ -128,8 +128,8 @@ macro_rules! key_no_checks_initialization {
     ($name: ident; $size: expr) => {
         impl $name {
             #[allow(dead_code)]
-            pub fn from_le_bytes(key: [u8; $size]) -> Self {
-                Self { key: key }
+            pub const fn from_le_bytes(key: [u8; $size]) -> Self {
+                Self { key }
             }
 
             #[cfg(test)]

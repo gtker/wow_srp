@@ -8,7 +8,7 @@ pub(crate) struct Integer {
 
 impl Integer {
     #[inline(always)]
-    fn from_bigint(bigint: BigInt) -> Self {
+    const fn from_bigint(bigint: BigInt) -> Self {
         Self { value: bigint }
     }
 
@@ -16,13 +16,10 @@ impl Integer {
     pub fn to_padded_32_byte_array_le(&self) -> [u8; 32] {
         let value = self.value.to_bytes_le().1;
 
-        let value = {
-            let mut c = [0u8; 32];
-            c[0..value.len()].clone_from_slice(&value);
-            c
-        };
+        let mut array = [0u8; 32];
+        array[0..value.len()].clone_from_slice(&value);
 
-        value
+        array
     }
 
     #[inline(always)]
