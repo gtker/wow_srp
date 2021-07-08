@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - BREAKING: `Decryptor` and `Encryptor` have been renamed to `Decrypter` and `Encrypter` to better reflect namings in the stdlib.
+- BREAKING: `read_decrypted_server_header` renamed to `read_and_decrypt_server_header` and `read_decrypted_client_header` renamed to `read_and_decrypt_client_header` to better describe what happens.
 
 ### Deprecated
 

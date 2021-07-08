@@ -119,7 +119,7 @@ impl Encrypter for HeaderCrypto {
 }
 
 impl Decrypter for HeaderCrypto {
-    fn read_decrypted_server_header<R: Read>(
+    fn read_and_decrypt_server_header<R: Read>(
         &mut self,
         reader: &mut R,
     ) -> std::io::Result<ServerHeader> {
@@ -129,7 +129,7 @@ impl Decrypter for HeaderCrypto {
         Ok(self.decrypt_server_header(buf))
     }
 
-    fn read_decrypted_client_header<R: Read>(
+    fn read_and_decrypt_client_header<R: Read>(
         &mut self,
         reader: &mut R,
     ) -> std::io::Result<ClientHeader> {

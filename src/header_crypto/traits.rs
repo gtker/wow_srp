@@ -38,12 +38,12 @@ pub trait Encrypter {
 }
 
 pub trait Decrypter {
-    fn read_decrypted_server_header<R: Read>(
+    fn read_and_decrypt_server_header<R: Read>(
         &mut self,
         reader: &mut R,
     ) -> std::io::Result<ServerHeader>;
 
-    fn read_decrypted_client_header<R: Read>(
+    fn read_and_decrypt_client_header<R: Read>(
         &mut self,
         reader: &mut R,
     ) -> std::io::Result<ClientHeader>;
