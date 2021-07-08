@@ -18,9 +18,14 @@ pub use traits::Encrypter;
 pub use traits::CLIENT_HEADER_LENGTH;
 pub use traits::SERVER_HEADER_LENGTH;
 
+pub use decrypt::DecrypterHalf;
+pub use encrypt::EncrypterHalf;
+
 use crate::normalized_string::NormalizedString;
 use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
 
+pub(crate) mod decrypt;
+pub(crate) mod encrypt;
 pub(crate) mod traits;
 
 #[derive(Debug)]
@@ -47,33 +52,23 @@ pub struct HeaderCrypto {
 
 impl Encrypter for HeaderCrypto {
     fn encrypt(&mut self, data: &mut [u8]) {
-        for unencrypted in data {
-            // x = (d ^ session_key[index]) + previous_value
-            let encrypted = (*unencrypted ^ self.session_key[self.encrypt_index as usize])
-                .wrapping_add(self.encrypt_previous_value);
-
-            // Use the session key as a circular buffer
-            self.encrypt_index = (self.encrypt_index + 1) % SESSION_KEY_LENGTH as u8;
-
-            *unencrypted = encrypted;
-            self.encrypt_previous_value = encrypted;
-        }
+        encrypt::encrypt(
+            data,
+            self.session_key,
+            &mut self.encrypt_index,
+            &mut self.encrypt_previous_value,
+        );
     }
 }
 
 impl Decrypter for HeaderCrypto {
     fn decrypt(&mut self, data: &mut [u8]) {
-        for encrypted in data {
-            // unencrypted = (encrypted - previous_value) ^ session_key[index]
-            let unencrypted = encrypted.wrapping_sub(self.decrypt_previous_value)
-                ^ self.session_key[self.decrypt_index as usize];
-
-            // Use session key as circular buffer
-            self.decrypt_index = (self.decrypt_index + 1) % SESSION_KEY_LENGTH as u8;
-
-            self.decrypt_previous_value = *encrypted;
-            *encrypted = unencrypted;
-        }
+        decrypt::decrypt(
+            data,
+            &self.session_key,
+            &mut self.decrypt_index,
+            &mut self.decrypt_previous_value,
+        );
     }
 }
 
@@ -109,6 +104,23 @@ impl HeaderCrypto {
 
         server_proof == client_proof
     }
+
+    pub fn split(self) -> (EncrypterHalf, DecrypterHalf) {
+        let encrypt = EncrypterHalf {
+            username: self.username,
+            session_key: self.session_key,
+            index: self.encrypt_index,
+            previous_value: self.encrypt_previous_value,
+        };
+
+        let decrypt = DecrypterHalf {
+            session_key: self.session_key,
+            index: self.decrypt_index,
+            previous_value: self.decrypt_previous_value,
+        };
+
+        (encrypt, decrypt)
+    }
 }
 
 #[cfg(test)]
@@ -119,6 +131,8 @@ mod test {
     use crate::header_crypto::HeaderCrypto;
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
+    use crate::SESSION_KEY_LENGTH;
+    use std::convert::TryInto;
 
     #[test]
     fn verify_server_header() {
@@ -209,21 +223,77 @@ mod test {
             let mut line = line.split_whitespace();
             let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
             let mut data = hex::decode(line.next().unwrap()).unwrap();
+            let mut split_data = data.clone();
             let original_data = data.clone();
             let expected = hex::decode(line.next().unwrap()).unwrap();
 
             let mut encryption =
                 HeaderCrypto::new(NormalizedString::new("A").unwrap(), *session_key.as_le());
+
             encryption.encrypt(&mut data);
+
             assert_eq!(
                 hex::encode(&expected),
                 hex::encode(&data),
                 "Session Key: {},
-                 data: {}",
+                 data: {},
+                 Got data: {}",
                 hex::encode(session_key.as_le()),
-                hex::encode(&original_data)
+                hex::encode(&original_data),
+                hex::encode(&data)
+            );
+
+            let full = HeaderCrypto::new(NormalizedString::new("A").unwrap(), *session_key.as_le());
+            let (mut enc, _dec) = full.split();
+
+            enc.encrypt(&mut split_data);
+
+            assert_eq!(
+                hex::encode(&expected),
+                hex::encode(&split_data),
+                "Session Key: {},
+                 data: {},
+                 Got data: {}",
+                hex::encode(session_key.as_le()),
+                hex::encode(&original_data),
+                hex::encode(&split_data)
             );
         }
+    }
+
+    #[test]
+    fn verify_mixed_used() {
+        // Verify that mixed use does not interfere with each other
+
+        let session_key = hex::decode(
+            "2EFEE7B0C177EBBDFF6676C56EFC2339BE9CAD14BF8B54BB5A86FBF81F6D424AA23CC9A3149FB175",
+        )
+        .unwrap();
+        let session_key: [u8; SESSION_KEY_LENGTH as usize] = session_key.try_into().unwrap();
+
+        let original_data = hex::decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca").unwrap();
+        let mut encrypt_data = original_data.clone();
+        let mut decrypt_data = original_data.clone();
+
+        let mut encryption = HeaderCrypto::new(NormalizedString::new("A").unwrap(), session_key);
+        const STEP: usize = 10;
+        for (i, _d) in original_data.iter().enumerate().step_by(STEP) {
+            encryption.encrypt(&mut encrypt_data[i..(i) + STEP]);
+            encryption.decrypt(&mut decrypt_data[i..(i) + STEP]);
+        }
+
+        let expected_decrypt = hex::decode("13a3a0059817e73404d97cd455159b50d40af74a22f719aacb6a9a2e991982c61a6f0285f880cc8512ec2ef1c98fa923512f").unwrap();
+        let expected_encrypt = hex::decode("13777da3d109b912322a08841e3ff5bc92f4e98b77bb03997da999b22ae0b926a3b1e56580314b3932499ee11b9f7deb6915").unwrap();
+        assert_eq!(
+            expected_decrypt, decrypt_data,
+            "Original data: {:?}, expected: {:?}, got: {:?}",
+            original_data, expected_decrypt, decrypt_data
+        );
+        assert_eq!(
+            expected_encrypt, encrypt_data,
+            "Original data: {:?}, expected: {:?}, got: {:?}",
+            original_data, expected_encrypt, encrypt_data
+        );
     }
 
     #[test]
@@ -234,20 +304,40 @@ mod test {
             let mut line = line.split_whitespace();
             let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
             let mut data = hex::decode(line.next().unwrap()).unwrap();
+            let mut split_data = data.clone();
             let original_data = data.clone();
             let expected = hex::decode(line.next().unwrap()).unwrap();
 
             let mut encryption =
                 HeaderCrypto::new(NormalizedString::new("A").unwrap(), *session_key.as_le());
+
             encryption.decrypt(&mut data);
 
             assert_eq!(
                 hex::encode(&expected),
                 hex::encode(&data),
                 "Session Key: {},
-                 data: {}",
+                 data: {},
+                 Got data: {}",
                 hex::encode(session_key.as_le()),
-                hex::encode(&original_data)
+                hex::encode(&original_data),
+                hex::encode(&data)
+            );
+
+            let full = HeaderCrypto::new(NormalizedString::new("A").unwrap(), *session_key.as_le());
+            let (_enc, mut dec) = full.split();
+
+            dec.decrypt(&mut split_data);
+
+            assert_eq!(
+                hex::encode(&expected),
+                hex::encode(&split_data),
+                "Session Key: {},
+                 data: {},
+                 Got data: {}",
+                hex::encode(session_key.as_le()),
+                hex::encode(&original_data),
+                hex::encode(&split_data),
             );
         }
     }
