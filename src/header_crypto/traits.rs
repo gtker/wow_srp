@@ -7,7 +7,7 @@ pub const CLIENT_HEADER_LENGTH: u8 =
 pub const SERVER_HEADER_LENGTH: u8 =
     (std::mem::size_of::<u16>() + std::mem::size_of::<u16>()) as u8;
 
-pub trait Encryptor {
+pub trait Encrypter {
     fn write_encrypted_server_header<W: Write>(
         &mut self,
         write: &mut W,
@@ -37,7 +37,7 @@ pub trait Encryptor {
     fn encrypt(&mut self, data: &mut [u8]);
 }
 
-pub trait Decryptor {
+pub trait Decrypter {
     fn read_decrypted_server_header<R: Read>(
         &mut self,
         reader: &mut R,

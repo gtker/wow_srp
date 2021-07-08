@@ -5,8 +5,8 @@
 //! The packet headers are different length depending on if they are
 //! [client](traits::CLIENT_HEADER_LENGTH) or [server](traits::SERVER_HEADER_LENGTH) headers.
 //!
-//! The sending party will encrypt the packets they send using an [Encryptor] and the receiving
-//! party will decrypt with a [Decryptor].
+//! The sending party will encrypt the packets they send using an [Encrypter] and the receiving
+//! party will decrypt with a [Decrypter].
 //! The [HeaderCrypto] struct contains both.
 //!
 //! [World Packet]: https://wowdev.wiki/World_Packet
@@ -15,8 +15,8 @@ use std::io::{Read, Write};
 
 use sha1::{Digest, Sha1};
 
-pub use traits::Decryptor;
-pub use traits::Encryptor;
+pub use traits::Decrypter;
+pub use traits::Encrypter;
 pub use traits::CLIENT_HEADER_LENGTH;
 pub use traits::SERVER_HEADER_LENGTH;
 
@@ -47,7 +47,7 @@ pub struct HeaderCrypto {
     decrypt_previous_value: u8,
 }
 
-impl Encryptor for HeaderCrypto {
+impl Encrypter for HeaderCrypto {
     fn write_encrypted_server_header<W: Write>(
         &mut self,
         write: &mut W,
@@ -118,7 +118,7 @@ impl Encryptor for HeaderCrypto {
     }
 }
 
-impl Decryptor for HeaderCrypto {
+impl Decrypter for HeaderCrypto {
     fn read_decrypted_server_header<R: Read>(
         &mut self,
         reader: &mut R,
@@ -216,7 +216,7 @@ impl HeaderCrypto {
 mod test {
     use std::fs::read_to_string;
 
-    use crate::header_crypto::traits::{Decryptor, Encryptor};
+    use crate::header_crypto::traits::{Decrypter, Encrypter};
     use crate::header_crypto::HeaderCrypto;
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
