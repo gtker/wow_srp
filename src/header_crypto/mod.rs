@@ -1,6 +1,7 @@
 //! Functionality for encrypting/decrypting [World Packet] headers.
 //! For unknown reasons the session key obtained during the SRP6
 //! exchange is used to "encrypt" packet headers.
+//! Be aware that [Login Packets] are not encrypted in this way.
 //!
 //! The packet headers are different length depending on if they are
 //! [client](traits::CLIENT_HEADER_LENGTH) or [server](traits::SERVER_HEADER_LENGTH) headers.
@@ -10,6 +11,7 @@
 //! The [HeaderCrypto] struct contains both.
 //!
 //! [World Packet]: https://wowdev.wiki/World_Packet
+//! [Login Packets]: https://wowdev.wiki/Login_Packet
 
 use sha1::{Digest, Sha1};
 
