@@ -107,6 +107,7 @@ impl HeaderCrypto {
         server_proof == client_proof
     }
 
+    #[allow(clippy::missing_const_for_fn)] // Clippy does not consider `self` arg
     pub fn split(self) -> (EncrypterHalf, DecrypterHalf) {
         let encrypt = EncrypterHalf {
             username: self.username,
