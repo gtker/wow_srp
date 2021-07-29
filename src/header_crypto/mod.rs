@@ -281,6 +281,7 @@ mod test {
         let mut encryption = HeaderCrypto::new(NormalizedString::new("A").unwrap(), session_key);
         const STEP: usize = 10;
         for (i, _d) in original_data.iter().enumerate().step_by(STEP) {
+            // Ensure that encrypting, then decrypting doesn't change how encryption works
             encryption.encrypt(&mut encrypt_data[i..(i) + STEP]);
             encryption.decrypt(&mut decrypt_data[i..(i) + STEP]);
         }
@@ -296,6 +297,128 @@ mod test {
             expected_encrypt, encrypt_data,
             "Original data: {:?}, expected: {:?}, got: {:?}",
             original_data, expected_encrypt, encrypt_data
+        );
+    }
+
+    #[test]
+    fn verify_splitting() {
+        // Verify that splitting and combining again works
+        let session_key = hex::decode(
+            "2EFEE7B0C177EBBDFF6676C56EFC2339BE9CAD14BF8B54BB5A86FBF81F6D424AA23CC9A3149FB175",
+        )
+        .unwrap();
+        let session_key: [u8; SESSION_KEY_LENGTH as usize] = session_key.try_into().unwrap();
+
+        let original_data = hex::decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca").unwrap();
+        let mut encrypt_data = original_data.clone();
+        let mut decrypt_data = original_data.clone();
+
+        let mut encryption = HeaderCrypto::new(NormalizedString::new("A").unwrap(), session_key);
+
+        const STEP: usize = 20;
+        encryption.encrypt(&mut encrypt_data[0..STEP]);
+        encryption.decrypt(&mut decrypt_data[0..STEP]);
+
+        let (mut e, mut d) = encryption.split();
+        e.encrypt(&mut encrypt_data[STEP..STEP * 2]);
+        d.decrypt(&mut decrypt_data[STEP..STEP * 2]);
+
+        let mut encryption = e.unsplit(d);
+
+        encryption.encrypt(&mut encrypt_data[STEP * 2..]);
+        encryption.decrypt(&mut decrypt_data[STEP * 2..]);
+
+        let expected_decrypt = hex::decode("13a3a0059817e73404d97cd455159b50d40af74a22f719aacb6a9a2e991982c61a6f0285f880cc8512ec2ef1c98fa923512f").unwrap();
+        let expected_encrypt = hex::decode("13777da3d109b912322a08841e3ff5bc92f4e98b77bb03997da999b22ae0b926a3b1e56580314b3932499ee11b9f7deb6915").unwrap();
+        assert_eq!(
+            expected_decrypt, decrypt_data,
+            "Original data: {:?}, expected: {:?}, got: {:?}",
+            original_data, expected_decrypt, decrypt_data
+        );
+        assert_eq!(
+            expected_encrypt, encrypt_data,
+            "Original data: {:?}, expected: {:?}, got: {:?}",
+            original_data, expected_encrypt, encrypt_data
+        );
+    }
+
+    #[test]
+    fn verify_trait_helpers() {
+        // Verify that the trait helpers do the same thing as manually encrypting/decrypting
+        let session_key = hex::decode(
+            "2EFEE7B0C177EBBDFF6676C56EFC2339BE9CAD14BF8B54BB5A86FBF81F6D424AA23CC9A3149FB175",
+        )
+        .unwrap();
+        let session_key: [u8; SESSION_KEY_LENGTH as usize] = session_key.try_into().unwrap();
+
+        let original_data = [
+            0x3d, 0x9a, 0xe1, 0x96, 0xef, 0x4f, 0x3d, 0x9a, 0xe1, 0x96, 0x3d, 0x9a, 0xe1, 0x96,
+            0xef, 0x4f, 0x3d, 0x9a, 0xe1, 0x96,
+        ];
+        let mut encrypt_data = original_data.clone();
+        let mut encrypted_data = Vec::new();
+        let mut decrypt_data = original_data.clone();
+        let decrypted_data = original_data.clone().to_vec();
+
+        let mut encryption = HeaderCrypto::new(NormalizedString::new("A").unwrap(), session_key);
+        let mut helper_encryption =
+            HeaderCrypto::new(NormalizedString::new("A").unwrap(), session_key);
+
+        encryption
+            .write_encrypted_client_header(&mut encrypted_data, 0x3d9a, 0x4fef96e1)
+            .unwrap();
+        encryption
+            .write_encrypted_server_header(&mut encrypted_data, 0x3d9a, 0x96e1)
+            .unwrap();
+        encrypted_data.append(
+            &mut encryption
+                .encrypt_client_header(0x3d9a, 0x4fef96e1)
+                .to_vec(),
+        );
+        encrypted_data.append(&mut encryption.encrypt_server_header(0x3d9a, 0x96e1).to_vec());
+        helper_encryption.encrypt(&mut encrypt_data);
+        assert_eq!(encrypted_data, encrypt_data);
+
+        encryption.decrypt(&mut decrypt_data);
+        let c = helper_encryption
+            .read_and_decrypt_client_header(&mut decrypted_data[0..6].to_vec().as_slice())
+            .unwrap();
+        assert_eq!(
+            c.size,
+            u16::from_be_bytes(decrypt_data[0..2].try_into().unwrap())
+        );
+        assert_eq!(
+            c.opcode,
+            u32::from_le_bytes(decrypt_data[2..6].try_into().unwrap())
+        );
+        let s = helper_encryption
+            .read_and_decrypt_server_header(&mut decrypted_data[6..10].to_vec().as_slice())
+            .unwrap();
+        assert_eq!(
+            s.size,
+            u16::from_be_bytes(decrypt_data[6..8].try_into().unwrap())
+        );
+        assert_eq!(
+            s.opcode,
+            u16::from_le_bytes(decrypt_data[8..10].try_into().unwrap())
+        );
+        let c = helper_encryption.decrypt_client_header(decrypted_data[10..16].try_into().unwrap());
+        assert_eq!(
+            c.size,
+            u16::from_be_bytes(decrypt_data[10..12].try_into().unwrap())
+        );
+        assert_eq!(
+            c.opcode,
+            u32::from_le_bytes(decrypt_data[12..16].try_into().unwrap())
+        );
+        let s = helper_encryption.decrypt_server_header(decrypted_data[16..20].try_into().unwrap());
+        assert_eq!(
+            s.size,
+            u16::from_be_bytes(decrypt_data[16..18].try_into().unwrap())
+        );
+        assert_eq!(
+            s.opcode,
+            u16::from_le_bytes(decrypt_data[18..20].try_into().unwrap())
         );
     }
 
