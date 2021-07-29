@@ -435,15 +435,15 @@ impl SrpProof {
     /// An invalid [`PublicKey`] is more likely to be the result of the client deliberately sending
     /// known invalid data while the [`MatchProofsError`] just means that the entered password is incorrect.
     ///
-    /// The client_public_key is called `A` in [RFC2945](https://tools.ietf.org/html/rfc2945) and most other
+    /// The `client_public_key` is called `A` in [RFC2945](https://tools.ietf.org/html/rfc2945) and most other
     /// literature. It is sometimes incorrectly called `a`, but this refers to the client private key.
     /// Private keys are never sent over the network, so if you see `a` in a packet table it is referring
     /// to the client _public_ key and not the private key.
     ///
-    /// The client_proof is called `M` in [RFC2945](https://tools.ietf.org/html/rfc2945) and `M1` in other
+    /// The `client_proof` is called `M` in [RFC2945](https://tools.ietf.org/html/rfc2945) and `M1` in other
     /// literature. This is different from the server proof returned from [`SrpProof::into_server`] which is often called
     /// `M2`, but is still referred to as `M` in [RFC2945](https://tools.ietf.org/html/rfc2945).
-    /// The client_proof is always [20 bytes (160 bits)](PROOF_LENGTH) in length because it's a SHA-1 hash.
+    /// The `client_proof` is always [20 bytes (160 bits)](PROOF_LENGTH) in length because it's a SHA-1 hash.
     ///
     /// # Example
     ///
@@ -481,6 +481,9 @@ impl SrpProof {
     /// # }
     /// ```
     ///
+    /// # Errors
+    ///
+    /// If the `client_proof` does not match the internal server proof.
     pub fn into_server(
         self,
         client_public_key: PublicKey,

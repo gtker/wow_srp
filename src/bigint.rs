@@ -16,7 +16,7 @@ impl Integer {
     pub fn to_padded_32_byte_array_le(&self) -> [u8; 32] {
         let value = self.value.to_bytes_le().1;
 
-        let mut array = [0u8; 32];
+        let mut array = [0_u8; 32];
         array[0..value.len()].clone_from_slice(&value);
 
         array

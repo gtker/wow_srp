@@ -71,7 +71,7 @@ pub trait Decrypter {
         &mut self,
         reader: &mut R,
     ) -> std::io::Result<ServerHeader> {
-        let mut buf = [0u8; SERVER_HEADER_LENGTH as usize];
+        let mut buf = [0_u8; SERVER_HEADER_LENGTH as usize];
         reader.read_exact(&mut buf)?;
 
         Ok(self.decrypt_server_header(buf))
@@ -81,7 +81,7 @@ pub trait Decrypter {
         &mut self,
         reader: &mut R,
     ) -> std::io::Result<ClientHeader> {
-        let mut buf = [0u8; CLIENT_HEADER_LENGTH as usize];
+        let mut buf = [0_u8; CLIENT_HEADER_LENGTH as usize];
         reader.read_exact(&mut buf)?;
 
         Ok(self.decrypt_client_header(buf))

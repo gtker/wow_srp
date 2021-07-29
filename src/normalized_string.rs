@@ -88,6 +88,10 @@ impl NormalizedString {
     /// and correctly uppercases letters as needed.
     ///
     /// Allowed characters are all ASCII characters except for ASCII control characters.
+    ///
+    /// # Errors
+    ///
+    /// See the [module level docs](crate::normalized_string) for explanation of allowed values.
     pub fn new(s: impl Into<String>) -> Result<Self, NormalizedStringError> {
         let s = s.into();
 

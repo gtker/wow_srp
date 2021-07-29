@@ -163,8 +163,11 @@ impl SrpClientChallenge {
     }
 
     /// Verifies that the server knows the same password as was initially used in [`SrpClientUser::new`].
-    /// This should very rarely return an error unless something weird is going on with the server
-    /// or the packet has been read incorrectly.
+    ///
+    /// # Errors
+    ///
+    /// This should very rarely return an error unless something weird is going on with the server,
+    /// ther server deliberately sends an incorrect value, or the packet has been read incorrectly.
     pub fn verify_server_proof(
         self,
         server_proof: [u8; PROOF_LENGTH as usize],
@@ -234,7 +237,7 @@ impl SrpClientUser {
     /// # Panics
     ///
     /// Panics on the extremely unlikely chance that the generated public key is invalid.
-    /// See [PublicKey] for details on validity.
+    /// See [`PublicKey`] for details on validity.
     ///
     /// There are only two invalid states for the randomly generated server public key:
     /// * All zeros.

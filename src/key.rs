@@ -23,7 +23,7 @@ macro_rules! key_new {
     ($name: ident; $size: expr) => {
         impl Default for $name {
             fn default() -> Self {
-                let mut key = [0u8; $size];
+                let mut key = [0_u8; $size];
                 thread_rng().fill_bytes(&mut key);
                 Self::from_le_bytes(key)
             }
@@ -56,6 +56,11 @@ macro_rules! key_check_not_zero_initialization {
             /// Creates the struct from little endian bytes.
             ///
             /// Values are stored internally as little endian so no reversal occurs.
+            ///
+            /// # Errors
+            ///
+            /// Will error if the public key is invalid. See [`PublicKey`] for specifics.
+            ///
             pub fn from_le_bytes(key: &[u8; $size]) -> Result<Self, InvalidPublicKeyError> {
                 let key_is_valid = check_public_key(key);
                 match key_is_valid {
@@ -100,7 +105,7 @@ macro_rules! key_check_not_zero_initialization {
                     return Err(InvalidPublicKeyError::PublicKeyModLargeSafePrimeIsZero);
                 }
 
-                let mut key = [0u8; $size];
+                let mut key = [0_u8; $size];
 
                 let b = b.to_bytes_le().to_vec();
                 key[0..b.len()].clone_from_slice(&b);
@@ -113,7 +118,7 @@ macro_rules! key_check_not_zero_initialization {
             pub(crate) fn try_from_bigint(
                 b: bigint::Integer,
             ) -> Result<Self, InvalidPublicKeyError> {
-                let mut key = [0u8; $size];
+                let mut key = [0_u8; $size];
 
                 let b = b.to_bytes_le().to_vec();
                 key[0..b.len()].clone_from_slice(&b);
@@ -150,7 +155,7 @@ macro_rules! key_no_checks_initialization {
 
         impl From<bigint::Integer> for $name {
             fn from(b: bigint::Integer) -> Self {
-                let mut key = [0u8; $size];
+                let mut key = [0_u8; $size];
 
                 let b = b.to_bytes_le().to_vec();
                 key[0..b.len()].clone_from_slice(&b);
@@ -305,7 +310,7 @@ impl SKey {
 /// The size of the reconnect challenge data in bytes.
 ///
 /// Always 16 since the challenge field of
-/// [CMD_AUTH_RECONNECT_CHALLENGE_Server](https://wowdev.wiki/CMD_AUTH_RECONNECT_CHALLENGE_Server)
+/// [`CMD_AUTH_RECONNECT_CHALLENGE_Server`](https://wowdev.wiki/CMD_AUTH_RECONNECT_CHALLENGE_Server)
 /// has a fixed width.
 pub const RECONNECT_CHALLENGE_DATA_LENGTH: u8 = 16;
 key_wrapper!(ReconnectData; RECONNECT_CHALLENGE_DATA_LENGTH as usize);

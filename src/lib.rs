@@ -66,6 +66,8 @@
     clippy::correctness,
     clippy::style,
     clippy::missing_const_for_fn,
+    clippy::doc_markdown,
+    clippy::unseparated_literal_suffix,
     missing_docs
 )]
 

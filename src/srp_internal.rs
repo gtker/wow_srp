@@ -24,10 +24,10 @@ const PRECALCULATED_XOR_HASH: [u8; SHA1_HASH_LENGTH as usize] = [
     221, 123, 176, 58, 56, 172, 115, 17, 3, 152, 124, 90, 80, 111, 202, 150, 108, 123, 194, 167,
 ];
 
-/// Calculate the `x` value which is used for generating the password verifier `v`. See [calculate_password_verifier].
+/// Calculate the `x` value which is used for generating the password verifier `v`. See [`calculate_password_verifier`].
 ///
 /// `x` is calculated as `H( salt | H( upper( username | : |  password ) ) )` as described on page 3 of [RFC2945] and page 8 of [RFC5054].
-/// Uppercasing is not a requirement for SRP6 itself, only for the WoW client.
+/// Uppercasing is not a requirement for SRP6 itself, only for the `WoW` client.
 ///
 /// `H()` is the SHA1 hashing function.
 /// `:` is the literal character `:`.
@@ -153,19 +153,19 @@ pub fn calculate_S(
 pub fn calculate_interleaved(S: &SKey) -> SessionKey {
     let S = S.to_equal_slice();
 
-    let mut E = [0u8; (S_LENGTH / 2) as usize];
+    let mut E = [0_u8; (S_LENGTH / 2) as usize];
     for (i, e) in S.iter().step_by(2).enumerate() {
         E[i] = *e;
     }
     let G = Sha1::new().chain(&E[..S.len() / 2]).finalize();
 
-    let mut F = [0u8; (S_LENGTH / 2) as usize];
+    let mut F = [0_u8; (S_LENGTH / 2) as usize];
     for (i, f) in S.iter().skip(1).step_by(2).enumerate() {
         F[i] = *f;
     }
     let H = Sha1::new().chain(&F[..S.len() / 2]).finalize();
 
-    let mut result = [0u8; SESSION_KEY_LENGTH as usize];
+    let mut result = [0_u8; SESSION_KEY_LENGTH as usize];
     let zip = G.iter().zip(H.iter());
     for (i, r) in zip.enumerate() {
         result[i * 2] = *r.0;
@@ -216,7 +216,7 @@ pub(crate) fn calculate_xor_hash(
 
     let g_hash = Sha1::new().chain([generator.as_u8()]).finalize();
 
-    let mut xor_hash = [0u8; SHA1_HASH_LENGTH as usize];
+    let mut xor_hash = [0_u8; SHA1_HASH_LENGTH as usize];
     for (i, n) in large_safe_prime_hash.iter().enumerate() {
         xor_hash[i] = *n as u8 ^ g_hash[i];
     }

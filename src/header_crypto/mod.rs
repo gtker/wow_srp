@@ -8,7 +8,7 @@
 //!
 //! The sending party will encrypt the packets they send using an [Encrypter] and the receiving
 //! party will decrypt with a [Decrypter].
-//! The [HeaderCrypto] struct contains both.
+//! The [`HeaderCrypto`] struct contains both.
 //!
 //! [World Packet]: https://wowdev.wiki/World_Packet
 //! [Login Packets]: https://wowdev.wiki/Login_Packet
