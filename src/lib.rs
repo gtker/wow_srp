@@ -66,6 +66,8 @@
     clippy::correctness,
     clippy::style,
     clippy::missing_const_for_fn,
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc,
     clippy::doc_markdown,
     clippy::unseparated_literal_suffix,
     missing_docs
@@ -87,7 +89,6 @@ pub use primes::LARGE_SAFE_PRIME_LITTLE_ENDIAN;
 pub(crate) mod bigint;
 pub mod client;
 pub mod error;
-#[allow(missing_docs)]
 pub mod header_crypto;
 mod key;
 pub mod normalized_string;
