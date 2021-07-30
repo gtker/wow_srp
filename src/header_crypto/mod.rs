@@ -243,13 +243,20 @@ impl ProofSeed {
         Self { seed: server_seed }
     }
 
-    /// The server seed used in [SMSG_AUTH_CHALLENGE].
+    /// Either the server seed used in [SMSG_AUTH_CHALLENGE] or the client
+    /// seed used in [CMSG_AUTH_SESSION].
     ///
     /// [SMSG_AUTH_CHALLENGE]: https://wowdev.wiki/SMSG_AUTH_CHALLENGE
+    /// [CMSG_AUTH_SESSION]: https://wowdev.wiki/CMSG_AUTH_SESSION
     pub const fn seed(&self) -> u32 {
         self.seed
     }
 
+    /// Generates world server proof and [`HeaderCrypto`].
+    ///
+    /// This is not valid until the server has responded with a successful [`SMSG_AUTH_RESPONSE`].
+    ///
+    /// [`SMSG_AUTH_RESPONSE`]: https://wowdev.wiki/SMSG_AUTH_RESPONSE
     pub fn into_proof_and_header_crypto(
         self,
         username: &NormalizedString,
@@ -279,6 +286,11 @@ impl ProofSeed {
     /// # Errors
     ///
     /// If the `client_proof` does not match the server generated proof.
+    /// This should only happen if:
+    ///
+    /// * There's an error with the provided parameters.
+    /// * The session key might be out of date.
+    /// * The client is not well behaved and deliberately trying to get past the login server.
     ///
     pub fn into_header_crypto(
         self,
