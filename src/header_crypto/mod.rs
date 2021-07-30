@@ -50,14 +50,17 @@
 //! use std::io::{Read, Error, Write};
 //! use wow_srp::header_crypto::{HeaderCrypto, Decrypter, ServerHeader, Encrypter, ServerSeed};
 //! use std::convert::TryInto;
-//! use wow_srp::SESSION_KEY_LENGTH;
+//! use wow_srp::{SESSION_KEY_LENGTH, PROOF_LENGTH};
 //! use wow_srp::normalized_string::NormalizedString;
 //!
-//! fn establish_connection(username: NormalizedString, session_key: [u8; SESSION_KEY_LENGTH as _]) {
+//! fn establish_connection(username: NormalizedString,
+//!                         session_key: [u8; SESSION_KEY_LENGTH as _],
+//!                         client_proof: [u8; PROOF_LENGTH as _],
+//!                         client_seed: u32) {
 //!     let seed = ServerSeed::new();
 //!     // Send seed to client
 //!     // Get username from client, fetch session key from login server
-//!     let encryption = seed.into_header_crypto(username, session_key);
+//!     let encryption = seed.into_header_crypto(username, session_key, client_proof, client_seed);
 //!
 //!     // Send the first server message
 //! }
@@ -117,6 +120,7 @@ pub use traits::SERVER_HEADER_LENGTH;
 pub use decrypt::DecrypterHalf;
 pub use encrypt::EncrypterHalf;
 
+use crate::error::MatchProofsError;
 use crate::normalized_string::NormalizedString;
 use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
 use rand::{thread_rng, RngCore};
@@ -171,7 +175,6 @@ pub struct HeaderCrypto {
     encrypt_previous_value: u8,
     decrypt_index: u8,
     decrypt_previous_value: u8,
-    server_seed: u32,
 }
 
 impl Encrypter for HeaderCrypto {
@@ -197,30 +200,6 @@ impl Decrypter for HeaderCrypto {
 }
 
 impl HeaderCrypto {
-    /// Checks if the client knows the session key.
-    ///
-    /// The server seed is randomized after calling this,
-    /// so you will need to call [`HeaderCrypto::server_seed`]
-    /// if you need the right seed again.
-    pub fn client_proof_is_correct(
-        &mut self,
-        client_proof: [u8; PROOF_LENGTH as usize],
-        client_seed: u32,
-    ) -> bool {
-        let server_proof: [u8; PROOF_LENGTH as usize] = Sha1::new()
-            .chain(&self.username.as_ref())
-            .chain(0_u32.to_le_bytes())
-            .chain(client_seed.to_le_bytes())
-            .chain(self.server_seed.to_le_bytes())
-            .chain(&self.session_key)
-            .finalize()
-            .into();
-
-        self.server_seed = thread_rng().next_u32();
-
-        server_proof == client_proof
-    }
-
     #[allow(clippy::missing_const_for_fn)] // Clippy does not consider `self` arg
     pub fn split(self) -> (EncrypterHalf, DecrypterHalf) {
         let encrypt = EncrypterHalf {
@@ -264,16 +243,33 @@ impl ServerSeed {
         self,
         username: NormalizedString,
         session_key: [u8; SESSION_KEY_LENGTH as _],
-    ) -> HeaderCrypto {
-        HeaderCrypto {
+        client_proof: [u8; PROOF_LENGTH as _],
+        client_seed: u32,
+    ) -> Result<HeaderCrypto, MatchProofsError> {
+        let server_proof: [u8; PROOF_LENGTH as usize] = Sha1::new()
+            .chain(&username.as_ref())
+            .chain(0_u32.to_le_bytes())
+            .chain(client_seed.to_le_bytes())
+            .chain(self.server_seed.to_le_bytes())
+            .chain(&session_key)
+            .finalize()
+            .into();
+
+        if server_proof != client_proof {
+            return Err(MatchProofsError {
+                client_proof,
+                server_proof,
+            });
+        }
+
+        Ok(HeaderCrypto {
             session_key,
             username,
             encrypt_index: 0,
             encrypt_previous_value: 0,
             decrypt_index: 0,
             decrypt_previous_value: 0,
-            server_seed: self.server_seed,
-        }
+        })
     }
 }
 
@@ -297,8 +293,19 @@ mod test {
             1, 201, 202, 137, 231, 87, 203, 23, 62, 17, 7, 169, 178, 1, 51, 208, 202, 223, 26, 216,
             250, 9,
         ];
-        let mut encryption =
-            ServerSeed::new().into_header_crypto(NormalizedString::new("A").unwrap(), session_key);
+        let client_seed = 12589856;
+        let client_proof = [
+            26, 97, 90, 187, 176, 134, 53, 49, 75, 160, 129, 47, 67, 207, 231, 42, 234, 184, 227,
+            124,
+        ];
+        let mut encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
+            .into_header_crypto(
+                NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                client_seed,
+            )
+            .unwrap();
 
         let header = encryption.encrypt_server_header(12, 494);
         let expected_header = [239, 86, 206, 186];
@@ -326,8 +333,19 @@ mod test {
             126, 216, 48, 38, 40, 234, 116, 174, 149, 133, 20, 193, 51, 103, 223, 194, 141, 4, 191,
             161, 96,
         ];
-        let mut encryption =
-            ServerSeed::new().into_header_crypto(NormalizedString::new("A").unwrap(), session_key);
+        let client_proof = [
+            102, 178, 126, 54, 19, 161, 151, 190, 103, 77, 100, 97, 155, 55, 161, 248, 99, 146,
+            229, 128,
+        ];
+        let client_seed = 12589856;
+        let mut encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
+            .into_header_crypto(
+                NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                client_seed,
+            )
+            .unwrap();
 
         let header = [9, 96, 220, 67, 72, 254];
         let c = encryption.decrypt_client_header(header);
@@ -368,8 +386,8 @@ mod test {
         ];
 
         let seed = ServerSeed::from_specific_seed(server_seed);
-        let mut encryption = seed.into_header_crypto(username, session_key);
-        assert!(encryption.client_proof_is_correct(client_proof, client_seed));
+        let encryption = seed.into_header_crypto(username, session_key, client_proof, client_seed);
+        assert!(encryption.is_ok());
     }
 
     #[test]
@@ -384,8 +402,15 @@ mod test {
             let original_data = data.clone();
             let expected = hex::decode(line.next().unwrap()).unwrap();
 
-            let mut encryption = ServerSeed::new()
-                .into_header_crypto(NormalizedString::new("A").unwrap(), *session_key.as_le());
+            // Bypass checking seeds and proofs because they aren't there
+            let mut encryption = HeaderCrypto {
+                session_key: *session_key.as_le(),
+                username: NormalizedString::new("A").unwrap(),
+                encrypt_index: 0,
+                encrypt_previous_value: 0,
+                decrypt_index: 0,
+                decrypt_previous_value: 0,
+            };
 
             encryption.encrypt(&mut data);
 
@@ -400,8 +425,15 @@ mod test {
                 hex::encode(&data)
             );
 
-            let full = ServerSeed::new()
-                .into_header_crypto(NormalizedString::new("A").unwrap(), *session_key.as_le());
+            // Bypass checking seeds and proofs because they aren't there
+            let full = HeaderCrypto {
+                session_key: *session_key.as_le(),
+                username: NormalizedString::new("A").unwrap(),
+                encrypt_index: 0,
+                encrypt_previous_value: 0,
+                decrypt_index: 0,
+                decrypt_previous_value: 0,
+            };
             let (mut enc, _dec) = full.split();
 
             enc.encrypt(&mut split_data);
@@ -433,8 +465,19 @@ mod test {
         let mut encrypt_data = original_data.clone();
         let mut decrypt_data = original_data.clone();
 
-        let mut encryption =
-            ServerSeed::new().into_header_crypto(NormalizedString::new("A").unwrap(), session_key);
+        let client_proof = [
+            171, 16, 181, 52, 139, 193, 19, 213, 173, 100, 0, 37, 65, 184, 70, 148, 36, 169, 17,
+            228,
+        ];
+
+        let mut encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
+            .into_header_crypto(
+                NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                0,
+            )
+            .unwrap();
         const STEP: usize = 10;
         for (i, _d) in original_data.iter().enumerate().step_by(STEP) {
             // Ensure that encrypting, then decrypting doesn't change how encryption works
@@ -469,8 +512,19 @@ mod test {
         let mut encrypt_data = original_data.clone();
         let mut decrypt_data = original_data.clone();
 
-        let mut encryption =
-            ServerSeed::new().into_header_crypto(NormalizedString::new("A").unwrap(), session_key);
+        let client_proof = [
+            171, 16, 181, 52, 139, 193, 19, 213, 173, 100, 0, 37, 65, 184, 70, 148, 36, 169, 17,
+            228,
+        ];
+
+        let mut encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
+            .into_header_crypto(
+                NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                0,
+            )
+            .unwrap();
 
         const STEP: usize = 20;
         encryption.encrypt(&mut encrypt_data[0..STEP]);
@@ -517,10 +571,27 @@ mod test {
         let mut decrypt_data = original_data.clone();
         let decrypted_data = original_data.clone().to_vec();
 
-        let mut encryption =
-            ServerSeed::new().into_header_crypto(NormalizedString::new("A").unwrap(), session_key);
-        let mut helper_encryption =
-            ServerSeed::new().into_header_crypto(NormalizedString::new("A").unwrap(), session_key);
+        let client_proof = [
+            171, 16, 181, 52, 139, 193, 19, 213, 173, 100, 0, 37, 65, 184, 70, 148, 36, 169, 17,
+            228,
+        ];
+
+        let mut encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
+            .into_header_crypto(
+                NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                0,
+            )
+            .unwrap();
+        let mut helper_encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
+            .into_header_crypto(
+                NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                0,
+            )
+            .unwrap();
 
         encryption
             .write_encrypted_client_header(&mut encrypted_data, 0x3d9a, 0x4fef96e1)
@@ -592,8 +663,14 @@ mod test {
             let original_data = data.clone();
             let expected = hex::decode(line.next().unwrap()).unwrap();
 
-            let mut encryption = ServerSeed::new()
-                .into_header_crypto(NormalizedString::new("A").unwrap(), *session_key.as_le());
+            let mut encryption = HeaderCrypto {
+                session_key: *session_key.as_le(),
+                username: NormalizedString::new("A").unwrap(),
+                encrypt_index: 0,
+                encrypt_previous_value: 0,
+                decrypt_index: 0,
+                decrypt_previous_value: 0,
+            };
 
             encryption.decrypt(&mut data);
 
@@ -608,8 +685,14 @@ mod test {
                 hex::encode(&data)
             );
 
-            let full = ServerSeed::new()
-                .into_header_crypto(NormalizedString::new("A").unwrap(), *session_key.as_le());
+            let full = HeaderCrypto {
+                session_key: *session_key.as_le(),
+                username: NormalizedString::new("A").unwrap(),
+                encrypt_index: 0,
+                encrypt_previous_value: 0,
+                decrypt_index: 0,
+                decrypt_previous_value: 0,
+            };
             let (_enc, mut dec) = full.split();
 
             dec.decrypt(&mut split_data);

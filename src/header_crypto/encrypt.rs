@@ -2,7 +2,6 @@ use crate::header_crypto::decrypt::DecrypterHalf;
 use crate::header_crypto::{Encrypter, HeaderCrypto};
 use crate::normalized_string::NormalizedString;
 use crate::SESSION_KEY_LENGTH;
-use rand::{thread_rng, RngCore};
 
 #[derive(Debug)]
 pub struct EncrypterHalf {
@@ -40,7 +39,6 @@ impl EncrypterHalf {
             encrypt_previous_value: self.previous_value,
             decrypt_index: decrypter.index,
             decrypt_previous_value: decrypter.previous_value,
-            server_seed: thread_rng().next_u32(),
         }
     }
 }
