@@ -24,7 +24,7 @@
 //!
 //! 1. Create a [`ServerSeed`] struct containing a randomly generated `u32` seed.
 //! 2. Send the seed to the client in a [SMSG_AUTH_CHALLENGE] message.
-//! 3. Receive the username in the [CMSG_AUTH_SESSION] message.
+//! 3. Receive the username, proof and seed in the [CMSG_AUTH_SESSION] message.
 //! 4. Retrieve the session key from the login server.
 //! 5. Create the [`HeaderCrypto`] struct through [`ServerSeed::into_header_crypto`].
 //! 6. Optionally, split the [`HeaderCrypto`] into [`EncrypterHalf`] and [`DecrypterHalf`] through
@@ -59,6 +59,7 @@
 //!                         client_seed: u32) {
 //!     let seed = ServerSeed::new();
 //!     // Send seed to client
+//!     seed.seed();
 //!     // Get username from client, fetch session key from login server
 //!     let encryption = seed.into_header_crypto(&username, session_key, client_proof, client_seed);
 //!
@@ -217,11 +218,16 @@ impl HeaderCrypto {
     }
 }
 
+/// Server seed part of the calculation needed to verify
+/// that a client knows the session key.
+///
+/// Converted into a [`HeaderCrypto`] using [`ServerSeed::into_header_crypto`].
 pub struct ServerSeed {
     server_seed: u32,
 }
 
 impl ServerSeed {
+    /// Creates a new, random, seed.
     pub fn new() -> Self {
         Self {
             server_seed: thread_rng().next_u32(),
@@ -233,6 +239,9 @@ impl ServerSeed {
         Self { server_seed }
     }
 
+    /// The server seed used in [SMSG_AUTH_CHALLENGE].
+    ///
+    /// [SMSG_AUTH_CHALLENGE]: https://wowdev.wiki/SMSG_AUTH_CHALLENGE
     pub const fn seed(&self) -> u32 {
         self.server_seed
     }
@@ -260,6 +269,13 @@ impl ServerSeed {
 
         (*client_proof.as_le(), crypto)
     }
+
+    /// Asserts that the client knows the session key.
+    ///
+    /// # Errors
+    ///
+    /// If the `client_proof` does not match the server generated proof.
+    ///
     pub fn into_header_crypto(
         self,
         username: &NormalizedString,

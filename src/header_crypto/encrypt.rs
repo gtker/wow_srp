@@ -1,6 +1,5 @@
 use crate::header_crypto::decrypt::DecrypterHalf;
 use crate::header_crypto::{Encrypter, HeaderCrypto};
-use crate::normalized_string::NormalizedString;
 use crate::SESSION_KEY_LENGTH;
 
 #[derive(Debug)]
