@@ -237,6 +237,29 @@ impl ServerSeed {
         self.server_seed
     }
 
+    pub fn into_proof_and_header_crypto(
+        self,
+        username: &NormalizedString,
+        session_key: [u8; SESSION_KEY_LENGTH as _],
+        server_seed: u32,
+    ) -> ([u8; PROOF_LENGTH as _], HeaderCrypto) {
+        let client_proof = calculate_world_server_proof(
+            username,
+            &SessionKey::from_le_bytes(session_key),
+            server_seed,
+            self.server_seed,
+        );
+
+        let crypto = HeaderCrypto {
+            session_key,
+            encrypt_index: 0,
+            encrypt_previous_value: 0,
+            decrypt_index: 0,
+            decrypt_previous_value: 0,
+        };
+
+        (*client_proof.as_le(), crypto)
+    }
     pub fn into_header_crypto(
         self,
         username: &NormalizedString,
