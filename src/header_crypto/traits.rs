@@ -2,12 +2,36 @@ use std::io::{Read, Write};
 
 use crate::header_crypto::{ClientHeader, ServerHeader};
 
+/// Size in bytes of the client [world packet] header.
+///
+/// Always 6 bytes because the size is 2 bytes and the opcode is 4 bytes.
+///
+/// [world packet]: https://wowdev.wiki/World_Packet
 pub const CLIENT_HEADER_LENGTH: u8 =
-    (std::mem::size_of::<u32>() + std::mem::size_of::<u16>()) as u8;
+    (std::mem::size_of::<u16>() + std::mem::size_of::<u32>()) as u8;
+
+/// Size in bytes of the server [world packet] header.
+///
+/// Always 4 bytes because the size is 2 bytes and the opcode is 2 bytes.
+///
+/// [world packet]: https://wowdev.wiki/World_Packet
 pub const SERVER_HEADER_LENGTH: u8 =
     (std::mem::size_of::<u16>() + std::mem::size_of::<u16>()) as u8;
 
+/// The `Encrypter` trait allows for decrypting world packet headers.
+///
+/// Only the [`Encrypter::encrypt`] method is required to be implemented, the rest
+/// are provided as convenience wrappers around it.
+///
+/// The are no `async` convenience methods because it can be trivially implemented by
+/// the user, and it would be tedious to support all the different runtimes.
+/// If in doubt look at the source for the [`Write`](std::io::Write) versions.
 pub trait Encrypter {
+    /// [`Write`](std::io::Write) wrapper for [`Encrypter::encrypt_server_header`].
+    ///
+    /// # Errors
+    ///
+    /// Has the same errors as [`std::io::Write::write_all`].
     fn write_encrypted_server_header<W: Write>(
         &mut self,
         write: &mut W,
@@ -21,6 +45,11 @@ pub trait Encrypter {
         Ok(())
     }
 
+    /// [`Write`](std::io::Write) wrapper for [`Encrypter::encrypt_server_header`].
+    ///
+    /// # Errors
+    ///
+    /// Has the same errors as [`std::io::Write::write_all`].
     fn write_encrypted_client_header<W: Write>(
         &mut self,
         write: &mut W,
@@ -34,6 +63,9 @@ pub trait Encrypter {
         Ok(())
     }
 
+    /// Convenience function for encrypting client headers.
+    ///
+    /// Prefer this over directly using [`Encrypter::encrypt`].
     fn encrypt_server_header(
         &mut self,
         size: u16,
@@ -49,6 +81,9 @@ pub trait Encrypter {
         header
     }
 
+    /// Convenience function for encrypting client headers.
+    ///
+    /// Prefer this over directly using [`Encrypter::encrypt`].
     fn encrypt_client_header(
         &mut self,
         size: u16,
@@ -63,10 +98,24 @@ pub trait Encrypter {
         header
     }
 
+    /// Directly encrypt the unencrypted `data` and leave the encrypted values.
     fn encrypt(&mut self, data: &mut [u8]);
 }
 
+/// The `Decrypter` trait allows for decrypting world packet headers.
+///
+/// Only the [`Decrypter::decrypt`] method is required to be implemented, the rest
+/// are provided as convenience wrappers around it.
+///
+/// The are no `async` convenience methods because it can be trivially implemented by
+/// the user, and it would be tedious to support all the different runtimes.
+/// If in doubt look at the source for the [`Read`](std::io::Read) versions.
 pub trait Decrypter {
+    /// [`Read`](std::io::Read) wrapper for [`Decrypter::decrypt_server_header`].
+    ///
+    /// # Errors
+    ///
+    /// Has the same errors as [`std::io::Read::read_exact`].
     fn read_and_decrypt_server_header<R: Read>(
         &mut self,
         reader: &mut R,
@@ -77,6 +126,11 @@ pub trait Decrypter {
         Ok(self.decrypt_server_header(buf))
     }
 
+    /// [`Read`](std::io::Read) wrapper for [`Decrypter::decrypt_client_header`].
+    ///
+    /// # Errors
+    ///
+    /// Has the same errors as [`std::io::Read::read_exact`].
     fn read_and_decrypt_client_header<R: Read>(
         &mut self,
         reader: &mut R,
@@ -87,6 +141,9 @@ pub trait Decrypter {
         Ok(self.decrypt_client_header(buf))
     }
 
+    /// Convenience function for decrypting server headers.
+    ///
+    /// Prefer this over directly using [`Decrypter::decrypt`].
     fn decrypt_server_header(
         &mut self,
         mut data: [u8; SERVER_HEADER_LENGTH as usize],
@@ -99,6 +156,9 @@ pub trait Decrypter {
         ServerHeader { size, opcode }
     }
 
+    /// Convenience function for decrypting client headers.
+    ///
+    /// Prefer this over directly using [`Decrypter::decrypt`].
     fn decrypt_client_header(
         &mut self,
         mut data: [u8; CLIENT_HEADER_LENGTH as usize],
@@ -111,5 +171,6 @@ pub trait Decrypter {
         ClientHeader { size, opcode }
     }
 
+    /// Directly the encrypted `data` and leave the unencrypted values.
     fn decrypt(&mut self, data: &mut [u8]);
 }

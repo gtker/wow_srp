@@ -17,14 +17,14 @@
 //! taking `self`, consuming the old object, and returning the new object.
 //!
 //! When a player connects to the world server, the server will need to send a seed value
-//! in the [SMSG_AUTH_CHALLENGE] message before the username has been received in the
-//! [CMSG_AUTH_SESSION] message.
+//! in the [`SMSG_AUTH_CHALLENGE`] message before the username has been received in the
+//! [`CMSG_AUTH_SESSION`] message.
 //!
 //! This means the following workflow has to be done:
 //!
 //! 1. Create a [`ProofSeed`] struct containing a randomly generated `u32` seed.
-//! 2. Send the seed to the client in a [SMSG_AUTH_CHALLENGE] message.
-//! 3. Receive the username, proof and seed in the [CMSG_AUTH_SESSION] message.
+//! 2. Send the seed to the client in a [`SMSG_AUTH_CHALLENGE`] message.
+//! 3. Receive the username, proof and seed in the [`CMSG_AUTH_SESSION`] message.
 //! 4. Retrieve the session key from the login server.
 //! 5. Create the [`HeaderCrypto`] struct through [`ProofSeed::into_header_crypto`].
 //! 6. Optionally, split the [`HeaderCrypto`] into [`EncrypterHalf`] and [`DecrypterHalf`] through
@@ -36,7 +36,7 @@
 //!                         Optional
 //!                            |
 //!                            |   |-> EncrypterHalf -|
-//! ProofSeed -> HeaderCrypto | --|                  |--> HeaderCrypto
+//! ProofSeed -> HeaderCrypto -|---|                  |--> HeaderCrypto
 //!                            |   |-> DecrypterHalf -|
 //!                            |
 //! ```
@@ -108,8 +108,8 @@
 //!
 //! [World Packet]: https://wowdev.wiki/World_Packet
 //! [Login Packets]: https://wowdev.wiki/Login_Packet
-//! [SMSG_AUTH_CHALLENGE]: https://wowdev.wiki/SMSG_AUTH_CHALLENGE
-//! [CMSG_AUTH_SESSION]: https://wowdev.wiki/SMSG_AUTH_SESSION
+//! [`SMSG_AUTH_CHALLENGE`]: https://wowdev.wiki/SMSG_AUTH_CHALLENGE
+//! [`CMSG_AUTH_SESSION`]: https://wowdev.wiki/SMSG_AUTH_SESSION
 
 pub use traits::Decrypter;
 pub use traits::Encrypter;
@@ -178,6 +178,11 @@ pub struct HeaderCrypto {
 }
 
 impl Encrypter for HeaderCrypto {
+    /// Use either [the client](Encrypter::write_encrypted_client_header)
+    /// or [the server](Encrypter::write_encrypted_server_header)
+    /// [`Write`](std::io::Write) functions, or
+    /// [the client](Encrypter::encrypt_client_header)
+    /// or [the server](Encrypter::encrypt_server_header) array functions.
     fn encrypt(&mut self, data: &mut [u8]) {
         encrypt::encrypt(
             data,
@@ -189,6 +194,11 @@ impl Encrypter for HeaderCrypto {
 }
 
 impl Decrypter for HeaderCrypto {
+    /// Use either [the client](Decrypter::read_and_decrypt_client_header)
+    /// or [the server](Decrypter::read_and_decrypt_server_header)
+    /// [`Read`](std::io::Read) functions, or
+    /// [the client](Decrypter::decrypt_client_header)
+    /// or [the server](Decrypter::decrypt_server_header) array functions.
     fn decrypt(&mut self, data: &mut [u8]) {
         decrypt::decrypt(
             data,
@@ -200,6 +210,15 @@ impl Decrypter for HeaderCrypto {
 }
 
 impl HeaderCrypto {
+    /// Split the [`HeaderCrypto`] into two parts for use with split connections.
+    ///
+    /// It is intended for the [`EncrypterHalf`] to be stored with the write half of
+    /// the connection and for the [`DecrypterHalf`] to be stored with the read half
+    /// of the connection.
+    ///
+    /// This is not necessary to do unless you actually can split your connections into
+    /// read and write halves, and you have some reason for not just keeping the crypto together
+    /// like if you don't want locking encryption to also lock decryption in a mutex.
     #[allow(clippy::missing_const_for_fn)] // Clippy does not consider `self` arg
     pub fn split(self) -> (EncrypterHalf, DecrypterHalf) {
         let encrypt = EncrypterHalf {
@@ -233,9 +252,7 @@ pub struct ProofSeed {
 impl ProofSeed {
     /// Creates a new, random, seed.
     pub fn new() -> Self {
-        Self {
-            seed: thread_rng().next_u32(),
-        }
+        Self::default()
     }
 
     #[cfg(test)]
@@ -243,11 +260,11 @@ impl ProofSeed {
         Self { seed: server_seed }
     }
 
-    /// Either the server seed used in [SMSG_AUTH_CHALLENGE] or the client
-    /// seed used in [CMSG_AUTH_SESSION].
+    /// Either the server seed used in [`SMSG_AUTH_CHALLENGE`] or the client
+    /// seed used in [`CMSG_AUTH_SESSION`].
     ///
-    /// [SMSG_AUTH_CHALLENGE]: https://wowdev.wiki/SMSG_AUTH_CHALLENGE
-    /// [CMSG_AUTH_SESSION]: https://wowdev.wiki/CMSG_AUTH_SESSION
+    /// [`SMSG_AUTH_CHALLENGE`]: https://wowdev.wiki/SMSG_AUTH_CHALLENGE
+    /// [`CMSG_AUTH_SESSION`]: https://wowdev.wiki/CMSG_AUTH_SESSION
     pub const fn seed(&self) -> u32 {
         self.seed
     }
@@ -320,6 +337,14 @@ impl ProofSeed {
             decrypt_index: 0,
             decrypt_previous_value: 0,
         })
+    }
+}
+
+impl Default for ProofSeed {
+    fn default() -> Self {
+        Self {
+            seed: thread_rng().next_u32(),
+        }
     }
 }
 
