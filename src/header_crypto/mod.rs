@@ -110,8 +110,6 @@
 //! [SMSG_AUTH_CHALLENGE]: https://wowdev.wiki/SMSG_AUTH_CHALLENGE
 //! [CMSG_AUTH_SESSION]: https://wowdev.wiki/SMSG_AUTH_SESSION
 
-use sha1::{Digest, Sha1};
-
 pub use traits::Decrypter;
 pub use traits::Encrypter;
 pub use traits::CLIENT_HEADER_LENGTH;
@@ -121,7 +119,9 @@ pub use decrypt::DecrypterHalf;
 pub use encrypt::EncrypterHalf;
 
 use crate::error::MatchProofsError;
+use crate::key::{Proof, SessionKey};
 use crate::normalized_string::NormalizedString;
+use crate::srp_internal::calculate_world_server_proof;
 use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
 use rand::{thread_rng, RngCore};
 
@@ -246,19 +246,17 @@ impl ServerSeed {
         client_proof: [u8; PROOF_LENGTH as _],
         client_seed: u32,
     ) -> Result<HeaderCrypto, MatchProofsError> {
-        let server_proof: [u8; PROOF_LENGTH as usize] = Sha1::new()
-            .chain(&username.as_ref())
-            .chain(0_u32.to_le_bytes())
-            .chain(client_seed.to_le_bytes())
-            .chain(self.server_seed.to_le_bytes())
-            .chain(&session_key)
-            .finalize()
-            .into();
+        let server_proof = calculate_world_server_proof(
+            &username,
+            &SessionKey::from_le_bytes(session_key),
+            self.server_seed,
+            client_seed,
+        );
 
-        if server_proof != client_proof {
+        if server_proof != Proof::from_le_bytes(client_proof) {
             return Err(MatchProofsError {
                 client_proof,
-                server_proof,
+                server_proof: *server_proof.as_le(),
             });
         }
 
