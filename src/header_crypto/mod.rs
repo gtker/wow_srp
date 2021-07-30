@@ -170,7 +170,6 @@ pub struct ClientHeader {
 #[derive(Debug)]
 pub struct HeaderCrypto {
     session_key: [u8; SESSION_KEY_LENGTH as usize],
-    username: NormalizedString,
     encrypt_index: u8,
     encrypt_previous_value: u8,
     decrypt_index: u8,
@@ -203,7 +202,6 @@ impl HeaderCrypto {
     #[allow(clippy::missing_const_for_fn)] // Clippy does not consider `self` arg
     pub fn split(self) -> (EncrypterHalf, DecrypterHalf) {
         let encrypt = EncrypterHalf {
-            username: self.username,
             session_key: self.session_key,
             index: self.encrypt_index,
             previous_value: self.encrypt_previous_value,
@@ -262,7 +260,6 @@ impl ServerSeed {
 
         Ok(HeaderCrypto {
             session_key,
-            username,
             encrypt_index: 0,
             encrypt_previous_value: 0,
             decrypt_index: 0,
@@ -403,7 +400,6 @@ mod test {
             // Bypass checking seeds and proofs because they aren't there
             let mut encryption = HeaderCrypto {
                 session_key: *session_key.as_le(),
-                username: NormalizedString::new("A").unwrap(),
                 encrypt_index: 0,
                 encrypt_previous_value: 0,
                 decrypt_index: 0,
@@ -426,7 +422,6 @@ mod test {
             // Bypass checking seeds and proofs because they aren't there
             let full = HeaderCrypto {
                 session_key: *session_key.as_le(),
-                username: NormalizedString::new("A").unwrap(),
                 encrypt_index: 0,
                 encrypt_previous_value: 0,
                 decrypt_index: 0,
@@ -663,7 +658,6 @@ mod test {
 
             let mut encryption = HeaderCrypto {
                 session_key: *session_key.as_le(),
-                username: NormalizedString::new("A").unwrap(),
                 encrypt_index: 0,
                 encrypt_previous_value: 0,
                 decrypt_index: 0,
@@ -685,7 +679,6 @@ mod test {
 
             let full = HeaderCrypto {
                 session_key: *session_key.as_le(),
-                username: NormalizedString::new("A").unwrap(),
                 encrypt_index: 0,
                 encrypt_previous_value: 0,
                 decrypt_index: 0,

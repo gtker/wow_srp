@@ -5,7 +5,6 @@ use crate::SESSION_KEY_LENGTH;
 
 #[derive(Debug)]
 pub struct EncrypterHalf {
-    pub(crate) username: NormalizedString,
     pub(crate) session_key: [u8; SESSION_KEY_LENGTH as usize],
     pub(crate) index: u8,
     pub(crate) previous_value: u8,
@@ -34,7 +33,6 @@ impl EncrypterHalf {
 
         HeaderCrypto {
             session_key: self.session_key,
-            username: self.username,
             encrypt_index: self.index,
             encrypt_previous_value: self.previous_value,
             decrypt_index: decrypter.index,
