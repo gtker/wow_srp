@@ -60,7 +60,7 @@
 //!     let seed = ServerSeed::new();
 //!     // Send seed to client
 //!     // Get username from client, fetch session key from login server
-//!     let encryption = seed.into_header_crypto(username, session_key, client_proof, client_seed);
+//!     let encryption = seed.into_header_crypto(&username, session_key, client_proof, client_seed);
 //!
 //!     // Send the first server message
 //! }
@@ -239,13 +239,13 @@ impl ServerSeed {
 
     pub fn into_header_crypto(
         self,
-        username: NormalizedString,
+        username: &NormalizedString,
         session_key: [u8; SESSION_KEY_LENGTH as _],
         client_proof: [u8; PROOF_LENGTH as _],
         client_seed: u32,
     ) -> Result<HeaderCrypto, MatchProofsError> {
         let server_proof = calculate_world_server_proof(
-            &username,
+            username,
             &SessionKey::from_le_bytes(session_key),
             self.server_seed,
             client_seed,
@@ -295,7 +295,7 @@ mod test {
         ];
         let mut encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
             .into_header_crypto(
-                NormalizedString::new("A").unwrap(),
+                &NormalizedString::new("A").unwrap(),
                 session_key,
                 client_proof,
                 client_seed,
@@ -335,7 +335,7 @@ mod test {
         let client_seed = 12589856;
         let mut encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
             .into_header_crypto(
-                NormalizedString::new("A").unwrap(),
+                &NormalizedString::new("A").unwrap(),
                 session_key,
                 client_proof,
                 client_seed,
@@ -381,7 +381,7 @@ mod test {
         ];
 
         let seed = ServerSeed::from_specific_seed(server_seed);
-        let encryption = seed.into_header_crypto(username, session_key, client_proof, client_seed);
+        let encryption = seed.into_header_crypto(&username, session_key, client_proof, client_seed);
         assert!(encryption.is_ok());
     }
 
@@ -465,7 +465,7 @@ mod test {
 
         let mut encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
             .into_header_crypto(
-                NormalizedString::new("A").unwrap(),
+                &NormalizedString::new("A").unwrap(),
                 session_key,
                 client_proof,
                 0,
@@ -512,7 +512,7 @@ mod test {
 
         let mut encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
             .into_header_crypto(
-                NormalizedString::new("A").unwrap(),
+                &NormalizedString::new("A").unwrap(),
                 session_key,
                 client_proof,
                 0,
@@ -571,7 +571,7 @@ mod test {
 
         let mut encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
             .into_header_crypto(
-                NormalizedString::new("A").unwrap(),
+                &NormalizedString::new("A").unwrap(),
                 session_key,
                 client_proof,
                 0,
@@ -579,7 +579,7 @@ mod test {
             .unwrap();
         let mut helper_encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
             .into_header_crypto(
-                NormalizedString::new("A").unwrap(),
+                &NormalizedString::new("A").unwrap(),
                 session_key,
                 client_proof,
                 0,
