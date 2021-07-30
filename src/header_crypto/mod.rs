@@ -1,4 +1,5 @@
 //! Functionality for encrypting/decrypting [World Packet] headers.
+//!
 //! For unknown reasons the session key obtained during the SRP6
 //! exchange is used to "encrypt" packet headers.
 //! Be aware that [Login Packets] are not encrypted in this way.
@@ -8,7 +9,57 @@
 //!
 //! The sending party will encrypt the packets they send using an [Encrypter] and the receiving
 //! party will decrypt with a [Decrypter].
-//! The [`HeaderCrypto`] struct contains both.
+//! The [`HeaderCrypto`] struct contains both and can be split with [`HeaderCrypto::split`].
+//!
+//! # Example
+//!
+//! After establishing a successful connection to the world server individual headers can be
+//! encrypted or decrypted through a few different means:
+//!
+//! ```
+//! use std::io::{Read, Error, Write};
+//! use wow_srp::header_crypto::{HeaderCrypto, Decrypter, ServerHeader, Encrypter};
+//! use std::convert::TryInto;
+//!
+//! fn decrypt_header<R: Read>(r: &mut R, raw_data: &mut [u8], encryption: &mut HeaderCrypto) {
+//!     let client_header = encryption.read_and_decrypt_server_header(r);
+//!     match client_header {
+//!         Ok(c) => {}
+//!         Err(_) => {
+//!             panic!("Reader error")
+//!         }
+//!     }
+//!
+//!     // OR
+//!
+//!     let header = raw_data[0..6].try_into().unwrap();
+//!     let client_header = encryption.decrypt_server_header(header);
+//!
+//!     // OR
+//!
+//!     encryption.decrypt(raw_data);
+//! }
+//!
+//! fn encrypt<W: Write>(w: &mut W, raw_data: &mut [u8], encryption: &mut HeaderCrypto) {
+//!     let result = encryption.write_encrypted_server_header(w, 4, 0xFF);
+//!     match result {
+//!         Ok(_) => {}
+//!         Err(_) => {
+//!             panic!("Reader error")
+//!         }
+//!     }
+//!
+//!     // OR
+//!
+//!     let server_header = encryption.encrypt_server_header(4, 0xFF);
+//!     // Send server_header
+//!
+//!     // OR
+//!
+//!     encryption.encrypt(raw_data);
+//! }
+//!
+//! ```
 //!
 //! [World Packet]: https://wowdev.wiki/World_Packet
 //! [Login Packets]: https://wowdev.wiki/Login_Packet
@@ -30,18 +81,42 @@ pub(crate) mod decrypt;
 pub(crate) mod encrypt;
 pub(crate) mod traits;
 
-#[derive(Debug)]
+/// Decrypted values from a server.
+///
+/// Gotten from either
+/// [`decrypt_server_header`](traits::Decrypter::decrypt_server_header) or
+/// [`read_and_decrypt_server_header`](traits::Decrypter::read_and_decrypt_server_header).
+#[derive(Debug, Clone, Copy)]
 pub struct ServerHeader {
+    /// Size of the message in bytes.
+    /// Includes the opcode field but not the size field
     pub size: u16,
+    /// Opcode of the message. Note that the size is not the same as the [`ClientHeader`].
     pub opcode: u16,
 }
 
-#[derive(Debug)]
+/// Decrypted values from a client.
+///
+/// Gotten from either
+/// [`decrypt_client_header`](traits::Decrypter::decrypt_client_header) or
+/// [`read_and_decrypt_server_header`](traits::Decrypter::read_and_decrypt_server_header).
+#[derive(Debug, Clone, Copy)]
 pub struct ClientHeader {
+    /// Size of the message in bytes.
+    /// Includes the opcode field but not the size field
     pub size: u16,
+    /// Opcode of the message. Note that the size is not the same as the [`ServerHeader`].
     pub opcode: u32,
 }
 
+/// Main struct for encryption or decryption.
+///
+/// Handles both encryption and decryption of headers through the
+/// [`Encrypter`] and [`Decrypter`] traits.
+///
+/// Can be split into a [`EncrypterHalf`] and [`DecrypterHalf`] through
+/// the [`HeaderCrypto::split`] method. This is useful if you have this struct behind a
+/// mutex and don't want to lock both reading and writing at the same time.
 #[derive(Debug)]
 pub struct HeaderCrypto {
     session_key: [u8; SESSION_KEY_LENGTH as usize],

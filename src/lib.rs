@@ -20,6 +20,7 @@
 //! The crate is split into:
 //! * A [`server`] module containing structs for use on the server.
 //! * A [`client`] module containing structs for use on the client.
+//! * A [`header_crypto`] module containing structs and traits for decrypting world packets.
 //! * An [`error`] module for errors that are shared by all modules.
 //! * A [`normalized_string`] module used for all modules to correctly handle strings.
 //!
@@ -56,6 +57,7 @@
 //! * [ArcEmu](https://github.com/arcemu/arcemu/blob/00355000cac5d0b9bce42bf6d03d4aeda9e396ea/src/logon/Auth/AuthSocket.cpp#L74) is a C++ implementation for 3.3.5.
 //! * [vMangos](https://github.com/vmangos/core/blob/fa9351de7e832510309209351c17f5c53f3155ef/src/realmd/AuthSocket.cpp#L350) is a C++ implementation.
 //! * [WoWCore](https://github.com/RomanRom2/WoWCore/blob/92b7646c2bafb22ad6dca0acc9496a35561292c4/05875_1.12.1/pas/sandbox/AuthServer.pas#L133) is a Pascal implementation that has 1.12, 2.4.3 and 3.3.5 versions.
+//! * [Shadowburn](https://gitlab.com/shadowburn/shadowburn/-/blob/ac905fabf56579b3bda6f16689c74f544da043e2/apps/common/lib/accounts/accounts.ex#L88) is an Elixir implementation.
 //!
 //! [archive]: https://web.archive.org/web/20210620154707/https://wowdev.wiki/Login_Packet
 
