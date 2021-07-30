@@ -22,11 +22,11 @@
 //!
 //! This means the following workflow has to be done:
 //!
-//! 1. Create a [`ServerSeed`] struct containing a randomly generated `u32` seed.
+//! 1. Create a [`ProofSeed`] struct containing a randomly generated `u32` seed.
 //! 2. Send the seed to the client in a [SMSG_AUTH_CHALLENGE] message.
 //! 3. Receive the username, proof and seed in the [CMSG_AUTH_SESSION] message.
 //! 4. Retrieve the session key from the login server.
-//! 5. Create the [`HeaderCrypto`] struct through [`ServerSeed::into_header_crypto`].
+//! 5. Create the [`HeaderCrypto`] struct through [`ProofSeed::into_header_crypto`].
 //! 6. Optionally, split the [`HeaderCrypto`] into [`EncrypterHalf`] and [`DecrypterHalf`] through
 //! [`HeaderCrypto::split`].
 //! 7. Optionally, unsplit them through [`EncrypterHalf::unsplit`].
@@ -36,7 +36,7 @@
 //!                         Optional
 //!                            |
 //!                            |   |-> EncrypterHalf -|
-//! ServerSeed -> HeaderCrypto | --|                  |--> HeaderCrypto
+//! ProofSeed -> HeaderCrypto | --|                  |--> HeaderCrypto
 //!                            |   |-> DecrypterHalf -|
 //!                            |
 //! ```
@@ -48,7 +48,7 @@
 //!
 //! ```
 //! use std::io::{Read, Error, Write};
-//! use wow_srp::header_crypto::{HeaderCrypto, Decrypter, ServerHeader, Encrypter, ServerSeed};
+//! use wow_srp::header_crypto::{HeaderCrypto, Decrypter, ServerHeader, Encrypter, ProofSeed};
 //! use std::convert::TryInto;
 //! use wow_srp::{SESSION_KEY_LENGTH, PROOF_LENGTH};
 //! use wow_srp::normalized_string::NormalizedString;
@@ -57,7 +57,7 @@
 //!                         session_key: [u8; SESSION_KEY_LENGTH as _],
 //!                         client_proof: [u8; PROOF_LENGTH as _],
 //!                         client_seed: u32) {
-//!     let seed = ServerSeed::new();
+//!     let seed = ProofSeed::new();
 //!     // Send seed to client
 //!     seed.seed();
 //!     // Get username from client, fetch session key from login server
@@ -160,7 +160,7 @@ pub struct ClientHeader {
 
 /// Main struct for encryption or decryption.
 ///
-/// Created from [`ServerSeed::into_header_crypto`].
+/// Created from [`ProofSeed::into_header_crypto`].
 ///
 /// Handles both encryption and decryption of headers through the
 /// [`Encrypter`] and [`Decrypter`] traits.
@@ -218,32 +218,36 @@ impl HeaderCrypto {
     }
 }
 
-/// Server seed part of the calculation needed to verify
+/// Random Seed part of the calculation needed to verify
 /// that a client knows the session key.
 ///
-/// Converted into a [`HeaderCrypto`] using [`ServerSeed::into_header_crypto`].
-pub struct ServerSeed {
-    server_seed: u32,
+/// The [`ProofSeed::into_header_crypto`] function is used by the server to verify
+/// that a client knows the session key.
+///
+/// The [`ProofSeed::into_proof_and_header_crypto`] function is used by the client to
+/// prove to the server that the client knows the session key.
+pub struct ProofSeed {
+    seed: u32,
 }
 
-impl ServerSeed {
+impl ProofSeed {
     /// Creates a new, random, seed.
     pub fn new() -> Self {
         Self {
-            server_seed: thread_rng().next_u32(),
+            seed: thread_rng().next_u32(),
         }
     }
 
     #[cfg(test)]
     fn from_specific_seed(server_seed: u32) -> Self {
-        Self { server_seed }
+        Self { seed: server_seed }
     }
 
     /// The server seed used in [SMSG_AUTH_CHALLENGE].
     ///
     /// [SMSG_AUTH_CHALLENGE]: https://wowdev.wiki/SMSG_AUTH_CHALLENGE
     pub const fn seed(&self) -> u32 {
-        self.server_seed
+        self.seed
     }
 
     pub fn into_proof_and_header_crypto(
@@ -256,7 +260,7 @@ impl ServerSeed {
             username,
             &SessionKey::from_le_bytes(session_key),
             server_seed,
-            self.server_seed,
+            self.seed,
         );
 
         let crypto = HeaderCrypto {
@@ -286,7 +290,7 @@ impl ServerSeed {
         let server_proof = calculate_world_server_proof(
             username,
             &SessionKey::from_le_bytes(session_key),
-            self.server_seed,
+            self.seed,
             client_seed,
         );
 
@@ -312,11 +316,46 @@ mod test {
     use std::fs::read_to_string;
 
     use crate::header_crypto::traits::{Decrypter, Encrypter};
-    use crate::header_crypto::{HeaderCrypto, ServerSeed};
+    use crate::header_crypto::{HeaderCrypto, ProofSeed};
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
     use crate::SESSION_KEY_LENGTH;
     use std::convert::TryInto;
+
+    #[test]
+    fn verify_client_and_server_agree() {
+        let session_key = [
+            239, 107, 150, 237, 174, 220, 162, 4, 138, 56, 166, 166, 138, 152, 188, 146, 96, 151,
+            1, 201, 202, 137, 231, 87, 203, 23, 62, 17, 7, 169, 178, 1, 51, 208, 202, 223, 26, 216,
+            250, 9,
+        ];
+
+        let username = NormalizedString::new("A").unwrap();
+
+        let client_seed = ProofSeed::new();
+        let client_seed_value = client_seed.seed();
+        let server_seed = ProofSeed::new();
+
+        let (client_proof, mut client_crypto) =
+            client_seed.into_proof_and_header_crypto(&username, session_key, server_seed.seed());
+
+        let mut server_crypto = server_seed
+            .into_header_crypto(&username, session_key, client_proof, client_seed_value)
+            .unwrap();
+
+        let original_data = hex::decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca").unwrap();
+        let mut data = original_data.clone();
+
+        client_crypto.encrypt(&mut data);
+        server_crypto.decrypt(&mut data);
+
+        assert_eq!(original_data, data);
+
+        server_crypto.encrypt(&mut data);
+        client_crypto.decrypt(&mut data);
+
+        assert_eq!(original_data, data);
+    }
 
     #[test]
     fn verify_server_header() {
@@ -332,7 +371,7 @@ mod test {
             26, 97, 90, 187, 176, 134, 53, 49, 75, 160, 129, 47, 67, 207, 231, 42, 234, 184, 227,
             124,
         ];
-        let mut encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
+        let mut encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
             .into_header_crypto(
                 &NormalizedString::new("A").unwrap(),
                 session_key,
@@ -372,7 +411,7 @@ mod test {
             229, 128,
         ];
         let client_seed = 12589856;
-        let mut encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
+        let mut encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
             .into_header_crypto(
                 &NormalizedString::new("A").unwrap(),
                 session_key,
@@ -419,7 +458,7 @@ mod test {
             7,
         ];
 
-        let seed = ServerSeed::from_specific_seed(server_seed);
+        let seed = ProofSeed::from_specific_seed(server_seed);
         let encryption = seed.into_header_crypto(&username, session_key, client_proof, client_seed);
         assert!(encryption.is_ok());
     }
@@ -502,7 +541,7 @@ mod test {
             228,
         ];
 
-        let mut encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
+        let mut encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
             .into_header_crypto(
                 &NormalizedString::new("A").unwrap(),
                 session_key,
@@ -549,7 +588,7 @@ mod test {
             228,
         ];
 
-        let mut encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
+        let mut encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
             .into_header_crypto(
                 &NormalizedString::new("A").unwrap(),
                 session_key,
@@ -608,7 +647,7 @@ mod test {
             228,
         ];
 
-        let mut encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
+        let mut encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
             .into_header_crypto(
                 &NormalizedString::new("A").unwrap(),
                 session_key,
@@ -616,7 +655,7 @@ mod test {
                 0,
             )
             .unwrap();
-        let mut helper_encryption = ServerSeed::from_specific_seed(0xDEADBEEF)
+        let mut helper_encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
             .into_header_crypto(
                 &NormalizedString::new("A").unwrap(),
                 session_key,
