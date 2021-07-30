@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use wow_srp::client::{SrpClientChallenge, SrpClientUser};
-use wow_srp::header_crypto::{Decrypter, Encrypter, HeaderCrypto};
+use wow_srp::header_crypto::{Decrypter, Encrypter, ProofSeed};
 use wow_srp::normalized_string::NormalizedString;
 use wow_srp::server::{SrpProof, SrpVerifier};
 use wow_srp::{
@@ -117,32 +117,6 @@ fn criterion_benchmark(c: &mut Criterion) {
                     *challenge_3.client_proof(),
                 )
                 .unwrap();
-        })
-    });
-    group.bench_function("header encryption and decryption", |b| {
-        b.iter(|| {
-            let session_key = [
-                12, 64, 43, 60, 11, 234, 2, 167, 235, 84, 13, 56, 67, 236, 12, 15, 222, 123, 235,
-                211, 52, 12, 253, 77, 228, 88, 74, 12, 72, 117, 0, 11, 164, 25, 234, 63, 204, 11,
-                88, 118,
-            ];
-            let mut crypto = HeaderCrypto::new(
-                NormalizedString::new(black_box(USERNAME_1)).unwrap(),
-                black_box(session_key),
-            );
-
-            for _ in 0..100 {
-                // Arbitrary data because it doesn't matter
-                let client_header = black_box([12, 83, 56, 20, 86, 34]);
-                let server_header = black_box([78, 57, 32, 7]);
-                crypto.decrypt_client_header(client_header);
-
-                crypto.encrypt_server_header(black_box(12), black_box(0xFF));
-
-                crypto.decrypt_server_header(server_header);
-
-                crypto.encrypt_client_header(black_box(67), black_box(0xF8));
-            }
         })
     });
 }
