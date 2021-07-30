@@ -15,7 +15,7 @@ use crate::key::PROOF_LENGTH;
 use std::error::Error;
 use std::fmt::{Display, Formatter, Result};
 
-/// Enum that covers all SRP error types.
+/// Enum that covers all SRP error types, except for the crypto error [`UnsplitCryptoError`].
 #[derive(Debug)]
 pub enum SrpError {
     /// Password is invalid.
@@ -60,6 +60,27 @@ impl From<MatchProofsError> for SrpError {
 impl From<NormalizedStringError> for SrpError {
     fn from(n: NormalizedStringError) -> Self {
         Self::NormalizedStringError(n)
+    }
+}
+
+/// [`DecrypterHalf`](crate::header_crypto::DecrypterHalf) and
+/// [`EncrypterHalf`](crate::header_crypto::EncrypterHalf) do not
+/// originate from the same [`HeaderCrypto`](crate::header_crypto::HeaderCrypto).
+///
+/// This is a logic bug and should always lead to either a panic or some other highly
+/// visible event.
+/// If in doubt just call [`unwrap`](std::option::Option::unwrap) on it.
+#[derive(Debug)]
+pub struct UnsplitCryptoError {}
+
+impl Error for UnsplitCryptoError {}
+
+impl Display for UnsplitCryptoError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(
+            f,
+            "Crypto items do not originate from the same HeaderCrypto. This is a logic bug and should never happen."
+        )
     }
 }
 

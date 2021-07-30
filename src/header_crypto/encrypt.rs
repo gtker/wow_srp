@@ -1,7 +1,13 @@
+use crate::error::UnsplitCryptoError;
 use crate::header_crypto::decrypt::DecrypterHalf;
 use crate::header_crypto::{Encrypter, HeaderCrypto};
 use crate::SESSION_KEY_LENGTH;
 
+/// Encryption part of a [`HeaderCrypto`].
+///
+/// Intended to be kept with the writer half of a connection.
+///
+/// Use the [`Encrypter`] functions to encrypt.
 #[derive(Debug)]
 pub struct EncrypterHalf {
     pub(crate) session_key: [u8; SESSION_KEY_LENGTH as usize],
@@ -10,6 +16,11 @@ pub struct EncrypterHalf {
 }
 
 impl Encrypter for EncrypterHalf {
+    /// Use either [the client](Encrypter::write_encrypted_client_header)
+    /// or [the server](Encrypter::write_encrypted_server_header)
+    /// [`Write`](std::io::Write) functions, or
+    /// [the client](Encrypter::encrypt_client_header)
+    /// or [the server](Encrypter::encrypt_server_header) array functions.
     fn encrypt(&mut self, data: &mut [u8]) {
         encrypt(
             data,
@@ -21,22 +32,34 @@ impl Encrypter for EncrypterHalf {
 }
 
 impl EncrypterHalf {
+    /// Tests whether both halves originate from the same [`HeaderCrypto`]
+    /// and can be [`EncrypterHalf::unsplit`].
     pub fn is_pair_of(&self, other: &DecrypterHalf) -> bool {
         self.session_key == other.session_key
     }
 
-    pub fn unsplit(self, decrypter: DecrypterHalf) -> HeaderCrypto {
+    /// Unsplits the two halves.
+    ///
+    /// # Errors
+    ///
+    /// This will error if the two halfs do not originate from the same
+    /// [`HeaderCrypto::split`].
+    /// This is a logic bug and should either lead
+    /// to panic or some other highly visible event.
+    /// If [`EncrypterHalf::is_pair_of`] returns [`true`] this will not
+    /// error.
+    pub fn unsplit(self, decrypter: DecrypterHalf) -> Result<HeaderCrypto, UnsplitCryptoError> {
         if !self.is_pair_of(&decrypter) {
-            panic!("Unrelated `DecrypterHalf` passed to `EncrypterHalf::unsplit`.")
+            return Err(UnsplitCryptoError {});
         }
 
-        HeaderCrypto {
+        Ok(HeaderCrypto {
             session_key: self.session_key,
             encrypt_index: self.index,
             encrypt_previous_value: self.previous_value,
             decrypt_index: decrypter.index,
             decrypt_previous_value: decrypter.previous_value,
-        }
+        })
     }
 }
 

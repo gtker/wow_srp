@@ -617,7 +617,7 @@ mod test {
         e.encrypt(&mut encrypt_data[STEP..STEP * 2]);
         d.decrypt(&mut decrypt_data[STEP..STEP * 2]);
 
-        let mut encryption = e.unsplit(d);
+        let mut encryption = e.unsplit(d).unwrap();
 
         encryption.encrypt(&mut encrypt_data[STEP * 2..]);
         encryption.decrypt(&mut decrypt_data[STEP * 2..]);

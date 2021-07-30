@@ -10,12 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `DecrypterHalf` and `EncrypterHalf`. Some TCP implementations allow separating reading and writing. If the encryption is under a Mutex it would not be optimal to make reads wait for writes and the other way around.
 - `ProofSeed` struct that generates a random u32 server seed for world servers, used to build `HeaderCrypto`.
+- Added `UnsplitCryptoError`. This is used instead of a panic when unsplitting two halves.
 
 ### Changed
 - BREAKING: `Decryptor` and `Encryptor` have been renamed to `Decrypter` and `Encrypter` to better reflect namings in the stdlib.
 - BREAKING: `read_decrypted_server_header` renamed to `read_and_decrypt_server_header` and `read_decrypted_client_header` renamed to `read_and_decrypt_client_header` to better describe what happens.
 - `Decryptor` and `Encryptor` traits now have default methods for everything but `encrypt` and `decrypt`.
 - BREAKING: `HeaderCrypto` can now only be built from a `ProofSeed`. This is to encode more information into the type system instead of in documentation.
+- BREAKING: `EncrypterHalf::unsplit` is now fallible and returns a `Result<HeaderCrypto, UnsplitCryptoError>`.
 
 ### Deprecated
 

@@ -2,6 +2,11 @@ use crate::header_crypto::encrypt::EncrypterHalf;
 use crate::header_crypto::Decrypter;
 use crate::SESSION_KEY_LENGTH;
 
+/// Decryption part of a [`HeaderCrypto`](crate::header_crypto::HeaderCrypto).
+///
+/// Intended to be kept with the reader half of a connection.
+///
+/// Use the [`Decrypter`] functions to decrypt.
 #[derive(Debug)]
 pub struct DecrypterHalf {
     pub(crate) session_key: [u8; SESSION_KEY_LENGTH as usize],
@@ -10,6 +15,11 @@ pub struct DecrypterHalf {
 }
 
 impl Decrypter for DecrypterHalf {
+    /// Use either [the client](Decrypter::read_and_decrypt_client_header)
+    /// or [the server](Decrypter::read_and_decrypt_server_header)
+    /// [`Read`](std::io::Read) functions, or
+    /// [the client](Decrypter::decrypt_client_header)
+    /// or [the server](Decrypter::decrypt_server_header) array functions.
     fn decrypt(&mut self, data: &mut [u8]) {
         decrypt(
             data,
@@ -21,8 +31,13 @@ impl Decrypter for DecrypterHalf {
 }
 
 impl DecrypterHalf {
+    /// Tests whether both halves originate from the same
+    /// [`HeaderCrypto`](crate::header_crypto::HeaderCrypto)
+    /// and can be [`EncrypterHalf::unsplit`].
+    ///
+    /// Same as [`EncrypterHalf::is_pair_of`], provided for convenience/readability.
     pub fn is_pair_of(&self, other: &EncrypterHalf) -> bool {
-        self.session_key == other.session_key
+        other.is_pair_of(self)
     }
 }
 
