@@ -1,6 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use wow_srp::client::{SrpClientChallenge, SrpClientUser};
-use wow_srp::header_crypto::{Decrypter, Encrypter, ProofSeed};
 use wow_srp::normalized_string::NormalizedString;
 use wow_srp::server::{SrpProof, SrpVerifier};
 use wow_srp::{
