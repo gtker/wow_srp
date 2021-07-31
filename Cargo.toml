@@ -17,6 +17,7 @@ default = ["num-bigint"]
 sha-1 = "0.9"
 rand = "0.8"
 num-bigint = { version = "0.4", optional = true }
+rug = { version = "1.13", features = ["integer"], default-features = false, optional = true }
 
 [dev-dependencies]
 hex-literal = "0.3"

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DecrypterHalf` and `EncrypterHalf`. Some TCP implementations allow separating reading and writing. If the encryption is under a Mutex it would not be optimal to make reads wait for writes and the other way around.
 - `ProofSeed` struct that generates a random u32 server seed for world servers, used to build `HeaderCrypto`.
 - Added `UnsplitCryptoError`. This is used instead of a panic when unsplitting two halves.
+- `rug` feature that uses the [rug](https://crates.io/crates/rug) crate instead of the default [num_bigint](https://crates.io/crates/num-bigint) crate. Using the `rug` feature leads to a ~100% performance increase (50% decrease in benchmark time). The difference can be tested using `cargo bench` for the default crate and `cargo bench --features rug --no-default-features` for the `rug` crate.
 
 ### Changed
 - BREAKING: `Decryptor` and `Encryptor` have been renamed to `Decrypter` and `Encrypter` to better reflect namings in the stdlib.
