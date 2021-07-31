@@ -338,15 +338,14 @@ mod test {
     use crate::key::{PrivateKey, PublicKey, PUBLIC_KEY_LENGTH};
     use crate::primes::LargeSafePrime;
     use crate::LARGE_SAFE_PRIME_LITTLE_ENDIAN;
-    use num_bigint::{BigInt, Sign};
 
     #[test]
     fn double_large_safe_prime_is_unrepresentable() {
         // Only the exact values of the large safe prime and 0 are checked for increased speed.
         // This is dependent on multiples of the large safe prime being unrepresentable in 32 bytes.
-        let p = BigInt::from_bytes_le(Sign::Plus, &LARGE_SAFE_PRIME_LITTLE_ENDIAN);
-        let p: BigInt = p * 2;
-        assert!(p.to_bytes_le().1.len() > PUBLIC_KEY_LENGTH as usize);
+        let p = Integer::from_bytes_le(&LARGE_SAFE_PRIME_LITTLE_ENDIAN);
+        let p = p * Integer::from(2);
+        assert!(p.to_bytes_le().len() > PUBLIC_KEY_LENGTH as usize);
     }
 
     #[test]
