@@ -10,10 +10,13 @@ version = "0.2.0" # Remember to update html_root_url and docs in src/lib.rs, and
 authors = ["Gtker <github@gtker.com"]
 edition = "2018"
 
+[features]
+default = ["num-bigint"]
+
 [dependencies]
 sha-1 = "0.9"
-num-bigint = "0.4"
 rand = "0.8"
+num-bigint = { version = "0.4", optional = true }
 
 [dev-dependencies]
 hex-literal = "0.3"

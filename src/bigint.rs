@@ -1,11 +1,14 @@
 use crate::primes::LargeSafePrime;
+#[cfg(feature = "num-bigint")]
 use num_bigint::{BigInt, Sign};
 use std::ops;
 
+#[cfg(feature = "num-bigint")]
 pub(crate) struct Integer {
     value: BigInt,
 }
 
+#[cfg(feature = "num-bigint")]
 impl Integer {
     #[inline(always)]
     const fn from_bigint(bigint: BigInt) -> Self {
@@ -48,6 +51,7 @@ impl Integer {
     }
 }
 
+#[cfg(feature = "num-bigint")]
 impl From<u8> for Integer {
     fn from(v: u8) -> Self {
         Self::from_bigint(BigInt::from(v))
