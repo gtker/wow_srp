@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+
+## [0.3.0] - 2021-08-05
+
+### Added
 - `DecrypterHalf` and `EncrypterHalf`. Some TCP implementations allow separating reading and writing. If the encryption is under a Mutex it would not be optimal to make reads wait for writes and the other way around.
 - `ProofSeed` struct that generates a random u32 server seed for world servers, used to build `HeaderCrypto`.
 - Added `UnsplitCryptoError`. This is used instead of a panic when unsplitting two halves.
@@ -20,15 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BREAKING: `HeaderCrypto` can now only be built from a `ProofSeed`. This is to encode more information into the type system instead of in documentation.
 - BREAKING: `EncrypterHalf::unsplit` is now fallible and returns a `Result<HeaderCrypto, UnsplitCryptoError>`.
 
-### Deprecated
-
 ### Removed
 - BREAKING: `HeaderCrypto::new`. Use `ProofSeed::into_header_crypto` instead.
-
-### Fixed
-
-### Security
-
 
 ## [0.2.0] - 2021-07-05
 
@@ -66,6 +74,7 @@ The smaller integer size indicates that the value fits into a u8 without truncat
 ### Added
 - Initial release
 
+[0.3.0]: https://github.com/gtker/wow_srp/releases/tag/v0.3.0
 [0.2.0]: https://github.com/gtker/wow_srp/releases/tag/0.2.0
 [0.1.1]: https://github.com/gtker/wow_srp/releases/tag/v0.1.1
 [0.1.0]: https://github.com/gtker/wow_srp/tree/39f5ef7ce9e17dd85381b2c48c06b174777469c1
