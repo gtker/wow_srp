@@ -46,7 +46,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! wow_srp = { version = "0.2" }
+//! wow_srp = { version = "0.3" }
 //! ```
 //!
 //! Then go to either the [`client`] module or [`server`] module for specific instructions.
@@ -65,7 +65,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! wow_srp = { version = "0.2", default-features = false, features = ["rug"] }
+//! wow_srp = { version = "0.3", default-features = false, features = ["rug"] }
 //! ```
 //!
 //! The `rug` feature leads to a 50% decrease in total time. It is highly recommended to enable
@@ -84,7 +84,7 @@
 //!
 //! [archive]: https://web.archive.org/web/20210620154707/https://wowdev.wiki/Login_Packet
 
-#![doc(html_root_url = "https://docs.rs/wow_srp/0.2.0")]
+#![doc(html_root_url = "https://docs.rs/wow_srp/0.3.0")]
 #![forbid(unsafe_code)]
 #![warn(
     clippy::perf,

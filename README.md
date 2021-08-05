@@ -9,7 +9,7 @@ Add the following to `Cargo.toml`:
 
 ```
 [dependencies]
-wow_srp = "0.2"
+wow_srp = "0.3"
 ```
 
 Or install with [cargo edit](https://crates.io/crates/cargo-edit):
@@ -31,7 +31,7 @@ Two different arbitrary precision integer libraries can be used, either:
 
 ```toml
 [dependencies]
-wow_srp = { version = "0.2", default-features = false, features = ["rug"] }
+wow_srp = { version = "0.3", default-features = false, features = ["rug"] }
 ```
 
 The `rug` feature leads to a 50% decrease in total time. It is highly recommended to enable
