@@ -32,7 +32,8 @@ jobs:
           override: true
       - uses: actions-rs/cargo@v1
         with:
-          command: test --features rug --no-default-features
+          command: test
+          args: --features rug --no-default-features
 
   fmt:
     name: Rustfmt

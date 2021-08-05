@@ -97,6 +97,9 @@
     clippy::unseparated_literal_suffix,
     missing_docs
 )]
+// There are false positives where we don't want to
+// take ownership of something unnecessarily.
+#![allow(clippy::needless_borrow)]
 
 pub use key::PublicKey;
 pub use key::PASSWORD_VERIFIER_LENGTH;
