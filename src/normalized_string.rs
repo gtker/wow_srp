@@ -73,7 +73,7 @@ use std::fmt::{Display, Formatter};
 /// Ownership is always taken by the function requiring it in order to prevent any cloning and reallocation.
 ///
 /// See [`normalized_string`](`crate::normalized_string`) for more information.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 pub struct NormalizedString {
     s: String,
 }
