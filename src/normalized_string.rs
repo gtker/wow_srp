@@ -113,7 +113,7 @@ impl NormalizedString {
 
 impl Display for NormalizedString {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.s)
+        f.write_str(&self.s)
     }
 }
 
