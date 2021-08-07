@@ -92,8 +92,8 @@ impl NormalizedString {
     /// # Errors
     ///
     /// See the [module level docs](crate::normalized_string) for explanation of allowed values.
-    pub fn new(s: impl Into<String>) -> Result<Self, NormalizedStringError> {
-        let s = s.into();
+    pub fn new<S: AsRef<str>>(s: S) -> Result<Self, NormalizedStringError> {
+        let s = s.as_ref();
 
         if s.len() > MAXIMUM_STRING_LENGTH_IN_BYTES as usize {
             return Err(NormalizedStringError::StringTooLong);
@@ -133,7 +133,7 @@ mod test {
         let allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-,.<>/?[]{}'|=+~` ";
 
         for c in allowed.chars() {
-            let s = NormalizedString::new(c).unwrap();
+            let s = NormalizedString::new(&c.to_string()).unwrap();
             assert_eq!(s.as_ref(), c.to_ascii_uppercase().to_string());
         }
     }
@@ -144,13 +144,13 @@ mod test {
         // Arbitrarily picked non-allowed ASCII control codes, Latin-1, Cyrillic and Greek letters
         let ascii_control_codes = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f\x7f";
         for c in ascii_control_codes.chars() {
-            let s = NormalizedString::new(c);
+            let s = NormalizedString::new(&c.to_string());
             assert!(s.is_err(), "Char should be allowed: '{}'", c);
         }
 
         let not_allowed_chars = "¢£¤¦¥©¨«¹²³¬®±µ¼½¾¿ÇÐØÞßðüĎГДЕЖЗЙΨΩ";
         for c in not_allowed_chars.chars() {
-            let s = NormalizedString::new(c);
+            let s = NormalizedString::new(&c.to_string());
             assert!(s.is_err(), "Char should be allowed: '{}'", c);
         }
     }

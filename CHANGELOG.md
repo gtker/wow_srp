@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* BREAKING: `NormalizedString::new` takes an `AsRef<str>` instead of an `Into<String>`.
+This is in order to switch to a stack allocated string type in the future, foregoing the allocation and heap fragmentation of a string that's smaller than the bookkeeping data.
 
 ### Deprecated
 
