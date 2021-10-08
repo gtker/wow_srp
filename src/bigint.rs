@@ -7,6 +7,12 @@ use rug::integer::Order;
 use rug::Integer as RugInt;
 use std::ops;
 
+#[cfg(all(feature = "rug", feature = "num-bigint"))]
+compile_error!("The features 'rug' and 'num-bigint' can not be enabled at the same time.\n\n The features exclusively select an arbitrary integer library.\n Use `num-bigint` if you want no-dependency compilation, but slow execution speed. Use 'rug' if you want exceptional execution speed but external dependencies.");
+
+#[cfg(not(any(feature = "rug", feature = "num-bigint")))]
+compile_error!("Either the 'rug' feature or the 'num-bigint' feature must be enabled.\n\n The features exclusively select an arbitrary integer library.\n Use `num-bigint` if you want no-dependency compilation, but slow execution speed. Use 'rug' if you want exceptional execution speed but external dependencies.");
+
 pub(crate) struct Integer {
     #[cfg(all(not(feature = "rug"), feature = "num-bigint"))]
     value: BigInt,
