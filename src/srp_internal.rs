@@ -6,7 +6,9 @@
 //!
 //!
 
+use std::ops::Deref;
 use sha1::{Digest, Sha1};
+use crate::bigint::Integer;
 
 use crate::error::InvalidPublicKeyError;
 use crate::key::{
@@ -61,8 +63,43 @@ pub fn calculate_x(
         .chain(password.as_ref())
         .finalize();
 
-    let x = Sha1::new().chain(salt.as_le()).chain(p).finalize();
+    calculate_x_with_p(p.deref(), &salt)
+}
 
+
+/// Calculate the `x` value which is used for generating the password verifier `v`. See [`calculate_password_verifier`].
+///
+/// `x` is calculated as `H( salt | H( upper( username | : |  password ) ) )` as described on page 3 of [RFC2945] and page 8 of [RFC5054].
+/// Uppercasing is not a requirement for SRP6 itself, only for the `WoW` client.
+///
+/// `H()` is the SHA1 hashing function.
+/// `:` is the literal character `:`.
+///
+/// Some implementations assign `p = H( upper( username | : |  password ) )` in an intermediate step, and then `H( salt | p )` later for clarity.
+/// Keep in mind that `p` in [RFC2945] refers to only the password string on page 4 as `p = <raw password>`.
+///
+/// Notice that the `x` value should only be calculated server side when a user registers an account or changes their password, since the database should never contain the raw password.
+///
+/// # Arguments
+///
+/// * `p` already hashed by `p = H( upper( username | : |  password ) )` see above
+/// * `salt` (`s` in [RFC2945] and [RFC5054]) is a **little endian** [32][`SALT_LENGTH_IN_BYTES`] byte array of random values.
+/// The client will not reject an authentication attempt with a salt of all zeros.
+///
+/// # Different Implementations
+///
+/// * [Ember](https://github.com/EmberEmu/Ember/blob/12834cd347472224fa180656222822744be3b1b0/src/libs/srp6/src/Util.cpp#L98)
+///
+/// [RFC2945]: https://tools.ietf.org/html/rfc2945
+/// [RFC5054]: https://tools.ietf.org/html/rfc5054
+pub fn calculate_x_with_p(
+    p: impl AsRef<[u8]>,
+    salt: &Salt,
+) -> Sha1Hash {
+    let x = Sha1::new()
+        .chain(salt.as_le())
+        .chain(p)
+        .finalize();
     Sha1Hash::from_le_bytes(x.into())
 }
 
@@ -96,12 +133,44 @@ pub fn calculate_password_verifier(
     // Return an array instead of Verifier because this is never directly used to create a Verifier
 ) -> [u8; PASSWORD_VERIFIER_LENGTH as usize] {
     let x = calculate_x(username, password, &salt).to_bigint();
+    generate_password_verifier_from_x(x)
+}
 
+/// Calculate the password verifier `v` used for generating the server public key `B` and the session key intermediate value `S`.
+/// See [`calculate_server_public_key`] and [`calculate_S`].
+///
+/// `v` is calculated as `g^x % N` as described on page 3 of [RFC2945].
+/// For `x` see [`calculate_x`].
+///
+/// # Arguments
+///
+/// * `p` already hashed by `p = H( upper( username | : |  password ) )` see [`calculate_x`]
+/// * `salt` (`s` in [RFC2945] and [RFC5054]) is a **little endian** [32 byte][`SALT_LENGTH_IN_BYTES`] array of random values.
+/// The client will not reject an authentication attempt with a salt of all zeros.
+///
+/// # Return value
+///
+/// A zero padded **little endian** array the [size of N][`N_LENGTH`].
+///
+/// # Different Implementations
+///
+/// * [Ember](https://github.com/EmberEmu/Ember/blob/12834cd347472224fa180656222822744be3b1b0/src/libs/srp6/include/srp6/Util.h#L48)
+///
+/// [RFC2945]: https://tools.ietf.org/html/rfc2945
+/// [RFC5054]: https://tools.ietf.org/html/rfc5054
+pub fn calculate_password_verifier_p(
+    p: impl AsRef<[u8]>,
+    salt: &Salt,
+    // Return an array instead of Verifier because this is never directly used to create a Verifier
+) -> [u8; PASSWORD_VERIFIER_LENGTH as usize] {
+    let x = calculate_x_with_p(p, &salt).to_bigint();
+    generate_password_verifier_from_x(x)
+}
+
+fn generate_password_verifier_from_x(x: Integer) ->  [u8; PASSWORD_VERIFIER_LENGTH as usize] {
     let generator = Generator::default().to_bigint();
     let large_safe_prime = LargeSafePrime::default().to_bigint();
-
     let password_verifier = generator.modpow(&x, &large_safe_prime);
-
     password_verifier.to_padded_32_byte_array_le()
 }
 

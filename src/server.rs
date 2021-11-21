@@ -250,6 +250,17 @@ impl SrpVerifier {
         Self::with_specific_salt(username, password, &salt)
     }
 
+    /// See [`normalized_string`](`crate::normalized_string`) for more information on the format.
+    /// Use this if you got already sha1 hash in database in format sha1 ("username:password")
+    pub fn from_with_username_specific_hashed_p(
+      username: NormalizedString,
+      hash: impl AsRef<[u8]>
+    )  -> Self {
+      let salt = Salt::randomized();
+
+      Self::with_specific_hashed_p_and_specific_salt(username, hash, &salt)
+    }
+
     /// See [`normalized_string`](`crate::normalized_string`) for more information on the string format.
     /// Both arrays are **little endian**.
     pub const fn from_database_values(
@@ -297,6 +308,16 @@ impl SrpVerifier {
         let password_verifier =
             srp_internal::calculate_password_verifier(&username, &password, salt);
 
+        Self::from_database_values(username, password_verifier, *salt.as_le())
+    }
+
+    fn with_specific_hashed_p_and_specific_salt(
+        username: NormalizedString,
+        p: impl AsRef<[u8]>,
+        salt: &Salt,
+    ) -> Self {
+        let password_verifier =
+            srp_internal::calculate_password_verifier_p(p, salt);
         Self::from_database_values(username, password_verifier, *salt.as_le())
     }
 
@@ -605,6 +626,16 @@ pub struct SrpServer {
 }
 
 impl SrpServer {
+    /// Creates SrpServer from session key `S`
+    /// see [`SrpServer::session_key`]
+    pub fn from_session_key(username: NormalizedString, session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
+        Self {
+            username,
+            session_key: SessionKey::from_le_bytes(session_key),
+            reconnect_challenge_data: ReconnectData::randomized()
+        }
+    }
+
     /// Called `S` in [RFC2945](https://tools.ietf.org/html/rfc2945) and sometimes `K` or `key`
     /// in other literature.
     ///
