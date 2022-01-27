@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * BREAKING: `NormalizedString::new` takes an `AsRef<str>` instead of an `Into<String>`.
 This is in order to switch to a stack allocated string type in the future, foregoing the allocation and heap fragmentation of a string that's smaller than the bookkeeping data.
+* BREAKING: Changed named of features `num-bigint` and `rug` to `default-math` and `fast-math` respectively.
+This is in order to not be locked into specific libraries.
 
 ### Deprecated
 

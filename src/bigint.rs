@@ -1,26 +1,26 @@
 use crate::primes::LargeSafePrime;
-#[cfg(all(not(feature = "rug"), feature = "num-bigint"))]
+#[cfg(all(not(feature = "fast-math"), feature = "default-math"))]
 use num_bigint::{BigInt, Sign};
-#[cfg(all(feature = "rug", not(feature = "num-bigint")))]
+#[cfg(all(feature = "fast-math", not(feature = "default-math")))]
 use rug::integer::Order;
-#[cfg(all(feature = "rug", not(feature = "num-bigint")))]
+#[cfg(all(feature = "fast-math", not(feature = "default-math")))]
 use rug::Integer as RugInt;
 use std::ops;
 
-#[cfg(all(feature = "rug", feature = "num-bigint"))]
-compile_error!("The features 'rug' and 'num-bigint' can not be enabled at the same time.\n\n The features exclusively select an arbitrary integer library.\n Use `num-bigint` if you want no-dependency compilation, but slow execution speed. Use 'rug' if you want exceptional execution speed but external dependencies.");
+#[cfg(all(feature = "fast-math", feature = "default-math"))]
+compile_error!("The features 'fast-math' and 'default-math' can not be enabled at the same time.\n\n The features exclusively select an arbitrary integer library.\n Use 'default-math' if you want no-dependency compilation, but slow execution speed. Use 'fast-math' if you want exceptional execution speed but external dependencies.");
 
-#[cfg(not(any(feature = "rug", feature = "num-bigint")))]
-compile_error!("Either the 'rug' feature or the 'num-bigint' feature must be enabled.\n\n The features exclusively select an arbitrary integer library.\n Use `num-bigint` if you want no-dependency compilation, but slow execution speed. Use 'rug' if you want exceptional execution speed but external dependencies.");
+#[cfg(not(any(feature = "fast-math", feature = "default-math")))]
+compile_error!("Either the 'fast-math' feature or the 'default-math' feature must be enabled.\n\n The features exclusively select an arbitrary integer library.\n Use 'default-math' if you want no-dependency compilation, but slow execution speed. Use 'fast-math' if you want exceptional execution speed but external dependencies.");
 
 pub(crate) struct Integer {
-    #[cfg(all(not(feature = "rug"), feature = "num-bigint"))]
+    #[cfg(all(not(feature = "fast-math"), feature = "default-math"))]
     value: BigInt,
-    #[cfg(all(feature = "rug", not(feature = "num-bigint")))]
+    #[cfg(all(feature = "fast-math", not(feature = "default-math")))]
     value: RugInt,
 }
 
-#[cfg(all(not(feature = "rug"), feature = "num-bigint"))]
+#[cfg(all(not(feature = "fast-math"), feature = "default-math"))]
 impl Integer {
     #[inline(always)]
     const fn from_bigint(bigint: BigInt) -> Self {
@@ -63,7 +63,7 @@ impl Integer {
     }
 }
 
-#[cfg(all(feature = "rug", not(feature = "num-bigint")))]
+#[cfg(all(feature = "fast-math", not(feature = "default-math")))]
 impl Integer {
     #[inline(always)]
     const fn from_bigint(bigint: RugInt) -> Self {
@@ -109,14 +109,14 @@ impl Integer {
         Self::from_bigint(RugInt::from_digits(&v, Order::LsfLe))
     }
 }
-#[cfg(all(not(feature = "rug"), feature = "num-bigint"))]
+#[cfg(all(not(feature = "fast-math"), feature = "default-math"))]
 impl From<u8> for Integer {
     fn from(v: u8) -> Self {
         Self::from_bigint(BigInt::from(v))
     }
 }
 
-#[cfg(all(feature = "rug", not(feature = "num-bigint")))]
+#[cfg(all(feature = "fast-math", not(feature = "default-math")))]
 impl From<u8> for Integer {
     fn from(v: u8) -> Self {
         Self::from_bigint(RugInt::from(v))
