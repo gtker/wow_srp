@@ -8,10 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* `TryFrom<&str>` and `TryFrom<String>` for `NormalizedString`.
+* `NormalizedString::from` and `NormalizedString::from_string`.
+These are intended to be the default way of constructing the struct from either a `&str` or `String`.
 
 ### Changed
-* BREAKING: `NormalizedString::new` takes an `AsRef<str>` instead of an `Into<String>`.
+* BREAKING: `NormalizedString::new` no longer has the guarantee of breaking API changes requiring a major version update.
 This is in order to switch to a stack allocated string type in the future, foregoing the allocation and heap fragmentation of a string that's smaller than the bookkeeping data.
+This will also alert users `NormalizedString::new` that internal changes have been made that could result in potential performance problems.
 * BREAKING: Changed named of features `num-bigint` and `rug` to `default-math` and `fast-math` respectively.
 This is in order to not be locked into specific libraries.
 

@@ -65,14 +65,38 @@
 //!
 
 use crate::error::NormalizedStringError;
+use std::convert::TryFrom;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
 /// Represents usernames and passwords containing only allowed characters.
 ///
-/// Ownership is always taken by the function requiring it in order to prevent any cloning and reallocation.
+/// See module [`normalized_string`](`crate::normalized_string`) for more information.
 ///
-/// See [`normalized_string`](`crate::normalized_string`) for more information.
+/// The [`NormalizedString::new`] method will always take the format that requires the
+/// least amount of translation to the underlying string format.
+/// **This method can change interface completely without it being a breaking change.**
+/// This is done deliberately in order to alert users of changes that could impact performance.
+///
+/// Iif you want stability Use the [`NormalizedString::from_string`] or [`NormalizedString::from`].
+///
+/// ```
+/// # use std::convert::TryInto;
+/// use wow_srp::error::NormalizedStringError;
+/// use wow_srp::normalized_string::NormalizedString;
+///
+/// # fn main() -> Result<(), NormalizedStringError> {
+/// // From &str
+/// let username = "Alice";
+/// let username: NormalizedString = username.try_into()?;
+///
+/// // From string
+/// let password = String::from("hunter2");
+/// let password: NormalizedString = password.try_into()?;
+/// # Ok(())
+/// # }
+/// ```
+///
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 pub struct NormalizedString {
     s: String,
@@ -92,8 +116,16 @@ impl NormalizedString {
     /// # Errors
     ///
     /// See the [module level docs](crate::normalized_string) for explanation of allowed values.
-    pub fn new<S: AsRef<str>>(s: S) -> Result<Self, NormalizedStringError> {
-        let s = s.as_ref();
+    ///
+    /// # Stability
+    ///
+    /// **This method can change interface completely without it being a breaking change.**
+    /// This is done deliberately in order to alert users of changes that could impact performance.
+    ///
+    /// Use the [`NormalizedString::from_string`] or [`NormalizedString::from`] conversions if you don't care about this.
+    ///
+    pub fn new(s: impl Into<String>) -> Result<Self, NormalizedStringError> {
+        let s: String = s.into();
 
         if s.len() > MAXIMUM_STRING_LENGTH_IN_BYTES as usize {
             return Err(NormalizedStringError::StringTooLong);
@@ -108,6 +140,56 @@ impl NormalizedString {
         Ok(Self {
             s: s.to_ascii_uppercase(),
         })
+    }
+
+    /// Checks for non-ASCII characters and too large of a string
+    /// and correctly uppercases letters as needed.
+    ///
+    /// Allowed characters are all ASCII characters except for ASCII control characters.
+    ///
+    /// # Errors
+    ///
+    /// See the [module level docs](crate::normalized_string) for explanation of allowed values.
+    ///
+    /// # Stability
+    ///
+    /// This method will not change interface without a major version bump, but it might have worse performance than [`NormalizedString::new`].
+    ///
+    pub fn from(s: impl AsRef<str>) -> Result<Self, NormalizedStringError> {
+        Self::new(s.as_ref())
+    }
+
+    /// Checks for non-ASCII characters and too large of a string
+    /// and correctly uppercases letters as needed.
+    ///
+    /// Allowed characters are all ASCII characters except for ASCII control characters.
+    ///
+    /// # Errors
+    ///
+    /// See the [module level docs](crate::normalized_string) for explanation of allowed values.
+    ///
+    /// # Stability
+    ///
+    /// This method will not change interface without a major version bump, but it might have worse performance than [`NormalizedString::new`].
+    ///
+    pub fn from_string(s: impl Into<String>) -> Result<Self, NormalizedStringError> {
+        Self::new(s)
+    }
+}
+
+impl TryFrom<&str> for NormalizedString {
+    type Error = NormalizedStringError;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        Self::new(s)
+    }
+}
+
+impl TryFrom<String> for NormalizedString {
+    type Error = NormalizedStringError;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        Self::new(s)
     }
 }
 
