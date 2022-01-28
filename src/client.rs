@@ -274,7 +274,7 @@ impl SrpClientUser {
             &server_public_key,
             &x,
             &self.client_private_key,
-            &u,
+            u,
             &generator,
             &large_safe_prime,
         );

@@ -95,7 +95,7 @@ pub fn calculate_password_verifier(
     salt: &Salt,
     // Return an array instead of Verifier because this is never directly used to create a Verifier
 ) -> [u8; PASSWORD_VERIFIER_LENGTH as usize] {
-    let x = calculate_x(username, password, &salt).to_bigint();
+    let x = calculate_x(username, password, salt).to_bigint();
 
     let generator = Generator::default().to_bigint();
     let large_safe_prime = LargeSafePrime::default().to_bigint();
@@ -184,12 +184,7 @@ pub fn calculate_session_key(
 ) -> SessionKey {
     let u = &calculate_u(client_public_key, server_public_key);
     #[allow(non_snake_case)]
-    let S = calculate_S(
-        &client_public_key,
-        &password_verifier,
-        &u,
-        &server_private_key,
-    );
+    let S = calculate_S(client_public_key, password_verifier, u, server_private_key);
 
     calculate_interleaved(&S)
 }
