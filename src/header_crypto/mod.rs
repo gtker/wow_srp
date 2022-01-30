@@ -360,6 +360,42 @@ mod test {
     use std::convert::TryInto;
 
     #[test]
+    fn verify_seed_proof() {
+        const FILE: &'static str = "tests/encryption/calculate_world_server_proof.txt";
+        let contents = read_to_string(FILE).unwrap();
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
+
+            let username = line.next().unwrap();
+            let session_key = SessionKey::from_be_hex_str(line.next().unwrap());
+            let server_seed = u32::from_le_bytes(
+                hex::decode(line.next().unwrap())
+                    .unwrap()
+                    .try_into()
+                    .unwrap(),
+            );
+            let client_seed = ProofSeed::from_specific_seed(u32::from_le_bytes(
+                hex::decode(line.next().unwrap())
+                    .unwrap()
+                    .try_into()
+                    .unwrap(),
+            ));
+            let expected: [u8; 20] = hex::decode(line.next().unwrap())
+                .unwrap()
+                .try_into()
+                .unwrap();
+
+            let (proof, _) = client_seed.into_proof_and_header_crypto(
+                &username.try_into().unwrap(),
+                *session_key.as_le(),
+                server_seed,
+            );
+
+            assert_eq!(expected, proof);
+        }
+    }
+
+    #[test]
     fn verify_client_and_server_agree() {
         let session_key = [
             239, 107, 150, 237, 174, 220, 162, 4, 138, 56, 166, 166, 138, 152, 188, 146, 96, 151,
