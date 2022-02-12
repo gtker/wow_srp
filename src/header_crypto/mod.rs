@@ -122,12 +122,13 @@ pub use encrypt::EncrypterHalf;
 use crate::error::MatchProofsError;
 use crate::key::{Proof, SessionKey};
 use crate::normalized_string::NormalizedString;
-use crate::srp_internal::calculate_world_server_proof;
 use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
+use internal::calculate_world_server_proof;
 use rand::{thread_rng, RngCore};
 
 pub(crate) mod decrypt;
 pub(crate) mod encrypt;
+mod internal;
 pub(crate) mod traits;
 
 /// Decrypted values from a server.
