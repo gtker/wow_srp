@@ -106,17 +106,16 @@ impl Integer {
         Self::from_bigint(RugInt::from_digits(&v, Order::LsfLe))
     }
 }
-#[cfg(all(not(feature = "srp-fast-math"), feature = "srp-default-math"))]
-impl From<u8> for Integer {
-    fn from(v: u8) -> Self {
-        Self::from_bigint(BigInt::from(v))
-    }
-}
 
-#[cfg(feature = "srp-fast-math")]
 impl From<u8> for Integer {
+    #[cfg(feature = "srp-fast-math")]
     fn from(v: u8) -> Self {
         Self::from_bigint(RugInt::from(v))
+    }
+
+    #[cfg(all(not(feature = "srp-fast-math"), feature = "srp-default-math"))]
+    fn from(v: u8) -> Self {
+        Self::from_bigint(BigInt::from(v))
     }
 }
 
