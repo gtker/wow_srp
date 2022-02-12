@@ -16,7 +16,7 @@ These are intended to be the default way of constructing the struct from either 
 * BREAKING: `NormalizedString::new` no longer has the guarantee of breaking API changes requiring a major version update.
 This is in order to switch to a stack allocated string type in the future, foregoing the allocation and heap fragmentation of a string that's smaller than the bookkeeping data.
 This will also alert users `NormalizedString::new` that internal changes have been made that could result in potential performance problems.
-* BREAKING: Changed named of features `num-bigint` and `rug` to `default-math` and `fast-math` respectively.
+* BREAKING: Changed named of features `num-bigint` and `rug` to `srp-default-math` and `srp-fast-math` respectively.
 This is in order to not be locked into specific libraries.
 
 ### Deprecated
