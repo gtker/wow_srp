@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.4.0] - 2022-02-20
+
+### Added
 * `TryFrom<&str>` and `TryFrom<String>` for `NormalizedString`.
 * `NormalizedString::from` and `NormalizedString::from_string`.
 These are intended to be the default way of constructing the struct from either a `&str` or `String`.
@@ -19,15 +33,8 @@ This will also alert users `NormalizedString::new` that internal changes have be
 * BREAKING: Changed named of features `num-bigint` and `rug` to `srp-default-math` and `srp-fast-math` respectively.
 This is in order to not be locked into specific libraries.
 
-### Deprecated
-
 ### Removed
 * Default features from `sha-1` dependency.
-
-### Fixed
-
-### Security
-
 
 ## [0.3.0] - 2021-08-05
 
@@ -83,6 +90,7 @@ The smaller integer size indicates that the value fits into a u8 without truncat
 ### Added
 - Initial release
 
+[0.4.0]: https://github.com/gtker/wow_srp/releases/tag/v0.4.0
 [0.3.0]: https://github.com/gtker/wow_srp/releases/tag/v0.3.0
 [0.2.0]: https://github.com/gtker/wow_srp/releases/tag/0.2.0
 [0.1.1]: https://github.com/gtker/wow_srp/releases/tag/v0.1.1
