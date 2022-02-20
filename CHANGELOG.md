@@ -22,6 +22,7 @@ This is in order to not be locked into specific libraries.
 ### Deprecated
 
 ### Removed
+* Default features from `sha-1` dependency.
 
 ### Fixed
 

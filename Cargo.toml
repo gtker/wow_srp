@@ -17,7 +17,7 @@ srp-fast-math = ["rug"]
 
 [dependencies]
 # Required for SRP6 algorithm
-sha-1 = "0.9"
+sha-1 = { version = "0.9", default-features = false }
 
 # Required for generating private keys
 rand = "0.8"
