@@ -300,9 +300,16 @@ impl SKey {
     pub fn to_equal_slice(&self) -> &[u8] {
         let mut s = &self.key[..];
 
-        if *s.first().unwrap() == 0 {
-            s = &s[2..];
+        let mut lead = 0;
+        while s[lead] == 0 {
+            lead += 1;
         }
+
+        if lead % 2 != 0 {
+            lead += 1;
+        }
+
+        s = &s[lead..];
         s
     }
 }
