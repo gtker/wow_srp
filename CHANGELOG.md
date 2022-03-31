@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+* Developer dependencies on `hex_literal` and `hex`.
+
 ### Fixed
 
 ### Security

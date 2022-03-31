@@ -29,8 +29,6 @@ num-bigint = { version = "0.4", optional = true }
 rug = { version = "1.13", features = ["integer"], default-features = false, optional = true }
 
 [dev-dependencies]
-# Used for easily converting hex strings to arrays for tests
-hex = "0.4"
 # Required for benchmarking.
 criterion = "0.3"
 
