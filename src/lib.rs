@@ -74,6 +74,11 @@
 //! To see the performance difference on your setup you can run `cargo bench` for the default version,
 //! and `cargo bench --features fast-math --no-default-features` for the `fast-math` version.
 //!
+//! # MSRV
+//!
+//! `wow_srp` has a Minimum Supported Rust Version (MSRV) of 1.48.0.
+//! The MSRV may be increased in `PATCH` versions before `wow_srp` reaches `1.0.0` (`MAJOR.MINOR.PATCH`).
+//!
 //! # Other implementations
 //!
 //! * [Ember](https://github.com/EmberEmu/Ember/tree/development/src/libs/srp6) is a C++ implementation for 1.12 with a clean, tested implementation of the protocol.

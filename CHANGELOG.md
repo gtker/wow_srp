@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Explicit Minimum Supported Rust Version (MSRV) of 1.48.0.
+When `wow_srp` is version `<1.0.0` the MSRV may be bumped in `PATCH` releases (`MAJOR.MINOR.PATCH`).
+
 ### Changed
 
 ### Deprecated

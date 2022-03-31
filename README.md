@@ -40,6 +40,11 @@ this feature for production usage since it also theoretically has better securit
 To see the performance difference on your setup you can run `cargo bench` for the default version,
 and `cargo bench --features fast-math --no-default-features` for the `fast-math` version.
 
+# MSRV
+
+`wow_srp` has a Minimum Supported Rust Version (MSRV) of 1.48.0.
+The MSRV may be increased in `PATCH` versions before `wow_srp` reaches `1.0.0` (`MAJOR.MINOR.PATCH`).
+
 ## License
 
 Licensed under either of
