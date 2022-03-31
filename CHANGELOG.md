@@ -20,6 +20,8 @@ When `wow_srp` is version `<1.0.0` the MSRV may be bumped in `PATCH` releases (`
 
 * Developer dependencies on `hex_literal` and `hex`.
 
+* Default features from `num_bigint`.
+
 ### Fixed
 
 ### Security

@@ -26,7 +26,7 @@ rand = "0.8"
 # Required for SRP6 algorithm.
 # rug is ~100% faster than num-bigint (50% reduced time used) but is not
 # pure Rust so it has external dependencies.
-num-bigint = { version = "0.4", optional = true }
+num-bigint = { version = "0.4", default-features = false, optional = true }
 rug = { version = "1.13", features = ["integer"], default-features = false, optional = true }
 
 [dev-dependencies]
