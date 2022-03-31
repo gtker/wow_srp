@@ -16,22 +16,32 @@ default = ["srp-default-math"]
 srp-default-math = ["num-bigint"]
 srp-fast-math = ["rug"]
 
-[dependencies]
+[dependencies.sha-1]
 # Required for SRP6 algorithm
-sha-1 = { version = "0.9", default-features = false }
+version = "0.9"
+default-features = false
 
+[dependencies.rand]
 # Required for generating private keys
-rand = "0.8"
+version = "0.8"
 
+[dependencies.num-bigint]
 # Required for SRP6 algorithm.
+version = "0.4"
+default-features = false
+optional = true
+
+[dependencies.rug]
 # rug is ~100% faster than num-bigint (50% reduced time used) but is not
 # pure Rust so it has external dependencies.
-num-bigint = { version = "0.4", default-features = false, optional = true }
-rug = { version = "1.13", features = ["integer"], default-features = false, optional = true }
+version = "1.13"
+features = ["integer"]
+default-features = false
+optional = true
 
-[dev-dependencies]
+[dev-dependencies.criterion]
 # Required for benchmarking.
-criterion = "0.3"
+version = "0.3"
 
 [[bench]]
 name = "benchmark"
