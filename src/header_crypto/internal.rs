@@ -24,6 +24,7 @@ pub fn calculate_world_server_proof(
 #[cfg(test)]
 mod test {
     use crate::header_crypto::internal::calculate_world_server_proof;
+    use crate::hex::*;
     use crate::key::{Proof, SessionKey};
     use crate::normalized_string::NormalizedString;
     use std::convert::TryInto;
@@ -41,18 +42,10 @@ mod test {
 
             let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
 
-            let server_seed = u32::from_le_bytes(
-                hex::decode(line.next().unwrap())
-                    .unwrap()
-                    .try_into()
-                    .unwrap(),
-            );
-            let client_seed = u32::from_le_bytes(
-                hex::decode(line.next().unwrap())
-                    .unwrap()
-                    .try_into()
-                    .unwrap(),
-            );
+            let server_seed =
+                u32::from_le_bytes(hex_decode(line.next().unwrap()).try_into().unwrap());
+            let client_seed =
+                u32::from_le_bytes(hex_decode(line.next().unwrap()).try_into().unwrap());
 
             let expected = Proof::from_le_hex_str(line.next().unwrap());
 

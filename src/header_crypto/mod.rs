@@ -355,6 +355,7 @@ mod test {
 
     use crate::header_crypto::traits::{Decrypter, Encrypter};
     use crate::header_crypto::{HeaderCrypto, ProofSeed};
+    use crate::hex::*;
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
     use crate::SESSION_KEY_LENGTH;
@@ -369,22 +370,12 @@ mod test {
 
             let username = line.next().unwrap();
             let session_key = SessionKey::from_be_hex_str(line.next().unwrap());
-            let server_seed = u32::from_le_bytes(
-                hex::decode(line.next().unwrap())
-                    .unwrap()
-                    .try_into()
-                    .unwrap(),
-            );
+            let server_seed =
+                u32::from_le_bytes(hex_decode(line.next().unwrap()).try_into().unwrap());
             let client_seed = ProofSeed::from_specific_seed(u32::from_le_bytes(
-                hex::decode(line.next().unwrap())
-                    .unwrap()
-                    .try_into()
-                    .unwrap(),
+                hex_decode(line.next().unwrap()).try_into().unwrap(),
             ));
-            let expected: [u8; 20] = hex::decode(line.next().unwrap())
-                .unwrap()
-                .try_into()
-                .unwrap();
+            let expected: [u8; 20] = hex_decode(line.next().unwrap()).try_into().unwrap();
 
             let (proof, _) = client_seed.into_proof_and_header_crypto(
                 &username.try_into().unwrap(),
@@ -417,7 +408,7 @@ mod test {
             .into_header_crypto(&username, session_key, client_proof, client_seed_value)
             .unwrap();
 
-        let original_data = hex::decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca").unwrap();
+        let original_data = hex_decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca");
         let mut data = original_data.clone();
 
         client_crypto.encrypt(&mut data);
@@ -544,10 +535,10 @@ mod test {
         for line in contents.lines() {
             let mut line = line.split_whitespace();
             let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
-            let mut data = hex::decode(line.next().unwrap()).unwrap();
+            let mut data = hex_decode(line.next().unwrap());
             let mut split_data = data.clone();
             let original_data = data.clone();
-            let expected = hex::decode(line.next().unwrap()).unwrap();
+            let expected = hex_decode(line.next().unwrap());
 
             // Bypass checking seeds and proofs because they aren't there
             let mut encryption = HeaderCrypto {
@@ -561,14 +552,14 @@ mod test {
             encryption.encrypt(&mut data);
 
             assert_eq!(
-                hex::encode(&expected),
-                hex::encode(&data),
+                hex_encode(&expected),
+                hex_encode(&data),
                 "Session Key: {},
                  data: {},
                  Got data: {}",
-                hex::encode(session_key.as_le()),
-                hex::encode(&original_data),
-                hex::encode(&data)
+                hex_encode(session_key.as_le()),
+                hex_encode(&original_data),
+                hex_encode(&data)
             );
 
             // Bypass checking seeds and proofs because they aren't there
@@ -584,14 +575,14 @@ mod test {
             enc.encrypt(&mut split_data);
 
             assert_eq!(
-                hex::encode(&expected),
-                hex::encode(&split_data),
+                hex_encode(&expected),
+                hex_encode(&split_data),
                 "Session Key: {},
                  data: {},
                  Got data: {}",
-                hex::encode(session_key.as_le()),
-                hex::encode(&original_data),
-                hex::encode(&split_data)
+                hex_encode(session_key.as_le()),
+                hex_encode(&original_data),
+                hex_encode(&split_data)
             );
         }
     }
@@ -600,13 +591,12 @@ mod test {
     fn verify_mixed_used() {
         // Verify that mixed use does not interfere with each other
 
-        let session_key = hex::decode(
+        let session_key = hex_decode(
             "2EFEE7B0C177EBBDFF6676C56EFC2339BE9CAD14BF8B54BB5A86FBF81F6D424AA23CC9A3149FB175",
-        )
-        .unwrap();
+        );
         let session_key: [u8; SESSION_KEY_LENGTH as usize] = session_key.try_into().unwrap();
 
-        let original_data = hex::decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca").unwrap();
+        let original_data = hex_decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca");
         let mut encrypt_data = original_data.clone();
         let mut decrypt_data = original_data.clone();
 
@@ -630,8 +620,8 @@ mod test {
             encryption.decrypt(&mut decrypt_data[i..(i) + STEP]);
         }
 
-        let expected_decrypt = hex::decode("13a3a0059817e73404d97cd455159b50d40af74a22f719aacb6a9a2e991982c61a6f0285f880cc8512ec2ef1c98fa923512f").unwrap();
-        let expected_encrypt = hex::decode("13777da3d109b912322a08841e3ff5bc92f4e98b77bb03997da999b22ae0b926a3b1e56580314b3932499ee11b9f7deb6915").unwrap();
+        let expected_decrypt = hex_decode("13a3a0059817e73404d97cd455159b50d40af74a22f719aacb6a9a2e991982c61a6f0285f880cc8512ec2ef1c98fa923512f");
+        let expected_encrypt = hex_decode("13777da3d109b912322a08841e3ff5bc92f4e98b77bb03997da999b22ae0b926a3b1e56580314b3932499ee11b9f7deb6915");
         assert_eq!(
             expected_decrypt, decrypt_data,
             "Original data: {:?}, expected: {:?}, got: {:?}",
@@ -647,13 +637,12 @@ mod test {
     #[test]
     fn verify_splitting() {
         // Verify that splitting and combining again works
-        let session_key = hex::decode(
+        let session_key = hex_decode(
             "2EFEE7B0C177EBBDFF6676C56EFC2339BE9CAD14BF8B54BB5A86FBF81F6D424AA23CC9A3149FB175",
-        )
-        .unwrap();
+        );
         let session_key: [u8; SESSION_KEY_LENGTH as usize] = session_key.try_into().unwrap();
 
-        let original_data = hex::decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca").unwrap();
+        let original_data = hex_decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca");
         let mut encrypt_data = original_data.clone();
         let mut decrypt_data = original_data.clone();
 
@@ -684,8 +673,8 @@ mod test {
         encryption.encrypt(&mut encrypt_data[STEP * 2..]);
         encryption.decrypt(&mut decrypt_data[STEP * 2..]);
 
-        let expected_decrypt = hex::decode("13a3a0059817e73404d97cd455159b50d40af74a22f719aacb6a9a2e991982c61a6f0285f880cc8512ec2ef1c98fa923512f").unwrap();
-        let expected_encrypt = hex::decode("13777da3d109b912322a08841e3ff5bc92f4e98b77bb03997da999b22ae0b926a3b1e56580314b3932499ee11b9f7deb6915").unwrap();
+        let expected_decrypt = hex_decode("13a3a0059817e73404d97cd455159b50d40af74a22f719aacb6a9a2e991982c61a6f0285f880cc8512ec2ef1c98fa923512f");
+        let expected_encrypt = hex_decode("13777da3d109b912322a08841e3ff5bc92f4e98b77bb03997da999b22ae0b926a3b1e56580314b3932499ee11b9f7deb6915");
         assert_eq!(
             expected_decrypt, decrypt_data,
             "Original data: {:?}, expected: {:?}, got: {:?}",
@@ -701,10 +690,9 @@ mod test {
     #[test]
     fn verify_trait_helpers() {
         // Verify that the trait helpers do the same thing as manually encrypting/decrypting
-        let session_key = hex::decode(
+        let session_key = hex_decode(
             "2EFEE7B0C177EBBDFF6676C56EFC2339BE9CAD14BF8B54BB5A86FBF81F6D424AA23CC9A3149FB175",
-        )
-        .unwrap();
+        );
         let session_key: [u8; SESSION_KEY_LENGTH as usize] = session_key.try_into().unwrap();
 
         let original_data = [
@@ -803,10 +791,10 @@ mod test {
         for line in contents.lines() {
             let mut line = line.split_whitespace();
             let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
-            let mut data = hex::decode(line.next().unwrap()).unwrap();
+            let mut data = hex_decode(line.next().unwrap());
             let mut split_data = data.clone();
             let original_data = data.clone();
-            let expected = hex::decode(line.next().unwrap()).unwrap();
+            let expected = hex_decode(line.next().unwrap());
 
             let mut encryption = HeaderCrypto {
                 session_key: *session_key.as_le(),
@@ -819,14 +807,14 @@ mod test {
             encryption.decrypt(&mut data);
 
             assert_eq!(
-                hex::encode(&expected),
-                hex::encode(&data),
+                hex_encode(&expected),
+                hex_encode(&data),
                 "Session Key: {},
                  data: {},
                  Got data: {}",
-                hex::encode(session_key.as_le()),
-                hex::encode(&original_data),
-                hex::encode(&data)
+                hex_encode(session_key.as_le()),
+                hex_encode(&original_data),
+                hex_encode(&data)
             );
 
             let full = HeaderCrypto {
@@ -841,14 +829,14 @@ mod test {
             dec.decrypt(&mut split_data);
 
             assert_eq!(
-                hex::encode(&expected),
-                hex::encode(&split_data),
+                hex_encode(&expected),
+                hex_encode(&split_data),
                 "Session Key: {},
                  data: {},
                  Got data: {}",
-                hex::encode(session_key.as_le()),
-                hex::encode(&original_data),
-                hex::encode(&split_data),
+                hex_encode(session_key.as_le()),
+                hex_encode(&original_data),
+                hex_encode(&split_data),
             );
         }
     }

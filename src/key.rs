@@ -6,6 +6,8 @@ use crate::bigint;
 use rand::{thread_rng, RngCore};
 
 use crate::error::InvalidPublicKeyError;
+#[cfg(test)]
+use crate::hex::*;
 use crate::primes::{LargeSafePrime, LARGE_SAFE_PRIME_LENGTH};
 use crate::LARGE_SAFE_PRIME_LITTLE_ENDIAN;
 
@@ -71,7 +73,7 @@ macro_rules! key_check_not_zero_initialization {
 
             #[cfg(test)]
             pub(crate) fn from_be_hex_str(s: &str) -> Result<Self, InvalidPublicKeyError> {
-                let mut key = hex::decode(&s).unwrap();
+                let mut key = hex_decode(&s);
                 key.reverse();
 
                 if key.len() > $size {
@@ -140,7 +142,7 @@ macro_rules! key_no_checks_initialization {
             #[cfg(test)]
             #[allow(dead_code)]
             pub fn from_be_hex_str(s: &str) -> Self {
-                let mut key = hex::decode(&s).unwrap();
+                let mut key = hex_decode(&s);
                 key.reverse();
 
                 while key.len() < $size {
@@ -197,7 +199,7 @@ macro_rules! key_wrapper {
                 let mut key = self.key;
                 key.reverse();
 
-                let mut s = hex::encode_upper(&key);
+                let mut s = hex_encode_upper(&key);
                 while s.len() < $size * 2 {
                     s = "0".to_owned() + &s;
                 }
@@ -207,7 +209,7 @@ macro_rules! key_wrapper {
             #[allow(dead_code)]
             #[cfg(test)]
             pub(crate) fn from_le_hex_str(s: &str) -> Self {
-                let key = hex::decode(&s).unwrap();
+                let key = hex_decode(&s);
 
                 let key = <[u8; $size]>::try_from(key).unwrap();
 

@@ -677,6 +677,7 @@ impl SrpServer {
 #[cfg(test)]
 mod test {
 
+    use crate::hex::*;
     use crate::key::{PrivateKey, Proof, PublicKey, Salt};
     use crate::normalized_string::NormalizedString;
     use crate::server::SrpVerifier;
@@ -702,12 +703,12 @@ mod test {
         let mut server_public_key = *s.server_public_key();
         server_public_key.reverse();
         assert_eq!(
-            hex::encode(&server_public_key),
+            hex_encode(&server_public_key),
             "13ed2108a7c50c4aa451c05e3c8ba779c2201a9dbccc0841041c2466c5e24000"
         );
 
         assert_eq!(
-            hex::encode(s.salt()),
+            hex_encode(s.salt()),
             "3c817155ed2215bf1623b08ae339977c294e590a39c8f64e9fea0bb3131e7765"
         );
 

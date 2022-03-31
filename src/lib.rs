@@ -121,3 +121,6 @@ pub(crate) mod primes;
 pub mod server;
 pub(crate) mod srp_internal;
 pub(crate) mod srp_internal_client;
+
+#[cfg(test)]
+pub(crate) mod hex;
