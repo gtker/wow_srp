@@ -22,13 +22,6 @@ pub const LARGE_SAFE_PRIME_LENGTH: u8 = 32;
 ///
 /// Always has the static size of [32 bytes](LARGE_SAFE_PRIME_LENGTH).
 ///
-/// ```rust
-/// use hex_literal::hex;
-/// use wow_srp::LARGE_SAFE_PRIME_BIG_ENDIAN;
-///
-/// assert_eq!(LARGE_SAFE_PRIME_BIG_ENDIAN,
-///  hex!("894B645E89E1535BBDAD5B8B290650530801B18EBFBF5E8FAB3C82872A3E9BB7"));
-/// ```
 #[doc(alias = "N")]
 pub const LARGE_SAFE_PRIME_BIG_ENDIAN: [u8; LARGE_SAFE_PRIME_LENGTH as usize] = [
     0x89, 0x4b, 0x64, 0x5e, 0x89, 0xe1, 0x53, 0x5b, 0xbd, 0xad, 0x5b, 0x8b, 0x29, 0x6, 0x50, 0x53,
@@ -43,13 +36,6 @@ pub const LARGE_SAFE_PRIME_BIG_ENDIAN: [u8; LARGE_SAFE_PRIME_LENGTH as usize] = 
 ///
 /// Always has the static size of [32 bytes](LARGE_SAFE_PRIME_LENGTH).
 ///
-/// ```rust
-/// use hex_literal::hex;
-/// use wow_srp::LARGE_SAFE_PRIME_LITTLE_ENDIAN;
-///
-/// assert_eq!(LARGE_SAFE_PRIME_LITTLE_ENDIAN,
-///  hex!("b79b3e2a87823cab8f5ebfbf8eb10108535006298b5badbd5b53e1895e644b89"));
-/// ```
 #[doc(alias = "N")]
 pub const LARGE_SAFE_PRIME_LITTLE_ENDIAN: [u8; LARGE_SAFE_PRIME_LENGTH as usize] = [
     0xb7, 0x9b, 0x3e, 0x2a, 0x87, 0x82, 0x3c, 0xab, 0x8f, 0x5e, 0xbf, 0xbf, 0x8e, 0xb1, 0x1, 0x8,
@@ -129,5 +115,28 @@ pub(crate) struct KValue {}
 impl KValue {
     pub fn bigint() -> bigint::Integer {
         bigint::Integer::from(K_VALUE)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn large_safe_prime_regression() {
+        const EXPECTED_BIG_ENDIAN: [u8; super::LARGE_SAFE_PRIME_LENGTH as usize] = [
+            0x89, 0x4b, 0x64, 0x5e, 0x89, 0xe1, 0x53, 0x5b, 0xbd, 0xad, 0x5b, 0x8b, 0x29, 0x6,
+            0x50, 0x53, 0x8, 0x1, 0xb1, 0x8e, 0xbf, 0xbf, 0x5e, 0x8f, 0xab, 0x3c, 0x82, 0x87, 0x2a,
+            0x3e, 0x9b, 0xb7,
+        ];
+        const EXPECTED_LITTLE_ENDIAN: [u8; super::LARGE_SAFE_PRIME_LENGTH as usize] = [
+            0xb7, 0x9b, 0x3e, 0x2a, 0x87, 0x82, 0x3c, 0xab, 0x8f, 0x5e, 0xbf, 0xbf, 0x8e, 0xb1,
+            0x1, 0x8, 0x53, 0x50, 0x6, 0x29, 0x8b, 0x5b, 0xad, 0xbd, 0x5b, 0x53, 0xe1, 0x89, 0x5e,
+            0x64, 0x4b, 0x89,
+        ];
+
+        assert_eq!(EXPECTED_BIG_ENDIAN, super::LARGE_SAFE_PRIME_BIG_ENDIAN);
+        assert_eq!(
+            EXPECTED_LITTLE_ENDIAN,
+            super::LARGE_SAFE_PRIME_LITTLE_ENDIAN
+        );
     }
 }

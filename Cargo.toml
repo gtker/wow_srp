@@ -29,8 +29,6 @@ num-bigint = { version = "0.4", optional = true }
 rug = { version = "1.13", features = ["integer"], default-features = false, optional = true }
 
 [dev-dependencies]
-# Used only in doctest to show easily readable large safe prime
-hex-literal = "0.3"
 # Used for easily converting hex strings to arrays for tests
 hex = "0.4"
 # Required for benchmarking.
