@@ -114,7 +114,7 @@ fn authentication_logon_challenge(stream: &mut TcpStream, client: &mut Vec<SrpSe
             panic!("Invalid client public key. This is likely a result of malformed packets.")
         }
     };
-    let client_public_key_hex = hex::encode(client_public_key.as_le());
+    let client_public_key_hex = *client_public_key.as_le();
 
     let mut client_proof = [0u8; PROOF_LENGTH as usize];
     client_proof.clone_from_slice(&buffer[33..33 + PROOF_LENGTH as usize]);
@@ -124,9 +124,9 @@ fn authentication_logon_challenge(stream: &mut TcpStream, client: &mut Vec<SrpSe
         Ok(s) => s,
         Err(_) => {
             println!(
-                "Client public key: '{}', Client proof: '{}'",
+                "Client public key: '{:02x?}', Client proof: '{:02x?}'",
                 client_public_key_hex,
-                hex::encode(&client_proof)
+                &client_proof
             );
             panic!("error in proof");
         }
