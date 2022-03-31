@@ -125,8 +125,7 @@ fn authentication_logon_challenge(stream: &mut TcpStream, client: &mut Vec<SrpSe
         Err(_) => {
             println!(
                 "Client public key: '{:02x?}', Client proof: '{:02x?}'",
-                client_public_key_hex,
-                &client_proof
+                client_public_key_hex, &client_proof
             );
             panic!("error in proof");
         }
