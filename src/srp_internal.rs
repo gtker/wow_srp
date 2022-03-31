@@ -259,272 +259,268 @@ pub fn calculate_reconnect_proof(
 
 #[cfg(test)]
 mod test {
+    use crate::key::{
+        PrivateKey, Proof, PublicKey, ReconnectData, SKey, Salt, SessionKey, Sha1Hash, Verifier,
+    };
+    use crate::normalized_string::NormalizedString;
     use crate::primes::{
         Generator, LargeSafePrime, LARGE_SAFE_PRIME_BIG_ENDIAN, LARGE_SAFE_PRIME_LITTLE_ENDIAN,
     };
-    use crate::srp_internal::{calculate_xor_hash, PRECALCULATED_XOR_HASH};
+    use crate::srp_internal::{
+        calculate_S, calculate_client_proof, calculate_interleaved, calculate_password_verifier,
+        calculate_reconnect_proof, calculate_server_proof, calculate_server_public_key,
+        calculate_session_key, calculate_u, calculate_x, calculate_xor_hash,
+        PRECALCULATED_XOR_HASH,
+    };
+    use std::fs::read_to_string;
 
-    mod regression {
-        use crate::key::{
-            PrivateKey, Proof, PublicKey, ReconnectData, SKey, Salt, SessionKey, Sha1Hash, Verifier,
-        };
-        use crate::normalized_string::NormalizedString;
-        use crate::srp_internal::{
-            calculate_S, calculate_client_proof, calculate_interleaved,
-            calculate_password_verifier, calculate_reconnect_proof, calculate_server_proof,
-            calculate_server_public_key, calculate_session_key, calculate_u, calculate_x,
-        };
-        use std::fs::read_to_string;
+    #[test]
+    fn verify_reconnection_proof() {
+        let contents =
+            read_to_string("tests/srp6_internal/calculate_reconnection_values.txt").unwrap();
 
-        #[test]
-        fn verify_reconnection_proof() {
-            let contents =
-                read_to_string("tests/srp6_internal/calculate_reconnection_values.txt").unwrap();
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
+            let username = NormalizedString::new(line.next().unwrap()).unwrap();
+            let client_data = ReconnectData::from_le_hex_str(line.next().unwrap());
+            let server_data = ReconnectData::from_le_hex_str(line.next().unwrap());
+            let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
+            let expected = Proof::from_le_hex_str(line.next().unwrap());
 
-            for line in contents.lines() {
-                let mut line = line.split_whitespace();
-                let username = NormalizedString::new(line.next().unwrap()).unwrap();
-                let client_data = ReconnectData::from_le_hex_str(line.next().unwrap());
-                let server_data = ReconnectData::from_le_hex_str(line.next().unwrap());
-                let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
-                let expected = Proof::from_le_hex_str(line.next().unwrap());
-
-                let proof =
-                    calculate_reconnect_proof(&username, &client_data, &server_data, &session_key);
-                assert_eq!(proof, expected);
-            }
+            let proof =
+                calculate_reconnect_proof(&username, &client_data, &server_data, &session_key);
+            assert_eq!(proof, expected);
         }
+    }
 
-        #[test]
-        fn verify_x_username_and_password() {
-            let contents = read_to_string("tests/srp6_internal/calculate_x_values.txt").unwrap();
-            let salt = Salt::from_be_hex_str(
-                "CAC94AF32D817BA64B13F18FDEDEF92AD4ED7EF7AB0E19E9F2AE13C828AEAF57",
+    #[test]
+    fn verify_x_username_and_password() {
+        let contents = read_to_string("tests/srp6_internal/calculate_x_values.txt").unwrap();
+        let salt = Salt::from_be_hex_str(
+            "CAC94AF32D817BA64B13F18FDEDEF92AD4ED7EF7AB0E19E9F2AE13C828AEAF57",
+        );
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
+            let username = NormalizedString::new(line.next().unwrap()).unwrap();
+            let password = NormalizedString::new(line.next().unwrap()).unwrap();
+
+            let expected = Sha1Hash::from_be_hex_str(line.next().unwrap());
+
+            let x = calculate_x(&username, &password, &salt);
+
+            // Normalize hex values to uppercase
+            assert_eq!(
+                expected,
+                x,
+                "{}",
+                format!("Salt: '{}'", &salt.to_be_hex_string())
             );
-            for line in contents.lines() {
-                let mut line = line.split_whitespace();
-                let username = NormalizedString::new(line.next().unwrap()).unwrap();
-                let password = NormalizedString::new(line.next().unwrap()).unwrap();
-
-                let expected = Sha1Hash::from_be_hex_str(line.next().unwrap());
-
-                let x = calculate_x(&username, &password, &salt);
-
-                // Normalize hex values to uppercase
-                assert_eq!(
-                    expected,
-                    x,
-                    "{}",
-                    format!("Salt: '{}'", &salt.to_be_hex_string())
-                );
-            }
         }
+    }
 
-        #[test]
-        fn verify_x_salt() {
-            let contents =
-                read_to_string("tests/srp6_internal/calculate_x_salt_values.txt").unwrap();
-            let username = NormalizedString::new("USERNAME123").unwrap();
-            let password = NormalizedString::new("PASSWORD123").unwrap();
+    #[test]
+    fn verify_x_salt() {
+        let contents = read_to_string("tests/srp6_internal/calculate_x_salt_values.txt").unwrap();
+        let username = NormalizedString::new("USERNAME123").unwrap();
+        let password = NormalizedString::new("PASSWORD123").unwrap();
 
-            for line in contents.lines() {
-                let mut line = line.split_whitespace();
-                let salt = Salt::from_be_hex_str(line.next().unwrap());
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
+            let salt = Salt::from_be_hex_str(line.next().unwrap());
 
-                let expected = Sha1Hash::from_be_hex_str(line.next().unwrap());
+            let expected = Sha1Hash::from_be_hex_str(line.next().unwrap());
 
-                let x = calculate_x(&username, &password, &salt);
+            let x = calculate_x(&username, &password, &salt);
 
-                // Normalize hex values to uppercase
-                assert_eq!(
-                    expected,
-                    x,
-                    "{}",
-                    format!("Salt: '{}'", &salt.to_be_hex_string())
-                );
-            }
+            // Normalize hex values to uppercase
+            assert_eq!(
+                expected,
+                x,
+                "{}",
+                format!("Salt: '{}'", &salt.to_be_hex_string())
+            );
         }
+    }
 
-        #[test]
-        fn verify_password_verifier_username_password_salt() {
-            let contents = read_to_string("tests/srp6_internal/calculate_v_values.txt").unwrap();
+    #[test]
+    fn verify_password_verifier_username_password_salt() {
+        let contents = read_to_string("tests/srp6_internal/calculate_v_values.txt").unwrap();
 
-            for line in contents.lines() {
-                let mut line = line.split_whitespace();
-                let username = NormalizedString::new(line.next().unwrap()).unwrap();
-                let password = NormalizedString::new(line.next().unwrap()).unwrap();
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
+            let username = NormalizedString::new(line.next().unwrap()).unwrap();
+            let password = NormalizedString::new(line.next().unwrap()).unwrap();
 
-                let salt = Salt::from_be_hex_str(line.next().unwrap());
+            let salt = Salt::from_be_hex_str(line.next().unwrap());
 
-                let expected = Verifier::from_be_hex_str(line.next().unwrap());
+            let expected = Verifier::from_be_hex_str(line.next().unwrap());
 
-                let v = Verifier::from_le_bytes(calculate_password_verifier(
-                    &username, &password, &salt,
-                ));
+            let v =
+                Verifier::from_le_bytes(calculate_password_verifier(&username, &password, &salt));
 
-                // Normalize hex values to uppercase
-                assert_eq!(
-                    expected,
-                    v,
-                    "{}",
-                    format!(
-                        "Username: '{}',\n Password: '{}',\n Salt: '{}'",
-                        username,
-                        password,
-                        &salt.to_be_hex_string()
-                    )
-                );
-            }
+            // Normalize hex values to uppercase
+            assert_eq!(
+                expected,
+                v,
+                "{}",
+                format!(
+                    "Username: '{}',\n Password: '{}',\n Salt: '{}'",
+                    username,
+                    password,
+                    &salt.to_be_hex_string()
+                )
+            );
         }
+    }
 
-        #[test]
-        fn verify_server_public_key_calculation() {
-            let contents = read_to_string("tests/srp6_internal/calculate_B_values.txt").unwrap();
-            for line in contents.lines() {
-                let mut line = line.split_whitespace();
+    #[test]
+    fn verify_server_public_key_calculation() {
+        let contents = read_to_string("tests/srp6_internal/calculate_B_values.txt").unwrap();
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
 
-                let verifier = Verifier::from_be_hex_str(line.next().unwrap());
+            let verifier = Verifier::from_be_hex_str(line.next().unwrap());
 
-                let server_private_key = PrivateKey::from_be_hex_str(line.next().unwrap());
+            let server_private_key = PrivateKey::from_be_hex_str(line.next().unwrap());
 
-                let expected = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
+            let expected = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
 
-                let server_public_key =
-                    calculate_server_public_key(&verifier, &server_private_key).unwrap();
+            let server_public_key =
+                calculate_server_public_key(&verifier, &server_private_key).unwrap();
 
-                // Normalize hex values to uppercase
-                assert_eq!(
-                    expected,
-                    server_public_key,
-                    "{}",
-                    format!(
-                        "v: '{}',\n b: '{}'",
-                        verifier.to_be_hex_string(),
-                        server_private_key.to_be_hex_string(),
-                    )
-                );
-            }
+            // Normalize hex values to uppercase
+            assert_eq!(
+                expected,
+                server_public_key,
+                "{}",
+                format!(
+                    "v: '{}',\n b: '{}'",
+                    verifier.to_be_hex_string(),
+                    server_private_key.to_be_hex_string(),
+                )
+            );
         }
+    }
 
-        #[test]
-        fn verify_u() {
-            let contents = read_to_string("tests/srp6_internal/calculate_u_values.txt").unwrap();
+    #[test]
+    fn verify_u() {
+        let contents = read_to_string("tests/srp6_internal/calculate_u_values.txt").unwrap();
 
-            for line in contents.lines() {
-                let mut line = line.split_whitespace();
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
 
-                let client_public_key = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
+            let client_public_key = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
 
-                let server_public_key = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
+            let server_public_key = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
 
-                let expected = Sha1Hash::from_be_hex_str(line.next().unwrap());
+            let expected = Sha1Hash::from_be_hex_str(line.next().unwrap());
 
-                let u = calculate_u(&client_public_key, &server_public_key);
+            let u = calculate_u(&client_public_key, &server_public_key);
 
-                assert_eq!(
-                    expected,
-                    u,
-                    "{}",
-                    format!(
-                        "A: '{}',\n B: '{}'",
-                        client_public_key.to_be_hex_string(),
-                        server_public_key.to_be_hex_string()
-                    )
-                );
-            }
+            assert_eq!(
+                expected,
+                u,
+                "{}",
+                format!(
+                    "A: '{}',\n B: '{}'",
+                    client_public_key.to_be_hex_string(),
+                    server_public_key.to_be_hex_string()
+                )
+            );
         }
+    }
 
-        #[test]
-        #[allow(non_snake_case)]
-        fn verify_S() {
-            let contents = read_to_string("tests/srp6_internal/calculate_S_values.txt").unwrap();
+    #[test]
+    #[allow(non_snake_case)]
+    fn verify_S() {
+        let contents = read_to_string("tests/srp6_internal/calculate_S_values.txt").unwrap();
 
-            for line in contents.lines() {
-                let mut line = line.split_whitespace();
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
 
-                let client_public_key = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
+            let client_public_key = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
 
-                let password_verifier = Verifier::from_be_hex_str(line.next().unwrap());
+            let password_verifier = Verifier::from_be_hex_str(line.next().unwrap());
 
-                let u = Sha1Hash::from_be_hex_str(line.next().unwrap());
+            let u = Sha1Hash::from_be_hex_str(line.next().unwrap());
 
-                let server_private_key = PrivateKey::from_be_hex_str(line.next().unwrap());
+            let server_private_key = PrivateKey::from_be_hex_str(line.next().unwrap());
 
-                let expected = SKey::from_be_hex_str(line.next().unwrap());
+            let expected = SKey::from_be_hex_str(line.next().unwrap());
 
-                let S = calculate_S(
-                    &client_public_key,
-                    &password_verifier,
-                    &u,
-                    &server_private_key,
-                );
+            let S = calculate_S(
+                &client_public_key,
+                &password_verifier,
+                &u,
+                &server_private_key,
+            );
 
-                // Normalize hex values to uppercase
-                assert_eq!(
-                    expected,
-                    S,
-                    "{}",
-                    format!(
-                        "A: '{}',\n v: '{}',\n u: '{}',\n b: '{}'",
-                        client_public_key.to_be_hex_string(),
-                        password_verifier.to_be_hex_string(),
-                        u.to_be_hex_string(),
-                        server_private_key.to_be_hex_string(),
-                    )
-                );
-            }
+            // Normalize hex values to uppercase
+            assert_eq!(
+                expected,
+                S,
+                "{}",
+                format!(
+                    "A: '{}',\n v: '{}',\n u: '{}',\n b: '{}'",
+                    client_public_key.to_be_hex_string(),
+                    password_verifier.to_be_hex_string(),
+                    u.to_be_hex_string(),
+                    server_private_key.to_be_hex_string(),
+                )
+            );
         }
+    }
 
-        #[test]
-        #[allow(non_snake_case)]
-        fn verify_interleaved_key() {
-            let contents =
-                read_to_string("tests/srp6_internal/calculate_interleaved_values.txt").unwrap();
+    #[test]
+    #[allow(non_snake_case)]
+    fn verify_interleaved_key() {
+        let contents =
+            read_to_string("tests/srp6_internal/calculate_interleaved_values.txt").unwrap();
 
-            for line in contents.lines() {
-                let mut line = line.split_whitespace();
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
 
-                let S = SKey::from_le_hex_str(line.next().unwrap());
+            let S = SKey::from_le_hex_str(line.next().unwrap());
 
-                let expected = SessionKey::from_le_hex_str(line.next().unwrap());
+            let expected = SessionKey::from_le_hex_str(line.next().unwrap());
 
-                let interleaved = calculate_interleaved(&S);
+            let interleaved = calculate_interleaved(&S);
 
-                // Normalize hex values to uppercase
-                assert_eq!(
-                    expected,
-                    interleaved,
-                    "{}",
-                    format!("S: '{}'", &S.to_be_hex_string())
-                );
-            }
+            // Normalize hex values to uppercase
+            assert_eq!(
+                expected,
+                interleaved,
+                "{}",
+                format!("S: '{}'", &S.to_be_hex_string())
+            );
         }
+    }
 
-        #[test]
-        fn verify_session_key() {
-            let contents =
-                read_to_string("tests/srp6_internal/calculate_session_key_values.txt").unwrap();
+    #[test]
+    fn verify_session_key() {
+        let contents =
+            read_to_string("tests/srp6_internal/calculate_session_key_values.txt").unwrap();
 
-            for line in contents.lines() {
-                let mut line = line.split_whitespace();
-                let client_public_key = PublicKey::from_le_hex_str(line.next().unwrap());
-                let password_verifier = Verifier::from_le_hex_str(line.next().unwrap());
-                let server_private_key = PrivateKey::from_le_hex_str(line.next().unwrap());
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
+            let client_public_key = PublicKey::from_le_hex_str(line.next().unwrap());
+            let password_verifier = Verifier::from_le_hex_str(line.next().unwrap());
+            let server_private_key = PrivateKey::from_le_hex_str(line.next().unwrap());
 
-                let expected = SessionKey::from_le_hex_str(line.next().unwrap());
+            let expected = SessionKey::from_le_hex_str(line.next().unwrap());
 
-                let server_public_key =
-                    calculate_server_public_key(&password_verifier, &server_private_key).unwrap();
+            let server_public_key =
+                calculate_server_public_key(&password_verifier, &server_private_key).unwrap();
 
-                let session_key = calculate_session_key(
-                    &client_public_key,
-                    &server_public_key,
-                    &password_verifier,
-                    &server_private_key,
-                );
+            let session_key = calculate_session_key(
+                &client_public_key,
+                &server_public_key,
+                &password_verifier,
+                &server_private_key,
+            );
 
-                // Normalize hex values to uppercase
-                assert_eq!(
+            // Normalize hex values to uppercase
+            assert_eq!(
                     expected,
                     session_key,
                     "{}",
@@ -536,38 +532,38 @@ mod test {
                         &server_public_key.to_be_hex_string(),
                     )
                 );
-            }
         }
+    }
 
-        #[test]
-        fn verify_client_proof() {
-            let contents = read_to_string("tests/srp6_internal/calculate_M1_values.txt").unwrap();
+    #[test]
+    fn verify_client_proof() {
+        let contents = read_to_string("tests/srp6_internal/calculate_M1_values.txt").unwrap();
 
-            for line in contents.lines() {
-                let mut line = line.split_whitespace();
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
 
-                let username = NormalizedString::new(line.next().unwrap()).unwrap();
+            let username = NormalizedString::new(line.next().unwrap()).unwrap();
 
-                let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
+            let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
 
-                let client_public_key = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
+            let client_public_key = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
 
-                let server_public_key = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
+            let server_public_key = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
 
-                let salt = Salt::from_be_hex_str(line.next().unwrap());
+            let salt = Salt::from_be_hex_str(line.next().unwrap());
 
-                let expected = Proof::from_be_hex_str(line.next().unwrap());
+            let expected = Proof::from_be_hex_str(line.next().unwrap());
 
-                let client_proof = calculate_client_proof(
-                    &username,
-                    &session_key,
-                    &client_public_key,
-                    &server_public_key,
-                    &salt,
-                );
+            let client_proof = calculate_client_proof(
+                &username,
+                &session_key,
+                &client_public_key,
+                &server_public_key,
+                &salt,
+            );
 
-                // Normalize hex values to uppercase
-                assert_eq!(
+            // Normalize hex values to uppercase
+            assert_eq!(
                     expected,
                     client_proof,
                     "{}",
@@ -580,39 +576,38 @@ mod test {
                         &salt.to_be_hex_string(),
                     )
                 );
-            }
         }
+    }
 
-        #[test]
-        fn verify_server_proof() {
-            let contents = read_to_string("tests/srp6_internal/calculate_M2_values.txt").unwrap();
+    #[test]
+    fn verify_server_proof() {
+        let contents = read_to_string("tests/srp6_internal/calculate_M2_values.txt").unwrap();
 
-            for line in contents.lines() {
-                let mut line = line.split_whitespace();
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
 
-                let client_public_key = PublicKey::from_be_hex_str(&line.next().unwrap()).unwrap();
+            let client_public_key = PublicKey::from_be_hex_str(&line.next().unwrap()).unwrap();
 
-                let client_proof = Proof::from_be_hex_str(line.next().unwrap());
+            let client_proof = Proof::from_be_hex_str(line.next().unwrap());
 
-                let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
+            let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
 
-                let expected = Proof::from_be_hex_str(line.next().unwrap());
+            let expected = Proof::from_be_hex_str(line.next().unwrap());
 
-                let server_proof =
-                    calculate_server_proof(&client_public_key, &client_proof, &session_key);
+            let server_proof =
+                calculate_server_proof(&client_public_key, &client_proof, &session_key);
 
-                assert_eq!(
-                    expected,
-                    server_proof,
-                    "{}",
-                    format!(
-                        "Client public key: '{}',\n client_proof: '{}',\n session_key: '{}'",
-                        client_public_key.to_be_hex_string(),
-                        client_proof.to_be_hex_string(),
-                        session_key.to_be_hex_string(),
-                    )
-                );
-            }
+            assert_eq!(
+                expected,
+                server_proof,
+                "{}",
+                format!(
+                    "Client public key: '{}',\n client_proof: '{}',\n session_key: '{}'",
+                    client_public_key.to_be_hex_string(),
+                    client_proof.to_be_hex_string(),
+                    session_key.to_be_hex_string(),
+                )
+            );
         }
     }
 
