@@ -17,14 +17,9 @@ pub(crate) struct Integer {
     value: RugInt,
 }
 
-#[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
 impl Integer {
-    const fn from_bigint(bigint: BigInt) -> Self {
-        Self { value: bigint }
-    }
-
     pub fn to_padded_32_byte_array_le(&self) -> [u8; 32] {
-        let value = self.value.to_bytes_le().1;
+        let value = self.to_bytes_le();
 
         let mut array = [0_u8; 32];
         array[0..value.len()].clone_from_slice(&value);
@@ -33,53 +28,23 @@ impl Integer {
     }
 
     pub fn is_zero(&self) -> bool {
-        self.value == BigInt::from(0)
+        self.value == Integer::from(0).value
     }
 
     pub fn mod_large_safe_prime_is_zero(&self, large_safe_prime: &LargeSafePrime) -> bool {
-        (&self.value % large_safe_prime.to_bigint().value) == BigInt::from(0)
+        (&self.value % large_safe_prime.to_bigint().value) == Integer::from(0).value
     }
 
+    #[cfg(feature = "srp-fast-math")]
+    pub fn to_bytes_le(&self) -> Vec<u8> {
+        self.value.to_digits(Order::LsfLe)
+    }
+    #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
     pub fn to_bytes_le(&self) -> Vec<u8> {
         self.value.to_bytes_le().1
     }
 
-    pub fn modpow(&self, exponent: &Self, modulus: &Self) -> Self {
-        Self::from_bigint(self.value.modpow(&exponent.value, &modulus.value))
-    }
-
-    pub fn from_bytes_le(v: &[u8]) -> Self {
-        Self::from_bigint(BigInt::from_bytes_le(Sign::Plus, v))
-    }
-}
-
-#[cfg(feature = "srp-fast-math")]
-impl Integer {
-    const fn from_bigint(bigint: RugInt) -> Self {
-        Self { value: bigint }
-    }
-
-    pub fn to_padded_32_byte_array_le(&self) -> [u8; 32] {
-        let value = self.value.to_digits(Order::LsfLe);
-
-        let mut array = [0_u8; 32];
-        array[0..value.len()].clone_from_slice(&value);
-
-        array
-    }
-
-    pub fn is_zero(&self) -> bool {
-        self.value == RugInt::from(0)
-    }
-
-    pub fn mod_large_safe_prime_is_zero(&self, large_safe_prime: &LargeSafePrime) -> bool {
-        (&self.value % large_safe_prime.to_bigint().value) == RugInt::from(0)
-    }
-
-    pub fn to_bytes_le(&self) -> Vec<u8> {
-        self.value.to_digits(Order::LsfLe)
-    }
-
+    #[cfg(feature = "srp-fast-math")]
     pub fn modpow(&self, exponent: &Self, modulus: &Self) -> Self {
         Self::from_bigint(
             self.value
@@ -87,10 +52,29 @@ impl Integer {
                 .secure_pow_mod(&exponent.value, &modulus.value),
         )
     }
+    #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
+    pub fn modpow(&self, exponent: &Self, modulus: &Self) -> Self {
+        Self::from_bigint(self.value.modpow(&exponent.value, &modulus.value))
+    }
 
+    #[cfg(feature = "srp-fast-math")]
     pub fn from_bytes_le(v: &[u8]) -> Self {
         Self::from_bigint(RugInt::from_digits(&v, Order::LsfLe))
     }
+    #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
+    pub fn from_bytes_le(v: &[u8]) -> Self {
+        Self::from_bigint(BigInt::from_bytes_le(Sign::Plus, v))
+    }
+
+    #[cfg(feature = "srp-fast-math")]
+    const fn from_bigint(bigint: RugInt) -> Self {
+        Self { value: bigint }
+    }
+    #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
+    const fn from_bigint(bigint: BigInt) -> Self {
+        Self { value: bigint }
+    }
+
 }
 
 impl From<u8> for Integer {
