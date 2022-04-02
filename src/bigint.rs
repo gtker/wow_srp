@@ -74,7 +74,6 @@ impl Integer {
     const fn from_bigint(bigint: BigInt) -> Self {
         Self { value: bigint }
     }
-
 }
 
 impl From<u8> for Integer {
