@@ -25,7 +25,7 @@ pub fn hex_decode(s: &str) -> Vec<u8> {
         let be_nibble = letters_to_numbers(c[0]);
         let le_nibble = letters_to_numbers(c[1]);
         let value = (be_nibble << 4) | le_nibble;
-        key.push(dbg!(value));
+        key.push(value);
     }
 
     key
