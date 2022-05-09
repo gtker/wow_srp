@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+
+## [0.4.1] - 2022-05-09
+
+### Added
+
 * Explicit Minimum Supported Rust Version (MSRV) of 1.48.0.
 When `wow_srp` is version `<1.0.0` the MSRV may be bumped in `PATCH` releases (`MAJOR.MINOR.PATCH`).
 
@@ -97,6 +112,7 @@ The smaller integer size indicates that the value fits into a u8 without truncat
 ### Added
 - Initial release
 
+[0.4.1]: https://github.com/gtker/wow_srp/releases/tag/v0.4.1
 [0.4.0]: https://github.com/gtker/wow_srp/releases/tag/v0.4.0
 [0.3.0]: https://github.com/gtker/wow_srp/releases/tag/v0.3.0
 [0.2.0]: https://github.com/gtker/wow_srp/releases/tag/0.2.0

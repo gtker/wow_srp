@@ -46,7 +46,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! wow_srp = { version = "0.4" }
+//! wow_srp = { version = "0.4.1" }
 //! ```
 //!
 //! Then go to either the [`client`] module or [`server`] module for specific instructions.
@@ -65,7 +65,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! wow_srp = { version = "0.4", default-features = false, features = ["fast-math"] }
+//! wow_srp = { version = "0.4.1", default-features = false, features = ["fast-math"] }
 //! ```
 //!
 //! The `fast-math` feature leads to a 50% decrease in total time. It is highly recommended to enable
@@ -89,7 +89,7 @@
 //!
 //! [archive]: https://web.archive.org/web/20210620154707/https://wowdev.wiki/Login_Packet
 
-#![doc(html_root_url = "https://docs.rs/wow_srp/0.4.0")]
+#![doc(html_root_url = "https://docs.rs/wow_srp/0.4.1")]
 #![forbid(unsafe_code)]
 #![warn(
     clippy::perf,
