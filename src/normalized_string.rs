@@ -7,6 +7,9 @@
 //! between logging in as `alice`, `ALICE`, or anything in between. This is no problem for ASCII
 //! characters as they have well defined upper- and lowercase letters.
 //!
+//! The client is able to enter up to 16 characters in the client, which will be sent over the network
+//! as one or more UTF-8 bytes each.
+//!
 //! Unicode characters, however, act differently and without any real pattern.
 //!
 //! The letter `ń`, Unicode code point `U+0144`, name `LATIN SMALL LETTER N WITH ACUTE` for example,
@@ -35,9 +38,6 @@
 //! really be sure how a specific character is represented on the client and gets sent over the network
 //! is to test every single unicode character. The behavior is also not guaranteed to be the same across
 //! different versions, or even different localizations of the same version.
-//!
-//! The client is able to enter up to 16 characters in the client, which will be sent over the network
-//! as one or more UTF-8 bytes.
 //!
 //! # Problems
 //!
@@ -127,7 +127,7 @@ impl NormalizedString {
     pub fn new(s: impl Into<String>) -> Result<Self, NormalizedStringError> {
         let s: String = s.into();
 
-        if s.len() > MAXIMUM_STRING_LENGTH_IN_BYTES as usize {
+        if s.len() > MAXIMUM_STRING_LENGTH_IN_BYTES as usize || s.len() == 0 {
             return Err(NormalizedStringError::StringTooLong);
         }
 
@@ -259,5 +259,12 @@ mod test {
                 NormalizedStringError::StringTooLong => {}
             },
         }
+    }
+
+    #[test]
+    fn no_empty_strings() {
+        let empty_string = String::new();
+        let empty = NormalizedString::new(empty_string);
+        assert!(empty.is_err());
     }
 }
