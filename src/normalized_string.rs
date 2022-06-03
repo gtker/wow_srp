@@ -127,7 +127,7 @@ impl NormalizedString {
     pub fn new(s: impl Into<String>) -> Result<Self, NormalizedStringError> {
         let s: String = s.into();
 
-        if s.len() > MAXIMUM_STRING_LENGTH_IN_BYTES as usize || s.len() == 0 {
+        if s.len() > MAXIMUM_STRING_LENGTH_IN_BYTES as usize || s.is_empty() {
             return Err(NormalizedStringError::StringTooLong);
         }
 
