@@ -17,9 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-* `NormalizedString` accepting empty usernames and passwords.
-
 ### Security
+
+## [0.4.2] - 2022-06-03
+
+### Fixed
+
+* `NormalizedString` accepting empty usernames and passwords.
 
 ## [0.4.1] - 2022-05-09
 
@@ -105,6 +109,7 @@ The smaller integer size indicates that the value fits into a u8 without truncat
 ### Added
 - Initial release
 
+[0.4.2]: https://github.com/gtker/wow_srp/releases/tag/v0.4.2
 [0.4.1]: https://github.com/gtker/wow_srp/releases/tag/v0.4.1
 [0.4.0]: https://github.com/gtker/wow_srp/releases/tag/v0.4.0
 [0.3.0]: https://github.com/gtker/wow_srp/releases/tag/v0.3.0
