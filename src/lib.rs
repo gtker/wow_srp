@@ -32,13 +32,11 @@
 //! The client will work not with any other server since it ignores everything
 //! that is not absolutely necessary for showcasing the crate.
 //!
-//! ## Running the examples
+//! ## Examples
 //!
-//! 1. Clone the repo with `git clone https://github.com/gtker/wow_srp`.
-//! 2. Run the server with `cargo run --example server` inside the directory.
-//! This runs a simple authentication server that accepts the username "a" and the password "a". Anything else panics.
-//! 3. Run a real client with the realmlist set to `localhost`
-//! or run the client example with `cargo run --example client`.
+//! The [`wow_messages`](https://github.com/gtker/wow_messages) repo has examples that uses the
+//! [`wow_login_messages`](https://docs.rs/wow_login_messages/latest/wow_login_messages/)
+//! and `wow_vanilla_messages` library message definitions to showcase both crates.
 //!
 //! ## Usage
 //!
