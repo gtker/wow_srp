@@ -1,11 +1,11 @@
-use crate::header_crypto::encrypt::EncrypterHalf;
-use crate::header_crypto::{
+use crate::vanilla_header::encrypt::EncrypterHalf;
+use crate::vanilla_header::{
     ClientHeader, ServerHeader, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH,
 };
 use crate::SESSION_KEY_LENGTH;
 use std::io::Read;
 
-/// Decryption part of a [`HeaderCrypto`](crate::header_crypto::HeaderCrypto).
+/// Decryption part of a [`HeaderCrypto`](crate::vanilla_header::HeaderCrypto).
 ///
 /// Intended to be kept with the reader half of a connection.
 ///
@@ -93,7 +93,7 @@ impl DecrypterHalf {
     }
 
     /// Tests whether both halves originate from the same
-    /// [`HeaderCrypto`](crate::header_crypto::HeaderCrypto)
+    /// [`HeaderCrypto`](crate::vanilla_header::HeaderCrypto)
     /// and can be [`EncrypterHalf::unsplit`].
     ///
     /// Same as [`EncrypterHalf::is_pair_of`], provided for convenience/readability.

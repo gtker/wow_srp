@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* BREAKING: `header_crypto` moved to `vanilla_header` to make way for Wrath header crypto.
+
 ### Deprecated
 
 ### Removed

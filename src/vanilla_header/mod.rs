@@ -48,7 +48,7 @@
 //!
 //! ```
 //! use std::io::{Read, Error, Write};
-//! use wow_srp::header_crypto::{HeaderCrypto, ServerHeader, ProofSeed};
+//! use wow_srp::vanilla_header::{HeaderCrypto, ServerHeader, ProofSeed};
 //! use std::convert::TryInto;
 //! use wow_srp::{SESSION_KEY_LENGTH, PROOF_LENGTH};
 //! use wow_srp::normalized_string::NormalizedString;
@@ -437,10 +437,10 @@ impl Default for ProofSeed {
 mod test {
     use std::fs::read_to_string;
 
-    use crate::header_crypto::{HeaderCrypto, ProofSeed};
     use crate::hex::*;
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
+    use crate::vanilla_header::{HeaderCrypto, ProofSeed};
     use crate::SESSION_KEY_LENGTH;
     use std::convert::TryInto;
 

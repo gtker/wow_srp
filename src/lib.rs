@@ -20,7 +20,7 @@
 //! The crate is split into:
 //! * A [`server`] module containing structs for use on the server.
 //! * A [`client`] module containing structs for use on the client.
-//! * A [`header_crypto`] module containing structs and traits for decrypting world packets.
+//! * A [`vanilla_header`] module containing structs for decrypting Vanilla and TBC world packets.
 //! * An [`error`] module for errors that are shared by all modules.
 //! * A [`normalized_string`] module used for all modules to correctly handle strings.
 //!
@@ -117,13 +117,13 @@ pub use primes::LARGE_SAFE_PRIME_LITTLE_ENDIAN;
 pub(crate) mod bigint;
 pub mod client;
 pub mod error;
-pub mod header_crypto;
 mod key;
 pub mod normalized_string;
 pub(crate) mod primes;
 pub mod server;
 pub(crate) mod srp_internal;
 pub(crate) mod srp_internal_client;
+pub mod vanilla_header;
 
 #[cfg(test)]
 pub(crate) mod hex;

@@ -23,10 +23,10 @@ pub fn calculate_world_server_proof(
 
 #[cfg(test)]
 mod test {
-    use crate::header_crypto::internal::calculate_world_server_proof;
     use crate::hex::*;
     use crate::key::{Proof, SessionKey};
     use crate::normalized_string::NormalizedString;
+    use crate::vanilla_header::internal::calculate_world_server_proof;
     use std::convert::TryInto;
     use std::fs::read_to_string;
 

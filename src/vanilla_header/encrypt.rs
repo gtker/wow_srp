@@ -1,6 +1,6 @@
 use crate::error::UnsplitCryptoError;
-use crate::header_crypto::decrypt::DecrypterHalf;
-use crate::header_crypto::{HeaderCrypto, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH};
+use crate::vanilla_header::decrypt::DecrypterHalf;
+use crate::vanilla_header::{HeaderCrypto, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH};
 use crate::SESSION_KEY_LENGTH;
 use std::io::Write;
 

@@ -63,9 +63,9 @@ impl From<NormalizedStringError> for SrpError {
     }
 }
 
-/// [`DecrypterHalf`](crate::header_crypto::DecrypterHalf) and
-/// [`EncrypterHalf`](crate::header_crypto::EncrypterHalf) do not
-/// originate from the same [`HeaderCrypto`](crate::header_crypto::HeaderCrypto).
+/// [`DecrypterHalf`](crate::vanilla_header::DecrypterHalf) and
+/// [`EncrypterHalf`](crate::vanilla_header::EncrypterHalf) do not
+/// originate from the same [`HeaderCrypto`](crate::vanilla_header::HeaderCrypto).
 ///
 /// This is a logic bug and should always lead to either a panic or some other highly
 /// visible event.
