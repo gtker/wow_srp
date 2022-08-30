@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+* BREAKING: `Decrypter` and `Encrypter` traits. Instead the `decrypter` and `encrypter` functions on the `HeaderCrypto` should be used. This is because the header crypto used for Wrath of the Lich King does not follow the same rules as `HeaderCrypto`, so there's no commonality.
+
 ### Fixed
 
 ### Security

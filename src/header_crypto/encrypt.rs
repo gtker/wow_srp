@@ -1,13 +1,14 @@
 use crate::error::UnsplitCryptoError;
 use crate::header_crypto::decrypt::DecrypterHalf;
-use crate::header_crypto::{Encrypter, HeaderCrypto};
+use crate::header_crypto::{HeaderCrypto, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH};
 use crate::SESSION_KEY_LENGTH;
+use std::io::Write;
 
 /// Encryption part of a [`HeaderCrypto`].
 ///
 /// Intended to be kept with the writer half of a connection.
 ///
-/// Use the [`Encrypter`] functions to encrypt.
+/// Use the [`EncrypterHalf`] functions to encrypt.
 #[derive(Debug)]
 pub struct EncrypterHalf {
     pub(crate) session_key: [u8; SESSION_KEY_LENGTH as usize],
@@ -15,13 +16,13 @@ pub struct EncrypterHalf {
     pub(crate) previous_value: u8,
 }
 
-impl Encrypter for EncrypterHalf {
-    /// Use either [the client](Encrypter::write_encrypted_client_header)
-    /// or [the server](Encrypter::write_encrypted_server_header)
+impl EncrypterHalf {
+    /// Use either [the client](EncrypterHalf::write_encrypted_client_header)
+    /// or [the server](EncrypterHalf::write_encrypted_server_header)
     /// [`Write`](std::io::Write) functions, or
-    /// [the client](Encrypter::encrypt_client_header)
-    /// or [the server](Encrypter::encrypt_server_header) array functions.
-    fn encrypt(&mut self, data: &mut [u8]) {
+    /// [the client](EncrypterHalf::encrypt_client_header)
+    /// or [the server](EncrypterHalf::encrypt_server_header) array functions.
+    pub fn encrypt(&mut self, data: &mut [u8]) {
         encrypt(
             data,
             self.session_key,
@@ -29,9 +30,78 @@ impl Encrypter for EncrypterHalf {
             &mut self.previous_value,
         );
     }
-}
 
-impl EncrypterHalf {
+    /// [`Write`](std::io::Write) wrapper for [`EncrypterHalf::encrypt_server_header`].
+    ///
+    /// # Errors
+    ///
+    /// Has the same errors as [`std::io::Write::write_all`].
+    pub fn write_encrypted_server_header<W: Write>(
+        &mut self,
+        write: &mut W,
+        size: u16,
+        opcode: u16,
+    ) -> std::io::Result<()> {
+        let buf = self.encrypt_server_header(size, opcode);
+
+        write.write_all(&buf)?;
+
+        Ok(())
+    }
+
+    /// [`Write`](std::io::Write) wrapper for [`EncrypterHalf::encrypt_server_header`].
+    ///
+    /// # Errors
+    ///
+    /// Has the same errors as [`std::io::Write::write_all`].
+    pub fn write_encrypted_client_header<W: Write>(
+        &mut self,
+        write: &mut W,
+        size: u16,
+        opcode: u32,
+    ) -> std::io::Result<()> {
+        let buf = self.encrypt_client_header(size, opcode);
+
+        write.write_all(&buf)?;
+
+        Ok(())
+    }
+
+    /// Convenience function for encrypting client headers.
+    ///
+    /// Prefer this over directly using [`EncrypterHalf::encrypt`].
+    pub fn encrypt_server_header(
+        &mut self,
+        size: u16,
+        opcode: u16,
+    ) -> [u8; SERVER_HEADER_LENGTH as usize] {
+        let size = size.to_be_bytes();
+        let opcode = opcode.to_le_bytes();
+
+        let mut header = [size[0], size[1], opcode[0], opcode[1]];
+
+        self.encrypt(&mut header);
+
+        header
+    }
+
+    /// Convenience function for encrypting client headers.
+    ///
+    /// Prefer this over directly using [`EncrypterHalf::encrypt`].
+    pub fn encrypt_client_header(
+        &mut self,
+        size: u16,
+        opcode: u32,
+    ) -> [u8; CLIENT_HEADER_LENGTH as usize] {
+        let size = size.to_be_bytes();
+        let opcode = opcode.to_le_bytes();
+
+        let mut header = [size[0], size[1], opcode[0], opcode[1], opcode[2], opcode[3]];
+        self.encrypt(&mut header);
+
+        header
+    }
+
     /// Tests whether both halves originate from the same [`HeaderCrypto`]
     /// and can be [`EncrypterHalf::unsplit`].
     pub fn is_pair_of(&self, other: &DecrypterHalf) -> bool {
@@ -42,7 +112,7 @@ impl EncrypterHalf {
         Self {
             session_key,
             index: 0,
-            previous_value: 0
+            previous_value: 0,
         }
     }
 
@@ -65,20 +135,17 @@ impl EncrypterHalf {
             decrypt: DecrypterHalf {
                 session_key: self.session_key,
                 index: decrypter.index,
-                previous_value: decrypter.previous_value
+                previous_value: decrypter.previous_value,
             },
             encrypt: EncrypterHalf {
                 session_key: self.session_key,
                 index: self.index,
                 previous_value: self.previous_value,
-            }
+            },
         })
     }
 }
 
-// Separate function to prevent duplicating logic in full and half versions.
-// The half version isn't used in order to allow the full version to only have
-// one session key instead of 2, saving 32 bytes.
 pub(crate) fn encrypt(
     data: &mut [u8],
     session_key: [u8; SESSION_KEY_LENGTH as usize],

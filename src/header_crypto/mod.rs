@@ -7,8 +7,8 @@
 //! The packet headers are different length depending on if they are
 //! [client](traits::CLIENT_HEADER_LENGTH) or [server](traits::SERVER_HEADER_LENGTH) headers.
 //!
-//! The sending party will encrypt the packets they send using an [Encrypter] and the receiving
-//! party will decrypt with a [Decrypter].
+//! The sending party will encrypt the packets they send using an [`EncrypterHalf`] and the receiving
+//! party will decrypt with a [`DecrypterHalf`].
 //! The [`HeaderCrypto`] struct contains both and can be split with [`HeaderCrypto::split`].
 //!
 //! The [Typestate](https://yoric.github.io/post/rust-typestate/) pattern is used
@@ -48,7 +48,7 @@
 //!
 //! ```
 //! use std::io::{Read, Error, Write};
-//! use wow_srp::header_crypto::{HeaderCrypto, Decrypter, ServerHeader, Encrypter, ProofSeed};
+//! use wow_srp::header_crypto::{HeaderCrypto, ServerHeader, ProofSeed};
 //! use std::convert::TryInto;
 //! use wow_srp::{SESSION_KEY_LENGTH, PROOF_LENGTH};
 //! use wow_srp::normalized_string::NormalizedString;
@@ -111,8 +111,7 @@
 //! [`SMSG_AUTH_CHALLENGE`]: https://wowdev.wiki/SMSG_AUTH_CHALLENGE
 //! [`CMSG_AUTH_SESSION`]: https://wowdev.wiki/SMSG_AUTH_SESSION
 
-pub use traits::Decrypter;
-pub use traits::Encrypter;
+use std::io::{Read, Write};
 pub use traits::CLIENT_HEADER_LENGTH;
 pub use traits::SERVER_HEADER_LENGTH;
 
@@ -134,8 +133,8 @@ pub(crate) mod traits;
 /// Decrypted values from a server.
 ///
 /// Gotten from either
-/// [`decrypt_server_header`](traits::Decrypter::decrypt_server_header) or
-/// [`read_and_decrypt_server_header`](traits::Decrypter::read_and_decrypt_server_header).
+/// [`decrypt_server_header`](DecrypterHalf::decrypt_server_header) or
+/// [`read_and_decrypt_server_header`](DecrypterHalf::read_and_decrypt_server_header).
 #[derive(Debug, Clone, Copy)]
 pub struct ServerHeader {
     /// Size of the message in bytes.
@@ -148,8 +147,8 @@ pub struct ServerHeader {
 /// Decrypted values from a client.
 ///
 /// Gotten from either
-/// [`decrypt_client_header`](traits::Decrypter::decrypt_client_header) or
-/// [`read_and_decrypt_server_header`](traits::Decrypter::read_and_decrypt_server_header).
+/// [`decrypt_client_header`](DecrypterHalf::decrypt_client_header) or
+/// [`read_and_decrypt_server_header`](DecrypterHalf::read_and_decrypt_server_header).
 #[derive(Debug, Clone, Copy)]
 pub struct ClientHeader {
     /// Size of the message in bytes.
@@ -164,7 +163,7 @@ pub struct ClientHeader {
 /// Created from [`ProofSeed::into_header_crypto`].
 ///
 /// Handles both encryption and decryption of headers through the
-/// [`Encrypter`] and [`Decrypter`] traits.
+/// [`EncrypterHalf`] and [`DecrypterHalf`] structs.
 ///
 /// Can be split into a [`EncrypterHalf`] and [`DecrypterHalf`] through
 /// the [`HeaderCrypto::split`] method. This is useful if you have this struct behind a
@@ -175,13 +174,23 @@ pub struct HeaderCrypto {
     encrypt: EncrypterHalf,
 }
 
-impl Encrypter for HeaderCrypto {
-    /// Use either [the client](Encrypter::write_encrypted_client_header)
-    /// or [the server](Encrypter::write_encrypted_server_header)
+impl HeaderCrypto {
+    /// Direct access to the internal [`DecrypterHalf`].
+    pub fn decrypter(&mut self) -> &mut DecrypterHalf {
+        &mut self.decrypt
+    }
+
+    /// Direct access to the internal [`EncrypterHalf`].
+    pub fn encrypter(&mut self) -> &mut EncrypterHalf {
+        &mut self.encrypt
+    }
+
+    /// Use either [the client](Self::write_encrypted_client_header)
+    /// or [the server](Self::write_encrypted_server_header)
     /// [`Write`](std::io::Write) functions, or
-    /// [the client](Encrypter::encrypt_client_header)
-    /// or [the server](Encrypter::encrypt_server_header) array functions.
-    fn encrypt(&mut self, data: &mut [u8]) {
+    /// [the client](Self::encrypt_client_header)
+    /// or [the server](Self::encrypt_server_header) array functions.
+    pub fn encrypt(&mut self, data: &mut [u8]) {
         encrypt::encrypt(
             data,
             self.encrypt.session_key,
@@ -189,15 +198,63 @@ impl Encrypter for HeaderCrypto {
             &mut self.encrypt.previous_value,
         );
     }
+
+    /// Convenience wrapper for [`EncrypterHalf::write_encrypted_server_header`].
+    ///
+    /// # Errors
+    ///
+    /// Has the same errors as [`EncrypterHalf::write_encrypted_server_header`].
+    pub fn write_encrypted_server_header<W: Write>(
+        &mut self,
+        write: &mut W,
+        size: u16,
+        opcode: u16,
+    ) -> std::io::Result<()> {
+        self.encrypt
+            .write_encrypted_server_header(write, size, opcode)
+    }
+
+    /// Convenience wrapper for [`EncrypterHalf::write_encrypted_client_header`].
+    ///
+    /// # Errors
+    ///
+    /// Has the same errors as [`EncrypterHalf::write_encrypted_client_header`].
+    pub fn write_encrypted_client_header<W: Write>(
+        &mut self,
+        write: &mut W,
+        size: u16,
+        opcode: u32,
+    ) -> std::io::Result<()> {
+        self.encrypt
+            .write_encrypted_client_header(write, size, opcode)
+    }
+
+    /// Convenience wrapper for [`EncrypterHalf::encrypt_server_header`].
+    pub fn encrypt_server_header(
+        &mut self,
+        size: u16,
+        opcode: u16,
+    ) -> [u8; SERVER_HEADER_LENGTH as usize] {
+        self.encrypt.encrypt_server_header(size, opcode)
+    }
+
+    /// Convenience wrapper for [`EncrypterHalf::encrypt_client_header`].
+    pub fn encrypt_client_header(
+        &mut self,
+        size: u16,
+        opcode: u32,
+    ) -> [u8; CLIENT_HEADER_LENGTH as usize] {
+        self.encrypt.encrypt_client_header(size, opcode)
+    }
 }
 
-impl Decrypter for HeaderCrypto {
-    /// Use either [the client](Decrypter::read_and_decrypt_client_header)
-    /// or [the server](Decrypter::read_and_decrypt_server_header)
+impl HeaderCrypto {
+    /// Use either [the client](Self::read_and_decrypt_client_header)
+    /// or [the server](Self::read_and_decrypt_server_header)
     /// [`Read`](std::io::Read) functions, or
-    /// [the client](Decrypter::decrypt_client_header)
-    /// or [the server](Decrypter::decrypt_server_header) array functions.
-    fn decrypt(&mut self, data: &mut [u8]) {
+    /// [the client](Self::decrypt_client_header)
+    /// or [the server](Self::decrypt_server_header) array functions.
+    pub fn decrypt(&mut self, data: &mut [u8]) {
         decrypt::decrypt(
             data,
             &self.decrypt.session_key,
@@ -205,9 +262,56 @@ impl Decrypter for HeaderCrypto {
             &mut self.decrypt.previous_value,
         );
     }
-}
 
-impl HeaderCrypto {
+    /// Convenience wrapper for [`DecrypterHalf::read_and_decrypt_server_header`].
+    ///
+    /// # Errors
+    ///
+    /// Has the same errors as [`Self::read_and_decrypt_server_header`].
+    pub fn read_and_decrypt_server_header<R: Read>(
+        &mut self,
+        reader: &mut R,
+    ) -> std::io::Result<ServerHeader> {
+        self.decrypt.read_and_decrypt_server_header(reader)
+    }
+
+    /// Convenience wrapper for [`DecrypterHalf::read_and_decrypt_client_header`].
+    ///
+    /// # Errors
+    ///
+    /// Has the same errors as [`Self::read_and_decrypt_client_header`].
+    pub fn read_and_decrypt_client_header<R: Read>(
+        &mut self,
+        reader: &mut R,
+    ) -> std::io::Result<ClientHeader> {
+        self.decrypt.read_and_decrypt_client_header(reader)
+    }
+
+    /// Convenience wrapper for [`DecrypterHalf::decrypt_server_header`].
+    ///
+    /// Prefer this over directly using [`Self::decrypt_server_header`].
+    pub fn decrypt_server_header(
+        &mut self,
+        data: [u8; SERVER_HEADER_LENGTH as usize],
+    ) -> ServerHeader {
+        self.decrypt.decrypt_server_header(data)
+    }
+
+    /// Convenience wrapper for [`DecrypterHalf::decrypt_client_header`].
+    ///
+    /// Prefer this over directly using [`Self::decrypt`].
+    pub fn decrypt_client_header(
+        &mut self,
+        mut data: [u8; CLIENT_HEADER_LENGTH as usize],
+    ) -> ClientHeader {
+        self.decrypt(&mut data);
+
+        let size: u16 = u16::from_be_bytes([data[0], data[1]]);
+        let opcode: u32 = u32::from_le_bytes([data[2], data[3], data[4], data[5]]);
+
+        ClientHeader { size, opcode }
+    }
+
     /// Split the [`HeaderCrypto`] into two parts for use with split connections.
     ///
     /// It is intended for the [`EncrypterHalf`] to be stored with the write half of
@@ -333,7 +437,6 @@ impl Default for ProofSeed {
 mod test {
     use std::fs::read_to_string;
 
-    use crate::header_crypto::traits::{Decrypter, Encrypter};
     use crate::header_crypto::{HeaderCrypto, ProofSeed};
     use crate::hex::*;
     use crate::key::SessionKey;
