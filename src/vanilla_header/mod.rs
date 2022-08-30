@@ -5,7 +5,7 @@
 //! Be aware that [Login Packets] are not encrypted in this way.
 //!
 //! The packet headers are different length depending on if they are
-//! [client](traits::CLIENT_HEADER_LENGTH) or [server](traits::SERVER_HEADER_LENGTH) headers.
+//! [client](CLIENT_HEADER_LENGTH) or [server](SERVER_HEADER_LENGTH) headers.
 //!
 //! The sending party will encrypt the packets they send using an [`EncrypterHalf`] and the receiving
 //! party will decrypt with a [`DecrypterHalf`].
@@ -112,8 +112,6 @@
 //! [`CMSG_AUTH_SESSION`]: https://wowdev.wiki/SMSG_AUTH_SESSION
 
 use std::io::{Read, Write};
-pub use traits::CLIENT_HEADER_LENGTH;
-pub use traits::SERVER_HEADER_LENGTH;
 
 pub use decrypt::DecrypterHalf;
 pub use encrypt::EncrypterHalf;
@@ -128,7 +126,21 @@ use rand::{thread_rng, RngCore};
 pub(crate) mod decrypt;
 pub(crate) mod encrypt;
 mod internal;
-pub(crate) mod traits;
+
+/// Size in bytes of the client [world packet] header.
+///
+/// Always 6 bytes because the size is 2 bytes and the opcode is 4 bytes.
+///
+/// [world packet]: https://wowdev.wiki/World_Packet
+pub const CLIENT_HEADER_LENGTH: u8 =
+    (std::mem::size_of::<u16>() + std::mem::size_of::<u32>()) as u8;
+/// Size in bytes of the server [world packet] header.
+///
+/// Always 4 bytes because the size is 2 bytes and the opcode is 2 bytes.
+///
+/// [world packet]: https://wowdev.wiki/World_Packet
+pub const SERVER_HEADER_LENGTH: u8 =
+    (std::mem::size_of::<u16>() + std::mem::size_of::<u16>()) as u8;
 
 /// Decrypted values from a server.
 ///
