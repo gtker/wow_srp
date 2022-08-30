@@ -1,5 +1,5 @@
 //! An implementation of the World of Warcraft flavor of SRP6 used for authentication with the Login Server.
-//! It is only tested and verified on 1.12.1, but should work for other versions.
+//! This should work on all versions from 1.2 to 3.3.5.
 //!
 //! The implementation is intended to abstract away as much of the protocol as possible,
 //! and limits itself to the specific requirements of the World of Warcraft implementation.
