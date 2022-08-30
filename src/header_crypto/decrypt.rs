@@ -39,6 +39,14 @@ impl DecrypterHalf {
     pub fn is_pair_of(&self, other: &EncrypterHalf) -> bool {
         other.is_pair_of(self)
     }
+
+    pub(crate) const fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
+        Self {
+            session_key,
+            index: 0,
+            previous_value: 0
+        }
+    }
 }
 
 // Separate function to prevent duplicating logic in full and half versions.

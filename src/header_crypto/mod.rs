@@ -171,11 +171,8 @@ pub struct ClientHeader {
 /// mutex and don't want to lock both reading and writing at the same time.
 #[derive(Debug)]
 pub struct HeaderCrypto {
-    session_key: [u8; SESSION_KEY_LENGTH as usize],
-    encrypt_index: u8,
-    encrypt_previous_value: u8,
-    decrypt_index: u8,
-    decrypt_previous_value: u8,
+    decrypt: DecrypterHalf,
+    encrypt: EncrypterHalf,
 }
 
 impl Encrypter for HeaderCrypto {
@@ -187,9 +184,9 @@ impl Encrypter for HeaderCrypto {
     fn encrypt(&mut self, data: &mut [u8]) {
         encrypt::encrypt(
             data,
-            self.session_key,
-            &mut self.encrypt_index,
-            &mut self.encrypt_previous_value,
+            self.encrypt.session_key,
+            &mut self.encrypt.index,
+            &mut self.encrypt.previous_value,
         );
     }
 }
@@ -203,9 +200,9 @@ impl Decrypter for HeaderCrypto {
     fn decrypt(&mut self, data: &mut [u8]) {
         decrypt::decrypt(
             data,
-            &self.session_key,
-            &mut self.decrypt_index,
-            &mut self.decrypt_previous_value,
+            &self.decrypt.session_key,
+            &mut self.decrypt.index,
+            &mut self.decrypt.previous_value,
         );
     }
 }
@@ -222,19 +219,14 @@ impl HeaderCrypto {
     /// like if you don't want locking encryption to also lock decryption in a mutex.
     #[allow(clippy::missing_const_for_fn)] // Clippy does not consider `self` arg
     pub fn split(self) -> (EncrypterHalf, DecrypterHalf) {
-        let encrypt = EncrypterHalf {
-            session_key: self.session_key,
-            index: self.encrypt_index,
-            previous_value: self.encrypt_previous_value,
-        };
+        (self.encrypt, self.decrypt)
+    }
 
-        let decrypt = DecrypterHalf {
-            session_key: self.session_key,
-            index: self.decrypt_index,
-            previous_value: self.decrypt_previous_value,
-        };
-
-        (encrypt, decrypt)
+    pub(crate) const fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
+        Self {
+            decrypt: DecrypterHalf::new(session_key),
+            encrypt: EncrypterHalf::new(session_key),
+        }
     }
 }
 
@@ -288,13 +280,7 @@ impl ProofSeed {
             self.seed,
         );
 
-        let crypto = HeaderCrypto {
-            session_key,
-            encrypt_index: 0,
-            encrypt_previous_value: 0,
-            decrypt_index: 0,
-            decrypt_previous_value: 0,
-        };
+        let crypto = HeaderCrypto::new(session_key);
 
         (*client_proof.as_le(), crypto)
     }
@@ -331,13 +317,7 @@ impl ProofSeed {
             });
         }
 
-        Ok(HeaderCrypto {
-            session_key,
-            encrypt_index: 0,
-            encrypt_previous_value: 0,
-            decrypt_index: 0,
-            decrypt_previous_value: 0,
-        })
+        Ok(HeaderCrypto::new(session_key))
     }
 }
 
@@ -541,13 +521,7 @@ mod test {
             let expected = hex_decode(line.next().unwrap());
 
             // Bypass checking seeds and proofs because they aren't there
-            let mut encryption = HeaderCrypto {
-                session_key: *session_key.as_le(),
-                encrypt_index: 0,
-                encrypt_previous_value: 0,
-                decrypt_index: 0,
-                decrypt_previous_value: 0,
-            };
+            let mut encryption = HeaderCrypto::new(*session_key.as_le());
 
             encryption.encrypt(&mut data);
 
@@ -563,13 +537,7 @@ mod test {
             );
 
             // Bypass checking seeds and proofs because they aren't there
-            let full = HeaderCrypto {
-                session_key: *session_key.as_le(),
-                encrypt_index: 0,
-                encrypt_previous_value: 0,
-                decrypt_index: 0,
-                decrypt_previous_value: 0,
-            };
+            let full = HeaderCrypto::new(*session_key.as_le());
             let (mut enc, _dec) = full.split();
 
             enc.encrypt(&mut split_data);
@@ -796,13 +764,7 @@ mod test {
             let original_data = data.clone();
             let expected = hex_decode(line.next().unwrap());
 
-            let mut encryption = HeaderCrypto {
-                session_key: *session_key.as_le(),
-                encrypt_index: 0,
-                encrypt_previous_value: 0,
-                decrypt_index: 0,
-                decrypt_previous_value: 0,
-            };
+            let mut encryption = HeaderCrypto::new(*session_key.as_le());
 
             encryption.decrypt(&mut data);
 
@@ -817,13 +779,7 @@ mod test {
                 hex_encode(&data)
             );
 
-            let full = HeaderCrypto {
-                session_key: *session_key.as_le(),
-                encrypt_index: 0,
-                encrypt_previous_value: 0,
-                decrypt_index: 0,
-                decrypt_previous_value: 0,
-            };
+            let full = HeaderCrypto::new(*session_key.as_le());
             let (_enc, mut dec) = full.split();
 
             dec.decrypt(&mut split_data);

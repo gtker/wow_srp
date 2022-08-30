@@ -38,6 +38,14 @@ impl EncrypterHalf {
         self.session_key == other.session_key
     }
 
+    pub(crate) const fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
+        Self {
+            session_key,
+            index: 0,
+            previous_value: 0
+        }
+    }
+
     /// Unsplits the two halves.
     ///
     /// # Errors
@@ -54,11 +62,16 @@ impl EncrypterHalf {
         }
 
         Ok(HeaderCrypto {
-            session_key: self.session_key,
-            encrypt_index: self.index,
-            encrypt_previous_value: self.previous_value,
-            decrypt_index: decrypter.index,
-            decrypt_previous_value: decrypter.previous_value,
+            decrypt: DecrypterHalf {
+                session_key: self.session_key,
+                index: decrypter.index,
+                previous_value: decrypter.previous_value
+            },
+            encrypt: EncrypterHalf {
+                session_key: self.session_key,
+                index: self.index,
+                previous_value: self.previous_value,
+            }
         })
     }
 }
