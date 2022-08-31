@@ -1,6 +1,11 @@
 use crate::wrath_header::encrypt::EncrypterHalf;
 use crate::wrath_header::{ClientHeader, ServerHeader, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH};
 use crate::SESSION_KEY_LENGTH;
+use rc4::consts::U20;
+use rc4::{Rc4, StreamCipher};
+
+use hmac::{Hmac, Mac};
+use sha1::Sha1;
 use std::io::Read;
 
 /// Decryption part of a [`HeaderCrypto`](crate::wrath_header::HeaderCrypto).
@@ -8,11 +13,8 @@ use std::io::Read;
 /// Intended to be kept with the reader half of a connection.
 ///
 /// Use the [`DecrypterHalf`] functions to decrypt.
-#[derive(Debug)]
 pub struct DecrypterHalf {
-    pub(crate) session_key: [u8; SESSION_KEY_LENGTH as usize],
-    pub(crate) index: u8,
-    pub(crate) previous_value: u8,
+    decrypt: Rc4<U20>,
 }
 
 impl DecrypterHalf {
@@ -22,12 +24,7 @@ impl DecrypterHalf {
     /// [the client](DecrypterHalf::decrypt_client_header)
     /// or [the server](DecrypterHalf::decrypt_server_header) array functions.
     pub fn decrypt(&mut self, data: &mut [u8]) {
-        decrypt(
-            data,
-            &self.session_key,
-            &mut self.index,
-            &mut self.previous_value,
-        );
+        self.decrypt.apply_keystream(data);
     }
 
     /// [`Read`](std::io::Read) wrapper for [`DecrypterHalf::decrypt_server_header`].
@@ -99,29 +96,25 @@ impl DecrypterHalf {
         other.is_pair_of(self)
     }
 
-    pub(crate) const fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
-        Self {
-            session_key,
-            index: 0,
-            previous_value: 0,
-        }
-    }
-}
+    pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
+        const S: [u8; 16] = [
+            0xC2, 0xB3, 0x72, 0x3C, 0xC6, 0xAE, 0xD9, 0xB5, 0x34, 0x3C, 0x53, 0xEE, 0x2F, 0x43,
+            0x67, 0xCE,
+        ];
 
-pub(crate) fn decrypt(
-    data: &mut [u8],
-    session_key: &[u8; SESSION_KEY_LENGTH as usize],
-    index: &mut u8,
-    previous_value: &mut u8,
-) {
-    for encrypted in data {
-        // unencrypted = (encrypted - previous_value) ^ session_key[index]
-        let unencrypted = encrypted.wrapping_sub(*previous_value) ^ session_key[*index as usize];
+        let mut hmac: Hmac<Sha1> = Hmac::<Sha1>::new_from_slice(&S).unwrap();
+        hmac.update(&session_key);
+        let hmac = hmac.finalize();
 
-        // Use session key as circular buffer
-        *index = (*index + 1) % SESSION_KEY_LENGTH as u8;
+        let mut decrypt = {
+            use rc4::KeyInit;
+            Rc4::new_from_slice(&hmac.into_bytes()).unwrap()
+        };
 
-        *previous_value = *encrypted;
-        *encrypted = unencrypted;
+        let mut pad_data = [0_u8; 1024];
+
+        decrypt.apply_keystream(&mut pad_data);
+
+        Self { decrypt }
     }
 }
