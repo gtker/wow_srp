@@ -2,11 +2,8 @@ use crate::error::UnsplitCryptoError;
 use crate::wrath_header::decrypt::DecrypterHalf;
 use crate::wrath_header::{HeaderCrypto, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH};
 use crate::SESSION_KEY_LENGTH;
-use rc4::consts::U20;
-use rc4::{Rc4, StreamCipher};
 
-use hmac::{Hmac, Mac};
-use sha1::Sha1;
+use crate::wrath_header::inner_crypto::InnerCrypto;
 use std::io::Write;
 
 /// Encryption part of a [`HeaderCrypto`].
@@ -15,7 +12,7 @@ use std::io::Write;
 ///
 /// Use the [`EncrypterHalf`] functions to encrypt.
 pub struct EncrypterHalf {
-    encrypt: Rc4<U20>,
+    encrypt: InnerCrypto,
 }
 
 impl EncrypterHalf {
@@ -25,7 +22,7 @@ impl EncrypterHalf {
     /// [the client](EncrypterHalf::encrypt_client_header)
     /// or [the server](EncrypterHalf::encrypt_server_header) array functions.
     pub fn encrypt(&mut self, data: &mut [u8]) {
-        self.encrypt.apply_keystream(data);
+        self.encrypt.apply(data);
     }
 
     /// [`Write`](std::io::Write) wrapper for [`EncrypterHalf::encrypt_server_header`].
@@ -111,20 +108,9 @@ impl EncrypterHalf {
             0x53, 0x57,
         ];
 
-        let mut hmac: Hmac<Sha1> = Hmac::<Sha1>::new_from_slice(&R).unwrap();
-        hmac.update(&session_key);
-        let hmac = hmac.finalize();
-
-        let mut encrypt = {
-            use rc4::KeyInit;
-            Rc4::new_from_slice(&hmac.into_bytes()).unwrap()
-        };
-
-        let mut pad_data = [0_u8; 1024];
-
-        encrypt.apply_keystream(&mut pad_data);
-
-        Self { encrypt }
+        Self {
+            encrypt: InnerCrypto::new(session_key, &R),
+        }
     }
 
     /// Unsplits the two halves.

@@ -1,11 +1,8 @@
 use crate::wrath_header::encrypt::EncrypterHalf;
 use crate::wrath_header::{ClientHeader, ServerHeader, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH};
 use crate::SESSION_KEY_LENGTH;
-use rc4::consts::U20;
-use rc4::{Rc4, StreamCipher};
 
-use hmac::{Hmac, Mac};
-use sha1::Sha1;
+use crate::wrath_header::inner_crypto::InnerCrypto;
 use std::io::Read;
 
 /// Decryption part of a [`HeaderCrypto`](crate::wrath_header::HeaderCrypto).
@@ -14,7 +11,7 @@ use std::io::Read;
 ///
 /// Use the [`DecrypterHalf`] functions to decrypt.
 pub struct DecrypterHalf {
-    decrypt: Rc4<U20>,
+    decrypt: InnerCrypto,
 }
 
 impl DecrypterHalf {
@@ -24,7 +21,7 @@ impl DecrypterHalf {
     /// [the client](DecrypterHalf::decrypt_client_header)
     /// or [the server](DecrypterHalf::decrypt_server_header) array functions.
     pub fn decrypt(&mut self, data: &mut [u8]) {
-        self.decrypt.apply_keystream(data);
+        self.decrypt.apply(data);
     }
 
     /// [`Read`](std::io::Read) wrapper for [`DecrypterHalf::decrypt_server_header`].
@@ -102,19 +99,8 @@ impl DecrypterHalf {
             0x67, 0xCE,
         ];
 
-        let mut hmac: Hmac<Sha1> = Hmac::<Sha1>::new_from_slice(&S).unwrap();
-        hmac.update(&session_key);
-        let hmac = hmac.finalize();
-
-        let mut decrypt = {
-            use rc4::KeyInit;
-            Rc4::new_from_slice(&hmac.into_bytes()).unwrap()
-        };
-
-        let mut pad_data = [0_u8; 1024];
-
-        decrypt.apply_keystream(&mut pad_data);
-
-        Self { decrypt }
+        Self {
+            decrypt: InnerCrypto::new(session_key, &S),
+        }
     }
 }

@@ -12,6 +12,7 @@ use rand::{thread_rng, RngCore};
 
 pub(crate) mod decrypt;
 pub(crate) mod encrypt;
+mod inner_crypto;
 
 /// Size in bytes of the client [world packet] header.
 ///
