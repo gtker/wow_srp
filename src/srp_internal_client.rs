@@ -54,15 +54,15 @@ pub(crate) fn calculate_client_proof_with_custom_value(
 ) -> Proof {
     let xor_hash = calculate_xor_hash(&large_safe_prime, &generator);
 
-    let username_hash = Sha1::new().chain(username.as_ref()).finalize();
+    let username_hash = Sha1::new().chain_update(username.as_ref()).finalize();
 
     let out: [u8; PROOF_LENGTH as usize] = Sha1::new()
-        .chain(xor_hash.as_le())
-        .chain(username_hash)
-        .chain(salt.as_le())
-        .chain(client_public_key.as_le())
-        .chain(server_public_key.as_le())
-        .chain(session_key.as_le())
+        .chain_update(xor_hash.as_le())
+        .chain_update(username_hash)
+        .chain_update(salt.as_le())
+        .chain_update(client_public_key.as_le())
+        .chain_update(server_public_key.as_le())
+        .chain_update(session_key.as_le())
         .finalize()
         .into();
 

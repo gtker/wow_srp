@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * BREAKING: `header_crypto` moved to `vanilla_header` to make way for Wrath header crypto.
+* Updated `sha-1` dependency to `0.10.0` from `0.9`.
 
 ### Deprecated
 

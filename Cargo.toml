@@ -18,7 +18,7 @@ srp-fast-math = ["rug"]
 
 [dependencies.sha-1]
 # Required for SRP6 algorithm
-version = "0.9"
+version = "0.10.0"
 default-features = false
 
 [dependencies.rand]

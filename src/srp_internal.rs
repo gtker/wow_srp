@@ -56,12 +56,15 @@ pub fn calculate_x(
     salt: &Salt,
 ) -> Sha1Hash {
     let p = Sha1::new()
-        .chain(username.as_ref())
-        .chain(":")
-        .chain(password.as_ref())
+        .chain_update(username.as_ref())
+        .chain_update(":")
+        .chain_update(password.as_ref())
         .finalize();
 
-    let x = Sha1::new().chain(salt.as_le()).chain(p).finalize();
+    let x = Sha1::new()
+        .chain_update(salt.as_le())
+        .chain_update(p)
+        .finalize();
 
     Sha1Hash::from_le_bytes(x.into())
 }
@@ -123,8 +126,8 @@ pub fn calculate_server_public_key(
 /// Calculate the parameter `u` used for generating the session key.
 pub fn calculate_u(client_public_key: &PublicKey, server_public_key: &PublicKey) -> Sha1Hash {
     let s = Sha1::new()
-        .chain(client_public_key.as_le())
-        .chain(server_public_key.as_le())
+        .chain_update(client_public_key.as_le())
+        .chain_update(server_public_key.as_le())
         .finalize();
     Sha1Hash::from_le_bytes(s.into())
 }
@@ -157,13 +160,13 @@ pub fn calculate_interleaved(S: &SKey) -> SessionKey {
     for (i, e) in S.iter().step_by(2).enumerate() {
         E[i] = *e;
     }
-    let G = Sha1::new().chain(&E[..S.len() / 2]).finalize();
+    let G = Sha1::new().chain_update(&E[..S.len() / 2]).finalize();
 
     let mut F = [0_u8; (S_LENGTH / 2) as usize];
     for (i, f) in S.iter().skip(1).step_by(2).enumerate() {
         F[i] = *f;
     }
-    let H = Sha1::new().chain(&F[..S.len() / 2]).finalize();
+    let H = Sha1::new().chain_update(&F[..S.len() / 2]).finalize();
 
     let mut result = [0_u8; SESSION_KEY_LENGTH as usize];
     let zip = G.iter().zip(H.iter());
@@ -195,9 +198,9 @@ pub fn calculate_server_proof(
     session_key: &SessionKey,
 ) -> Proof {
     let s = Sha1::new()
-        .chain(client_public_key.as_le())
-        .chain(client_proof.as_le())
-        .chain(session_key.as_le())
+        .chain_update(client_public_key.as_le())
+        .chain_update(client_proof.as_le())
+        .chain_update(session_key.as_le())
         .finalize();
 
     Proof::from_le_bytes(s.into())
@@ -207,9 +210,11 @@ pub(crate) fn calculate_xor_hash(
     large_safe_prime: &LargeSafePrime,
     generator: &Generator,
 ) -> Sha1Hash {
-    let large_safe_prime_hash = Sha1::new().chain(large_safe_prime.as_le_bytes()).finalize();
+    let large_safe_prime_hash = Sha1::new()
+        .chain_update(large_safe_prime.as_le_bytes())
+        .finalize();
 
-    let g_hash = Sha1::new().chain([generator.as_u8()]).finalize();
+    let g_hash = Sha1::new().chain_update([generator.as_u8()]).finalize();
 
     let mut xor_hash = [0_u8; SHA1_HASH_LENGTH as usize];
     for (i, n) in large_safe_prime_hash.iter().enumerate() {
@@ -226,15 +231,15 @@ pub fn calculate_client_proof(
     server_public_key: &PublicKey,
     salt: &Salt,
 ) -> Proof {
-    let username_hash = Sha1::new().chain(username.as_ref()).finalize();
+    let username_hash = Sha1::new().chain_update(username.as_ref()).finalize();
 
     let out: [u8; PROOF_LENGTH as usize] = Sha1::new()
-        .chain(PRECALCULATED_XOR_HASH)
-        .chain(username_hash)
-        .chain(salt.as_le())
-        .chain(client_public_key.as_le())
-        .chain(server_public_key.as_le())
-        .chain(session_key.as_le())
+        .chain_update(PRECALCULATED_XOR_HASH)
+        .chain_update(username_hash)
+        .chain_update(salt.as_le())
+        .chain_update(client_public_key.as_le())
+        .chain_update(server_public_key.as_le())
+        .chain_update(session_key.as_le())
         .finalize()
         .into();
 
@@ -248,10 +253,10 @@ pub fn calculate_reconnect_proof(
     session_key: &SessionKey,
 ) -> Proof {
     let s = Sha1::new()
-        .chain(username.as_ref())
-        .chain(client_data.as_le())
-        .chain(server_data.as_le())
-        .chain(session_key.as_le())
+        .chain_update(username.as_ref())
+        .chain_update(client_data.as_le())
+        .chain_update(server_data.as_le())
+        .chain_update(session_key.as_le())
         .finalize();
 
     Proof::from_le_bytes(s.into())
