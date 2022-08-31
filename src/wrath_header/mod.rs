@@ -1,116 +1,3 @@
-//! Functionality for encrypting/decrypting [World Packet] headers.
-//!
-//! For unknown reasons the session key obtained during the SRP6
-//! exchange is used to "encrypt" packet headers.
-//! Be aware that [Login Packets] are not encrypted in this way.
-//!
-//! The packet headers are different length depending on if they are
-//! [client](CLIENT_HEADER_LENGTH) or [server](SERVER_HEADER_LENGTH) headers.
-//!
-//! The sending party will encrypt the packets they send using an [`EncrypterHalf`] and the receiving
-//! party will decrypt with a [`DecrypterHalf`].
-//! The [`HeaderCrypto`] struct contains both and can be split with [`HeaderCrypto::split`].
-//!
-//! The [Typestate](https://yoric.github.io/post/rust-typestate/) pattern is used
-//! in order to prevent incorrect use.
-//! This means that whenever the next step of computation takes place, you call a function
-//! taking `self`, consuming the old object, and returning the new object.
-//!
-//! When a player connects to the world server, the server will need to send a seed value
-//! in the [`SMSG_AUTH_CHALLENGE`] message before the username has been received in the
-//! [`CMSG_AUTH_SESSION`] message.
-//!
-//! This means the following workflow has to be done:
-//!
-//! 1. Create a [`ProofSeed`] struct containing a randomly generated `u32` seed.
-//! 2. Send the seed to the client in a [`SMSG_AUTH_CHALLENGE`] message.
-//! 3. Receive the username, proof and seed in the [`CMSG_AUTH_SESSION`] message.
-//! 4. Retrieve the session key from the login server.
-//! 5. Create the [`HeaderCrypto`] struct through [`ProofSeed::into_header_crypto`].
-//! 6. Optionally, split the [`HeaderCrypto`] into [`EncrypterHalf`] and [`DecrypterHalf`] through
-//! [`HeaderCrypto::split`].
-//! 7. Optionally, unsplit them through [`EncrypterHalf::unsplit`].
-//!
-//! In a diagram this would look like:
-//! ```text
-//!                         Optional
-//!                            |
-//!                            |   |-> EncrypterHalf -|
-//! ProofSeed -> HeaderCrypto -|---|                  |--> HeaderCrypto
-//!                            |   |-> DecrypterHalf -|
-//!                            |
-//! ```
-//!
-//! # Example
-//!
-//! After establishing a successful connection to the world server individual headers can be
-//! encrypted or decrypted through a few different means:
-//!
-//! ```
-//! use std::io::{Read, Error, Write};
-//! use wow_srp::vanilla_header::{HeaderCrypto, ServerHeader, ProofSeed};
-//! use std::convert::TryInto;
-//! use wow_srp::{SESSION_KEY_LENGTH, PROOF_LENGTH};
-//! use wow_srp::normalized_string::NormalizedString;
-//!
-//! fn establish_connection(username: NormalizedString,
-//!                         session_key: [u8; SESSION_KEY_LENGTH as _],
-//!                         client_proof: [u8; PROOF_LENGTH as _],
-//!                         client_seed: u32) {
-//!     let seed = ProofSeed::new();
-//!     // Send seed to client
-//!     seed.seed();
-//!     // Get username from client, fetch session key from login server
-//!     let encryption = seed.into_header_crypto(&username, session_key, client_proof, client_seed);
-//!
-//!     // Send the first server message
-//! }
-//!
-//! fn decrypt_header<R: Read>(r: &mut R, raw_data: &mut [u8], encryption: &mut HeaderCrypto) {
-//!     let client_header = encryption.read_and_decrypt_server_header(r);
-//!     match client_header {
-//!         Ok(c) => {}
-//!         Err(_) => {
-//!             panic!("Reader error")
-//!         }
-//!     }
-//!
-//!     // OR
-//!
-//!     let header = raw_data[0..6].try_into().unwrap();
-//!     let client_header = encryption.decrypt_server_header(header);
-//!
-//!     // OR
-//!
-//!     encryption.decrypt(raw_data);
-//! }
-//!
-//! fn encrypt<W: Write>(w: &mut W, raw_data: &mut [u8], encryption: &mut HeaderCrypto) {
-//!     let result = encryption.write_encrypted_server_header(w, 4, 0xFF);
-//!     match result {
-//!         Ok(_) => {}
-//!         Err(_) => {
-//!             panic!("Reader error")
-//!         }
-//!     }
-//!
-//!     // OR
-//!
-//!     let server_header = encryption.encrypt_server_header(4, 0xFF);
-//!     // Send server_header
-//!
-//!     // OR
-//!
-//!     encryption.encrypt(raw_data);
-//! }
-//!
-//! ```
-//!
-//! [World Packet]: https://wowdev.wiki/World_Packet
-//! [Login Packets]: https://wowdev.wiki/Login_Packet
-//! [`SMSG_AUTH_CHALLENGE`]: https://wowdev.wiki/SMSG_AUTH_CHALLENGE
-//! [`CMSG_AUTH_SESSION`]: https://wowdev.wiki/SMSG_AUTH_SESSION
-
 use std::io::{Read, Write};
 
 pub use decrypt::DecrypterHalf;
@@ -119,14 +6,12 @@ pub use encrypt::EncrypterHalf;
 use crate::error::MatchProofsError;
 use crate::key::{Proof, SessionKey};
 use crate::normalized_string::NormalizedString;
+use crate::vanilla_header::calculate_world_server_proof;
 use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
 use rand::{thread_rng, RngCore};
 
 pub(crate) mod decrypt;
 pub(crate) mod encrypt;
-mod internal;
-
-pub(crate) use internal::calculate_world_server_proof;
 
 /// Size in bytes of the client [world packet] header.
 ///
@@ -441,7 +326,7 @@ mod test {
     use crate::hex::*;
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
-    use crate::vanilla_header::{HeaderCrypto, ProofSeed};
+    use crate::wrath_header::{HeaderCrypto, ProofSeed};
     use crate::SESSION_KEY_LENGTH;
     use std::convert::TryInto;
 

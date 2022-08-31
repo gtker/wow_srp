@@ -21,6 +21,14 @@ srp-fast-math = ["rug"]
 version = "0.10.0"
 default-features = false
 
+[dependencies.rc4]
+# Required for Wrath header crypto
+version = "0.1.0"
+
+[dependencies.hmac]
+# Required for Wrath header crypto
+version = "0.12.1"
+
 [dependencies.rand]
 # Required for generating private keys
 version = "0.8"

@@ -1,7 +1,12 @@
 use crate::error::UnsplitCryptoError;
-use crate::vanilla_header::decrypt::DecrypterHalf;
-use crate::vanilla_header::{HeaderCrypto, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH};
+use crate::wrath_header::decrypt::DecrypterHalf;
+use crate::wrath_header::{HeaderCrypto, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH};
 use crate::SESSION_KEY_LENGTH;
+use rc4::consts::U40;
+use rc4::{KeyInit, Rc4};
+
+use hmac::Hmac;
+use sha1::Sha1;
 use std::io::Write;
 
 /// Encryption part of a [`HeaderCrypto`].
@@ -11,9 +16,7 @@ use std::io::Write;
 /// Use the [`EncrypterHalf`] functions to encrypt.
 #[derive(Debug)]
 pub struct EncrypterHalf {
-    pub(crate) session_key: [u8; SESSION_KEY_LENGTH as usize],
-    pub(crate) index: u8,
-    pub(crate) previous_value: u8,
+    encrypt: Rc4<U40>,
 }
 
 impl EncrypterHalf {
@@ -108,7 +111,19 @@ impl EncrypterHalf {
         self.session_key == other.session_key
     }
 
+    const S: [u8; 16] = [
+        0xC2, 0xB3, 0x72, 0x3C, 0xC6, 0xAE, 0xD9, 0xB5, 0x34, 0x3C, 0x53, 0xEE, 0x2F, 0x43, 0x67,
+        0xCE,
+    ];
+    const R: [u8; 16] = [
+        0xCC, 0x98, 0xAE, 0x04, 0xE8, 0x97, 0xEA, 0xCA, 0x12, 0xDD, 0xC0, 0x93, 0x42, 0x91, 0x53,
+        0x57,
+    ];
+
     pub(crate) const fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
+        let mut hmac: Hmac<Sha1> = Hmac::new(&S);
+        hmac.update();
+
         Self {
             session_key,
             index: 0,

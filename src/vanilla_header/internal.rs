@@ -3,7 +3,8 @@ use crate::normalized_string::NormalizedString;
 use crate::PROOF_LENGTH;
 use sha1::{Digest, Sha1};
 
-pub fn calculate_world_server_proof(
+// This function is the same between Vanilla, TBC and Wrath
+pub(crate) fn calculate_world_server_proof(
     username: &NormalizedString,
     session_key: &SessionKey,
     server_seed: u32,

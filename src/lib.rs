@@ -21,6 +21,7 @@
 //! * A [`server`] module containing structs for use on the server.
 //! * A [`client`] module containing structs for use on the client.
 //! * A [`vanilla_header`] module containing structs for decrypting Vanilla and TBC world packets.
+//! * A [`wrath_header`] module containing structs for decrypting Wrath world packets.
 //! * An [`error`] module for errors that are shared by all modules.
 //! * A [`normalized_string`] module used for all modules to correctly handle strings.
 //!
@@ -124,6 +125,7 @@ pub mod server;
 pub(crate) mod srp_internal;
 pub(crate) mod srp_internal_client;
 pub mod vanilla_header;
+pub mod wrath_header;
 
 #[cfg(test)]
 pub(crate) mod hex;
