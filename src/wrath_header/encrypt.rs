@@ -1,7 +1,7 @@
-use crate::wrath_header::{CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH};
+use crate::wrath_header::{CLIENT_HEADER_LENGTH, R, S, SERVER_HEADER_LENGTH};
 use crate::SESSION_KEY_LENGTH;
 
-use crate::wrath_header::inner_crypto::{InnerCrypto, KEY_LENGTH};
+use crate::wrath_header::inner_crypto::InnerCrypto;
 use std::io::Write;
 
 pub struct ServerEncrypterHalf {
@@ -41,12 +41,9 @@ impl ServerEncrypterHalf {
         header
     }
 
-    pub(crate) fn new(
-        session_key: [u8; SESSION_KEY_LENGTH as usize],
-        key: &[u8; KEY_LENGTH as usize],
-    ) -> Self {
+    pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
         Self {
-            encrypt: InnerCrypto::new(session_key, key),
+            encrypt: InnerCrypto::new(session_key, &R),
         }
     }
 }
@@ -86,12 +83,9 @@ impl ClientEncrypterHalf {
         header
     }
 
-    pub(crate) fn new(
-        session_key: [u8; SESSION_KEY_LENGTH as usize],
-        key: &[u8; KEY_LENGTH as usize],
-    ) -> Self {
+    pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
         Self {
-            encrypt: InnerCrypto::new(session_key, key),
+            encrypt: InnerCrypto::new(session_key, &S),
         }
     }
 }

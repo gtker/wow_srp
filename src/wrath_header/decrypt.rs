@@ -1,7 +1,9 @@
-use crate::wrath_header::{ClientHeader, ServerHeader, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH};
+use crate::wrath_header::{
+    ClientHeader, ServerHeader, CLIENT_HEADER_LENGTH, R, S, SERVER_HEADER_LENGTH,
+};
 use crate::SESSION_KEY_LENGTH;
 
-use crate::wrath_header::inner_crypto::{InnerCrypto, KEY_LENGTH};
+use crate::wrath_header::inner_crypto::InnerCrypto;
 use std::io::Read;
 
 pub struct ServerDecrypterHalf {
@@ -35,12 +37,9 @@ impl ServerDecrypterHalf {
         ClientHeader { size, opcode }
     }
 
-    pub(crate) fn new(
-        session_key: [u8; SESSION_KEY_LENGTH as usize],
-        key: &[u8; KEY_LENGTH as usize],
-    ) -> Self {
+    pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
         Self {
-            decrypt: InnerCrypto::new(session_key, &key),
+            decrypt: InnerCrypto::new(session_key, &S),
         }
     }
 }
@@ -76,12 +75,9 @@ impl ClientDecrypterHalf {
         ServerHeader { size, opcode }
     }
 
-    pub(crate) fn new(
-        session_key: [u8; SESSION_KEY_LENGTH as usize],
-        key: &[u8; KEY_LENGTH as usize],
-    ) -> Self {
+    pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
         Self {
-            decrypt: InnerCrypto::new(session_key, &key),
+            decrypt: InnerCrypto::new(session_key, &R),
         }
     }
 }

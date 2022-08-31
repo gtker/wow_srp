@@ -22,10 +22,12 @@ pub const CLIENT_HEADER_LENGTH: u8 =
 pub const SERVER_HEADER_LENGTH: u8 =
     (std::mem::size_of::<u16>() + std::mem::size_of::<u16>()) as u8;
 
+// Used for Client (Encryption) to Server (Decryption)
 const S: [u8; 16] = [
     0xC2, 0xB3, 0x72, 0x3C, 0xC6, 0xAE, 0xD9, 0xB5, 0x34, 0x3C, 0x53, 0xEE, 0x2F, 0x43, 0x67, 0xCE,
 ];
 
+// Used for Server (Encryption) to Client (Decryption) messages
 const R: [u8; 16] = [
     0xCC, 0x98, 0xAE, 0x04, 0xE8, 0x97, 0xEA, 0xCA, 0x12, 0xDD, 0xC0, 0x93, 0x42, 0x91, 0x53, 0x57,
 ];
@@ -98,8 +100,8 @@ impl ClientCrypto {
 
     pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
         Self {
-            decrypt: ClientDecrypterHalf::new(session_key, &R),
-            encrypt: ClientEncrypterHalf::new(session_key, &S),
+            decrypt: ClientDecrypterHalf::new(session_key),
+            encrypt: ClientEncrypterHalf::new(session_key),
         }
     }
 }
@@ -165,8 +167,8 @@ impl ServerCrypto {
 
     pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
         Self {
-            decrypt: ServerDecrypterHalf::new(session_key, &S),
-            encrypt: ServerEncrypterHalf::new(session_key, &R),
+            decrypt: ServerDecrypterHalf::new(session_key),
+            encrypt: ServerEncrypterHalf::new(session_key),
         }
     }
 }
