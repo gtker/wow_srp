@@ -129,9 +129,19 @@ impl HeaderCrypto {
     }
 
     pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
+        const S: [u8; 16] = [
+            0xC2, 0xB3, 0x72, 0x3C, 0xC6, 0xAE, 0xD9, 0xB5, 0x34, 0x3C, 0x53, 0xEE, 0x2F, 0x43,
+            0x67, 0xCE,
+        ];
+
+        const R: [u8; 16] = [
+            0xCC, 0x98, 0xAE, 0x04, 0xE8, 0x97, 0xEA, 0xCA, 0x12, 0xDD, 0xC0, 0x93, 0x42, 0x91,
+            0x53, 0x57,
+        ];
+
         Self {
-            decrypt: DecrypterHalf::new(session_key),
-            encrypt: EncrypterHalf::new(session_key),
+            decrypt: DecrypterHalf::new(session_key, &S),
+            encrypt: EncrypterHalf::new(session_key, &R),
         }
     }
 }

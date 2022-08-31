@@ -3,7 +3,7 @@ use crate::wrath_header::decrypt::DecrypterHalf;
 use crate::wrath_header::{HeaderCrypto, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH};
 use crate::SESSION_KEY_LENGTH;
 
-use crate::wrath_header::inner_crypto::InnerCrypto;
+use crate::wrath_header::inner_crypto::{InnerCrypto, KEY_LENGTH};
 use std::io::Write;
 
 pub struct EncrypterHalf {
@@ -74,14 +74,12 @@ impl EncrypterHalf {
         unimplemented!()
     }
 
-    pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
-        const R: [u8; 16] = [
-            0xCC, 0x98, 0xAE, 0x04, 0xE8, 0x97, 0xEA, 0xCA, 0x12, 0xDD, 0xC0, 0x93, 0x42, 0x91,
-            0x53, 0x57,
-        ];
-
+    pub(crate) fn new(
+        session_key: [u8; SESSION_KEY_LENGTH as usize],
+        key: &[u8; KEY_LENGTH as usize],
+    ) -> Self {
         Self {
-            encrypt: InnerCrypto::new(session_key, &R),
+            encrypt: InnerCrypto::new(session_key, key),
         }
     }
 

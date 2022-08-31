@@ -2,7 +2,7 @@ use crate::wrath_header::encrypt::EncrypterHalf;
 use crate::wrath_header::{ClientHeader, ServerHeader, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH};
 use crate::SESSION_KEY_LENGTH;
 
-use crate::wrath_header::inner_crypto::InnerCrypto;
+use crate::wrath_header::inner_crypto::{InnerCrypto, KEY_LENGTH};
 use std::io::Read;
 
 pub struct DecrypterHalf {
@@ -62,14 +62,12 @@ impl DecrypterHalf {
         other.is_pair_of(self)
     }
 
-    pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
-        const S: [u8; 16] = [
-            0xC2, 0xB3, 0x72, 0x3C, 0xC6, 0xAE, 0xD9, 0xB5, 0x34, 0x3C, 0x53, 0xEE, 0x2F, 0x43,
-            0x67, 0xCE,
-        ];
-
+    pub(crate) fn new(
+        session_key: [u8; SESSION_KEY_LENGTH as usize],
+        key: &[u8; KEY_LENGTH as usize],
+    ) -> Self {
         Self {
-            decrypt: InnerCrypto::new(session_key, &S),
+            decrypt: InnerCrypto::new(session_key, &key),
         }
     }
 }
