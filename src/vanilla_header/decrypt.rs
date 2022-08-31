@@ -1,5 +1,7 @@
 use crate::vanilla_header::encrypt::EncrypterHalf;
-use crate::vanilla_header::{ClientHeader, ServerHeader, SERVER_HEADER_LENGTH, CLIENT_HEADER_LENGTH};
+use crate::vanilla_header::{
+    ClientHeader, ServerHeader, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH,
+};
 use crate::SESSION_KEY_LENGTH;
 use std::io::Read;
 
