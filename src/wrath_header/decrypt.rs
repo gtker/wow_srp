@@ -5,30 +5,15 @@ use crate::SESSION_KEY_LENGTH;
 use crate::wrath_header::inner_crypto::InnerCrypto;
 use std::io::Read;
 
-/// Decryption part of a [`HeaderCrypto`](crate::wrath_header::HeaderCrypto).
-///
-/// Intended to be kept with the reader half of a connection.
-///
-/// Use the [`DecrypterHalf`] functions to decrypt.
 pub struct DecrypterHalf {
     decrypt: InnerCrypto,
 }
 
 impl DecrypterHalf {
-    /// Use either [the client](DecrypterHalf::read_and_decrypt_client_header)
-    /// or [the server](DecrypterHalf::read_and_decrypt_server_header)
-    /// [`Read`](std::io::Read) functions, or
-    /// [the client](DecrypterHalf::decrypt_client_header)
-    /// or [the server](DecrypterHalf::decrypt_server_header) array functions.
     pub fn decrypt(&mut self, data: &mut [u8]) {
         self.decrypt.apply(data);
     }
 
-    /// [`Read`](std::io::Read) wrapper for [`DecrypterHalf::decrypt_server_header`].
-    ///
-    /// # Errors
-    ///
-    /// Has the same errors as [`std::io::Read::read_exact`].
     pub fn read_and_decrypt_server_header<R: Read>(
         &mut self,
         reader: &mut R,
@@ -39,11 +24,6 @@ impl DecrypterHalf {
         Ok(self.decrypt_server_header(buf))
     }
 
-    /// [`Read`](std::io::Read) wrapper for [`DecrypterHalf::decrypt_client_header`].
-    ///
-    /// # Errors
-    ///
-    /// Has the same errors as [`std::io::Read::read_exact`].
     pub fn read_and_decrypt_client_header<R: Read>(
         &mut self,
         reader: &mut R,
@@ -54,9 +34,6 @@ impl DecrypterHalf {
         Ok(self.decrypt_client_header(buf))
     }
 
-    /// Convenience function for decrypting server headers.
-    ///
-    /// Prefer this over directly using [`DecrypterHalf::decrypt`].
     pub fn decrypt_server_header(
         &mut self,
         mut data: [u8; SERVER_HEADER_LENGTH as usize],
@@ -69,9 +46,6 @@ impl DecrypterHalf {
         ServerHeader { size, opcode }
     }
 
-    /// Convenience function for decrypting client headers.
-    ///
-    /// Prefer this over directly using [`DecrypterHalf::decrypt`].
     pub fn decrypt_client_header(
         &mut self,
         mut data: [u8; CLIENT_HEADER_LENGTH as usize],
@@ -84,11 +58,6 @@ impl DecrypterHalf {
         ClientHeader { size, opcode }
     }
 
-    /// Tests whether both halves originate from the same
-    /// [`HeaderCrypto`](crate::wrath_header::HeaderCrypto)
-    /// and can be [`EncrypterHalf::unsplit`].
-    ///
-    /// Same as [`EncrypterHalf::is_pair_of`], provided for convenience/readability.
     pub fn is_pair_of(&self, other: &EncrypterHalf) -> bool {
         other.is_pair_of(self)
     }

@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use std::io::{Read, Write};
 
 pub use decrypt::DecrypterHalf;
@@ -14,89 +15,41 @@ pub(crate) mod decrypt;
 pub(crate) mod encrypt;
 mod inner_crypto;
 
-/// Size in bytes of the client [world packet] header.
-///
-/// Always 6 bytes because the size is 2 bytes and the opcode is 4 bytes.
-///
-/// [world packet]: https://wowdev.wiki/World_Packet
 pub const CLIENT_HEADER_LENGTH: u8 =
     (std::mem::size_of::<u16>() + std::mem::size_of::<u32>()) as u8;
-/// Size in bytes of the server [world packet] header.
-///
-/// Always 4 bytes because the size is 2 bytes and the opcode is 2 bytes.
-///
-/// [world packet]: https://wowdev.wiki/World_Packet
 pub const SERVER_HEADER_LENGTH: u8 =
     (std::mem::size_of::<u16>() + std::mem::size_of::<u16>()) as u8;
 
-/// Decrypted values from a server.
-///
-/// Gotten from either
-/// [`decrypt_server_header`](DecrypterHalf::decrypt_server_header) or
-/// [`read_and_decrypt_server_header`](DecrypterHalf::read_and_decrypt_server_header).
 #[derive(Debug, Clone, Copy)]
 pub struct ServerHeader {
-    /// Size of the message in bytes.
-    /// Includes the opcode field but not the size field
     pub size: u16,
-    /// Opcode of the message. Note that the size is not the same as the [`ClientHeader`].
     pub opcode: u16,
 }
 
-/// Decrypted values from a client.
-///
-/// Gotten from either
-/// [`decrypt_client_header`](DecrypterHalf::decrypt_client_header) or
-/// [`read_and_decrypt_server_header`](DecrypterHalf::read_and_decrypt_server_header).
 #[derive(Debug, Clone, Copy)]
 pub struct ClientHeader {
-    /// Size of the message in bytes.
-    /// Includes the opcode field but not the size field
     pub size: u16,
-    /// Opcode of the message. Note that the size is not the same as the [`ServerHeader`].
     pub opcode: u32,
 }
 
-/// Main struct for encryption or decryption.
-///
-/// Created from [`ProofSeed::into_header_crypto`].
-///
-/// Handles both encryption and decryption of headers through the
-/// [`EncrypterHalf`] and [`DecrypterHalf`] structs.
-///
-/// Can be split into a [`EncrypterHalf`] and [`DecrypterHalf`] through
-/// the [`HeaderCrypto::split`] method. This is useful if you have this struct behind a
-/// mutex and don't want to lock both reading and writing at the same time.
 pub struct HeaderCrypto {
     decrypt: DecrypterHalf,
     encrypt: EncrypterHalf,
 }
 
 impl HeaderCrypto {
-    /// Direct access to the internal [`DecrypterHalf`].
     pub fn decrypter(&mut self) -> &mut DecrypterHalf {
         &mut self.decrypt
     }
 
-    /// Direct access to the internal [`EncrypterHalf`].
     pub fn encrypter(&mut self) -> &mut EncrypterHalf {
         &mut self.encrypt
     }
 
-    /// Use either [the client](Self::write_encrypted_client_header)
-    /// or [the server](Self::write_encrypted_server_header)
-    /// [`Write`](std::io::Write) functions, or
-    /// [the client](Self::encrypt_client_header)
-    /// or [the server](Self::encrypt_server_header) array functions.
     pub fn encrypt(&mut self, data: &mut [u8]) {
         self.encrypt.encrypt(data);
     }
 
-    /// Convenience wrapper for [`EncrypterHalf::write_encrypted_server_header`].
-    ///
-    /// # Errors
-    ///
-    /// Has the same errors as [`EncrypterHalf::write_encrypted_server_header`].
     pub fn write_encrypted_server_header<W: Write>(
         &mut self,
         write: &mut W,
@@ -107,11 +60,6 @@ impl HeaderCrypto {
             .write_encrypted_server_header(write, size, opcode)
     }
 
-    /// Convenience wrapper for [`EncrypterHalf::write_encrypted_client_header`].
-    ///
-    /// # Errors
-    ///
-    /// Has the same errors as [`EncrypterHalf::write_encrypted_client_header`].
     pub fn write_encrypted_client_header<W: Write>(
         &mut self,
         write: &mut W,
@@ -122,7 +70,6 @@ impl HeaderCrypto {
             .write_encrypted_client_header(write, size, opcode)
     }
 
-    /// Convenience wrapper for [`EncrypterHalf::encrypt_server_header`].
     pub fn encrypt_server_header(
         &mut self,
         size: u16,
@@ -131,7 +78,6 @@ impl HeaderCrypto {
         self.encrypt.encrypt_server_header(size, opcode)
     }
 
-    /// Convenience wrapper for [`EncrypterHalf::encrypt_client_header`].
     pub fn encrypt_client_header(
         &mut self,
         size: u16,
@@ -140,20 +86,10 @@ impl HeaderCrypto {
         self.encrypt.encrypt_client_header(size, opcode)
     }
 
-    /// Use either [the client](Self::read_and_decrypt_client_header)
-    /// or [the server](Self::read_and_decrypt_server_header)
-    /// [`Read`](std::io::Read) functions, or
-    /// [the client](Self::decrypt_client_header)
-    /// or [the server](Self::decrypt_server_header) array functions.
     pub fn decrypt(&mut self, data: &mut [u8]) {
         self.decrypt.decrypt(data);
     }
 
-    /// Convenience wrapper for [`DecrypterHalf::read_and_decrypt_server_header`].
-    ///
-    /// # Errors
-    ///
-    /// Has the same errors as [`Self::read_and_decrypt_server_header`].
     pub fn read_and_decrypt_server_header<R: Read>(
         &mut self,
         reader: &mut R,
@@ -161,11 +97,6 @@ impl HeaderCrypto {
         self.decrypt.read_and_decrypt_server_header(reader)
     }
 
-    /// Convenience wrapper for [`DecrypterHalf::read_and_decrypt_client_header`].
-    ///
-    /// # Errors
-    ///
-    /// Has the same errors as [`Self::read_and_decrypt_client_header`].
     pub fn read_and_decrypt_client_header<R: Read>(
         &mut self,
         reader: &mut R,
@@ -173,9 +104,6 @@ impl HeaderCrypto {
         self.decrypt.read_and_decrypt_client_header(reader)
     }
 
-    /// Convenience wrapper for [`DecrypterHalf::decrypt_server_header`].
-    ///
-    /// Prefer this over directly using [`Self::decrypt_server_header`].
     pub fn decrypt_server_header(
         &mut self,
         data: [u8; SERVER_HEADER_LENGTH as usize],
@@ -183,9 +111,6 @@ impl HeaderCrypto {
         self.decrypt.decrypt_server_header(data)
     }
 
-    /// Convenience wrapper for [`DecrypterHalf::decrypt_client_header`].
-    ///
-    /// Prefer this over directly using [`Self::decrypt`].
     pub fn decrypt_client_header(
         &mut self,
         mut data: [u8; CLIENT_HEADER_LENGTH as usize],
@@ -198,15 +123,6 @@ impl HeaderCrypto {
         ClientHeader { size, opcode }
     }
 
-    /// Split the [`HeaderCrypto`] into two parts for use with split connections.
-    ///
-    /// It is intended for the [`EncrypterHalf`] to be stored with the write half of
-    /// the connection and for the [`DecrypterHalf`] to be stored with the read half
-    /// of the connection.
-    ///
-    /// This is not necessary to do unless you actually can split your connections into
-    /// read and write halves, and you have some reason for not just keeping the crypto together
-    /// like if you don't want locking encryption to also lock decryption in a mutex.
     #[allow(clippy::missing_const_for_fn)] // Clippy does not consider `self` arg
     pub fn split(self) -> (EncrypterHalf, DecrypterHalf) {
         (self.encrypt, self.decrypt)
@@ -220,20 +136,11 @@ impl HeaderCrypto {
     }
 }
 
-/// Random Seed part of the calculation needed to verify
-/// that a client knows the session key.
-///
-/// The [`ProofSeed::into_header_crypto`] function is used by the server to verify
-/// that a client knows the session key.
-///
-/// The [`ProofSeed::into_proof_and_header_crypto`] function is used by the client to
-/// prove to the server that the client knows the session key.
 pub struct ProofSeed {
     seed: u32,
 }
 
 impl ProofSeed {
-    /// Creates a new, random, seed.
     pub fn new() -> Self {
         Self::default()
     }
@@ -243,20 +150,10 @@ impl ProofSeed {
         Self { seed: server_seed }
     }
 
-    /// Either the server seed used in [`SMSG_AUTH_CHALLENGE`] or the client
-    /// seed used in [`CMSG_AUTH_SESSION`].
-    ///
-    /// [`SMSG_AUTH_CHALLENGE`]: https://wowdev.wiki/SMSG_AUTH_CHALLENGE
-    /// [`CMSG_AUTH_SESSION`]: https://wowdev.wiki/CMSG_AUTH_SESSION
     pub const fn seed(&self) -> u32 {
         self.seed
     }
 
-    /// Generates world server proof and [`HeaderCrypto`].
-    ///
-    /// This is not valid until the server has responded with a successful [`SMSG_AUTH_RESPONSE`].
-    ///
-    /// [`SMSG_AUTH_RESPONSE`]: https://wowdev.wiki/SMSG_AUTH_RESPONSE
     pub fn into_proof_and_header_crypto(
         self,
         username: &NormalizedString,
@@ -275,17 +172,6 @@ impl ProofSeed {
         (*client_proof.as_le(), crypto)
     }
 
-    /// Asserts that the client knows the session key.
-    ///
-    /// # Errors
-    ///
-    /// If the `client_proof` does not match the server generated proof.
-    /// This should only happen if:
-    ///
-    /// * There's an error with the provided parameters.
-    /// * The session key might be out of date.
-    /// * The client is not well behaved and deliberately trying to get past the login server.
-    ///
     pub fn into_header_crypto(
         self,
         username: &NormalizedString,
