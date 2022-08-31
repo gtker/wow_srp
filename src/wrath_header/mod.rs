@@ -1,15 +1,15 @@
 #![allow(missing_docs)]
 use std::io::{Read, Write};
 
+pub use decrypt::ClientDecrypterHalf;
 pub use decrypt::ServerDecrypterHalf;
+pub use encrypt::ClientEncrypterHalf;
 pub use encrypt::ServerEncrypterHalf;
 
 use crate::error::MatchProofsError;
 use crate::key::{Proof, SessionKey};
 use crate::normalized_string::NormalizedString;
 use crate::vanilla_header::calculate_world_server_proof;
-use crate::wrath_header::decrypt::ClientDecrypterHalf;
-use crate::wrath_header::encrypt::ClientEncrypterHalf;
 use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
 use rand::{thread_rng, RngCore};
 
