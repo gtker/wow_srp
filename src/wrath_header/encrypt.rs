@@ -2,10 +2,10 @@ use crate::error::UnsplitCryptoError;
 use crate::wrath_header::decrypt::DecrypterHalf;
 use crate::wrath_header::{HeaderCrypto, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH};
 use crate::SESSION_KEY_LENGTH;
-use rc4::consts::U40;
-use rc4::{KeyInit, Rc4};
+use rc4::consts::U20;
+use rc4::{Rc4, StreamCipher};
 
-use hmac::Hmac;
+use hmac::{Hmac, Mac};
 use sha1::Sha1;
 use std::io::Write;
 
@@ -14,9 +14,8 @@ use std::io::Write;
 /// Intended to be kept with the writer half of a connection.
 ///
 /// Use the [`EncrypterHalf`] functions to encrypt.
-#[derive(Debug)]
 pub struct EncrypterHalf {
-    encrypt: Rc4<U40>,
+    encrypt: Rc4<U20>,
 }
 
 impl EncrypterHalf {
@@ -26,12 +25,7 @@ impl EncrypterHalf {
     /// [the client](EncrypterHalf::encrypt_client_header)
     /// or [the server](EncrypterHalf::encrypt_server_header) array functions.
     pub fn encrypt(&mut self, data: &mut [u8]) {
-        encrypt(
-            data,
-            self.session_key,
-            &mut self.index,
-            &mut self.previous_value,
-        );
+        self.encrypt.apply_keystream(data);
     }
 
     /// [`Write`](std::io::Write) wrapper for [`EncrypterHalf::encrypt_server_header`].
@@ -108,27 +102,34 @@ impl EncrypterHalf {
     /// Tests whether both halves originate from the same [`HeaderCrypto`]
     /// and can be [`EncrypterHalf::unsplit`].
     pub fn is_pair_of(&self, other: &DecrypterHalf) -> bool {
-        self.session_key == other.session_key
+        unimplemented!()
     }
 
-    const S: [u8; 16] = [
-        0xC2, 0xB3, 0x72, 0x3C, 0xC6, 0xAE, 0xD9, 0xB5, 0x34, 0x3C, 0x53, 0xEE, 0x2F, 0x43, 0x67,
-        0xCE,
-    ];
     const R: [u8; 16] = [
         0xCC, 0x98, 0xAE, 0x04, 0xE8, 0x97, 0xEA, 0xCA, 0x12, 0xDD, 0xC0, 0x93, 0x42, 0x91, 0x53,
         0x57,
     ];
 
-    pub(crate) const fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
-        let mut hmac: Hmac<Sha1> = Hmac::new(&S);
-        hmac.update();
+    pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
+        const S: [u8; 16] = [
+            0xC2, 0xB3, 0x72, 0x3C, 0xC6, 0xAE, 0xD9, 0xB5, 0x34, 0x3C, 0x53, 0xEE, 0x2F, 0x43,
+            0x67, 0xCE,
+        ];
 
-        Self {
-            session_key,
-            index: 0,
-            previous_value: 0,
-        }
+        let mut hmac: Hmac<Sha1> = Hmac::<Sha1>::new_from_slice(&S).unwrap();
+        hmac.update(&session_key);
+        let hmac = hmac.finalize();
+
+        let mut encrypt = {
+            use rc4::KeyInit;
+            Rc4::new_from_slice(&hmac.into_bytes()).unwrap()
+        };
+
+        let mut pad_data = [0_u8; 1024];
+
+        encrypt.apply_keystream(&mut pad_data);
+
+        Self { encrypt }
     }
 
     /// Unsplits the two halves.
@@ -150,23 +151,5 @@ impl EncrypterHalf {
             decrypt: decrypter,
             encrypt: self,
         })
-    }
-}
-
-pub(crate) fn encrypt(
-    data: &mut [u8],
-    session_key: [u8; SESSION_KEY_LENGTH as usize],
-    index: &mut u8,
-    previous_value: &mut u8,
-) {
-    for unencrypted in data {
-        // x = (d ^ session_key[index]) + previous_value
-        let encrypted = (*unencrypted ^ session_key[*index as usize]).wrapping_add(*previous_value);
-
-        // Use the session key as a circular buffer
-        *index = (*index + 1) % SESSION_KEY_LENGTH as u8;
-
-        *unencrypted = encrypted;
-        *previous_value = encrypted;
     }
 }

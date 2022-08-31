@@ -66,7 +66,6 @@ pub struct ClientHeader {
 /// Can be split into a [`EncrypterHalf`] and [`DecrypterHalf`] through
 /// the [`HeaderCrypto::split`] method. This is useful if you have this struct behind a
 /// mutex and don't want to lock both reading and writing at the same time.
-#[derive(Debug)]
 pub struct HeaderCrypto {
     decrypt: DecrypterHalf,
     encrypt: EncrypterHalf,
@@ -212,7 +211,7 @@ impl HeaderCrypto {
         (self.encrypt, self.decrypt)
     }
 
-    pub(crate) const fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
+    pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
         Self {
             decrypt: DecrypterHalf::new(session_key),
             encrypt: EncrypterHalf::new(session_key),
