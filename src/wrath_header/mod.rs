@@ -313,9 +313,57 @@ mod test {
         assert_eq!(original_data, data);
     }
 
-    // fn verify_server_header() { }
+    #[test]
+    fn verify_headers() {
+        // Real capture with 3.3.5 client
+        let session_key = [
+            1, 51, 81, 113, 146, 209, 181, 133, 131, 129, 50, 206, 122, 228, 208, 115, 52, 15, 132,
+            54, 189, 17, 178, 157, 178, 3, 35, 186, 202, 151, 226, 58, 162, 188, 65, 174, 60, 18,
+            152, 7,
+        ];
 
-    // fn verify_client_header() { }
+        let client_proof = [
+            145, 164, 79, 1, 159, 98, 226, 16, 5, 12, 237, 65, 135, 95, 214, 190, 65, 92, 15, 77,
+        ];
+        let client_seed = 3567746900;
+
+        let mut encryption = ProofSeed::from_specific_seed(3818341363)
+            .into_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                client_seed,
+            )
+            .unwrap();
+
+        let header = encryption.encrypt_server_header(13, 0x1ee);
+        let expected_header = [0x17, 0xaa, 0xd4, 0x4c];
+        assert_eq!(header, expected_header);
+
+        let header = encryption.decrypt_client_header([0x85, 0x0f, 0x6e, 0x91, 0x55, 0xf9]);
+        assert_eq!(header.size, 4);
+        assert_eq!(header.opcode, 0x4ff);
+
+        let header = encryption.encrypt_server_header(277, 0x3b);
+        let expected_header = [0x1a, 0x9c, 0x7c, 0x10];
+        assert_eq!(header, expected_header);
+
+        let header = encryption.decrypt_client_header([0x56, 0x8e, 0x8c, 0x9a, 0xed, 0x42]);
+        assert_eq!(header.size, 4);
+        assert_eq!(header.opcode, 0x37);
+
+        let header = encryption.encrypt_server_header(19, 0x38B);
+        let expected_header = [0x10, 0xfb, 0x6e, 0xa8];
+        assert_eq!(header, expected_header);
+
+        let header = encryption.decrypt_client_header([0xc2, 0xf3, 0xb7, 0xc5, 0x17, 0xbc]);
+        assert_eq!(header.size, 8);
+        assert_eq!(header.opcode, 0x38c);
+
+        let header = encryption.decrypt_client_header([0x30, 0xf7, 0xa6, 0xee, 0x74, 0xbe]);
+        assert_eq!(header.size, 12);
+        assert_eq!(header.opcode, 0x1DC);
+    }
 
     #[test]
     fn verify_login() {
