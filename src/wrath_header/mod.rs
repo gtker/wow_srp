@@ -249,7 +249,7 @@ mod test {
     use crate::hex::*;
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
-    use crate::wrath_header::ProofSeed;
+    use crate::wrath_header::{ClientCrypto, ProofSeed, ServerCrypto};
     use std::convert::TryInto;
 
     #[test]
@@ -385,7 +385,36 @@ mod test {
         assert!(encryption.is_ok());
     }
 
-    // fn verify_encrypt() { }
+    #[test]
+    fn verify_encrypt_and_decrypt() {
+        let contents =
+            read_to_string("tests/encryption/calculate_wrath_encrypt_values.txt").unwrap();
+
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
+
+            let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
+            let mut data = hex_decode(line.next().unwrap());
+            let expected_client = hex_decode(line.next().unwrap());
+            let expected_server = hex_decode(line.next().unwrap());
+
+            let original_data = data.clone();
+
+            let mut client = ClientCrypto::new(*session_key.as_le());
+            client.encrypt(&mut data);
+            assert_eq!(data, expected_client);
+
+            let mut server = ServerCrypto::new(*session_key.as_le());
+            server.decrypt(&mut data);
+            assert_eq!(data, original_data);
+
+            server.encrypt(&mut data);
+            assert_eq!(data, expected_server);
+
+            client.decrypt(&mut data);
+            assert_eq!(data, original_data);
+        }
+    }
 
     // fn verify_mixed_used() { }
 
