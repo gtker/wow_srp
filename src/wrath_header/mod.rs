@@ -34,7 +34,7 @@ const R: [u8; 16] = [
 
 #[derive(Debug, Clone, Copy)]
 pub struct ServerHeader {
-    pub size: u16,
+    pub size: u32,
     pub opcode: u16,
 }
 
