@@ -104,6 +104,11 @@ impl ClientCrypto {
             encrypt: ClientEncrypterHalf::new(session_key),
         }
     }
+
+    #[allow(clippy::missing_const_for_fn)] // Clippy does not consider `self` arg
+    pub fn split(self) -> (ClientEncrypterHalf, ClientDecrypterHalf) {
+        (self.encrypt, self.decrypt)
+    }
 }
 
 pub struct ServerCrypto {
@@ -170,6 +175,11 @@ impl ServerCrypto {
             decrypt: ServerDecrypterHalf::new(session_key),
             encrypt: ServerEncrypterHalf::new(session_key),
         }
+    }
+
+    #[allow(clippy::missing_const_for_fn)] // Clippy does not consider `self` arg
+    pub fn split(self) -> (ServerEncrypterHalf, ServerDecrypterHalf) {
+        (self.encrypt, self.decrypt)
     }
 }
 
@@ -416,9 +426,37 @@ mod test {
         }
     }
 
-    // fn verify_mixed_used() { }
+    #[test]
+    fn verify_splitting() {
+        // Same as verify_encrypt_and_decrypt but with split
+        let contents =
+            read_to_string("tests/encryption/calculate_wrath_encrypt_values.txt").unwrap();
+
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
+
+            let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
+            let mut data = hex_decode(line.next().unwrap());
+            let expected_client = hex_decode(line.next().unwrap());
+            let expected_server = hex_decode(line.next().unwrap());
+
+            let original_data = data.clone();
+
+            let (mut client_enc, mut client_dec) = ClientCrypto::new(*session_key.as_le()).split();
+            client_enc.encrypt(&mut data);
+            assert_eq!(data, expected_client);
+
+            let (mut server_enc, mut server_dec) = ServerCrypto::new(*session_key.as_le()).split();
+            server_dec.decrypt(&mut data);
+            assert_eq!(data, original_data);
+
+            server_enc.encrypt(&mut data);
+            assert_eq!(data, expected_server);
+
+            client_dec.decrypt(&mut data);
+            assert_eq!(data, original_data);
+        }
+    }
 
     // fn verify_trait_helpers() { }
-
-    // fn verify_decrypt() { }
 }
