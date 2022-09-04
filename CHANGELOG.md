@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Supporting for encrypting/decrypting Wrath headers.
+* Ability to not have a Bigint library dependency. Compiling with no features will no longer be a compile error.
+
 ### Changed
 
 * BREAKING: `header_crypto` moved to `vanilla_header` to make way for Wrath header crypto.
