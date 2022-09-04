@@ -88,7 +88,8 @@
 //!
 //! [archive]: https://web.archive.org/web/20210620154707/https://wowdev.wiki/Login_Packet
 
-#![doc(html_root_url = "https://docs.rs/wow_srp/0.4.2")]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![warn(
     clippy::perf,
