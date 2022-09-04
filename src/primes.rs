@@ -1,3 +1,4 @@
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 use crate::bigint;
 
 /// The size in bytes of the [large safe prime](LARGE_SAFE_PRIME_LITTLE_ENDIAN).
@@ -63,6 +64,7 @@ impl LargeSafePrime {
         &self.prime
     }
 
+    #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
     pub fn to_bigint(&self) -> bigint::Integer {
         bigint::Integer::from_bytes_le(&self.prime)
     }
@@ -95,6 +97,7 @@ impl Default for Generator {
     }
 }
 impl Generator {
+    #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
     pub fn to_bigint(&self) -> bigint::Integer {
         bigint::Integer::from(self.generator)
     }
@@ -113,6 +116,7 @@ impl From<u8> for Generator {
 pub const K_VALUE: u8 = 3;
 pub(crate) struct KValue {}
 impl KValue {
+    #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
     pub fn bigint() -> bigint::Integer {
         bigint::Integer::from(K_VALUE)
     }

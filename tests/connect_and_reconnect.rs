@@ -1,3 +1,4 @@
+#![cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 use std::io::{Read, Write};
 use std::net::{Ipv4Addr, SocketAddrV4, TcpListener, TcpStream};
 use wow_srp::normalized_string::NormalizedString;

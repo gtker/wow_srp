@@ -1,3 +1,4 @@
+#![cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 use wow_srp::client::SrpClientUser;
 use wow_srp::normalized_string::NormalizedString;
 use wow_srp::server::SrpVerifier;

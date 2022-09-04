@@ -7,9 +7,6 @@ use rug::integer::Order;
 use rug::Integer as RugInt;
 use std::ops;
 
-#[cfg(not(any(feature = "srp-fast-math", feature = "srp-default-math")))]
-compile_error!("Either the 'srp-fast-math' feature or the 'srp-default-math' feature must be enabled.\n\n The features exclusively select an arbitrary integer library.\n Use 'srp-default-math' if you want no-dependency compilation, but slow execution speed. Use 'srp-fast-math' if you want exceptional execution speed but external dependencies.");
-
 pub(crate) struct Integer {
     #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
     value: BigInt,

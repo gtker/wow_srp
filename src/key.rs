@@ -1,6 +1,7 @@
 #[cfg(test)]
 use std::convert::TryFrom;
 
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 use crate::bigint;
 
 use rand::{thread_rng, RngCore};
@@ -13,6 +14,7 @@ use crate::LARGE_SAFE_PRIME_LITTLE_ENDIAN;
 
 macro_rules! key_bigint {
     ($name: ident) => {
+        #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
         impl $name {
             pub(crate) fn to_bigint(&self) -> bigint::Integer {
                 bigint::Integer::from_bytes_le(&self.key)
@@ -96,6 +98,7 @@ macro_rules! key_check_not_zero_initialization {
             // Keep a separate validation function for clients because the large safe prime
             // can't be known ahead of time, meaning we don't have the guarantees for it
             // that we do for the server prime.
+            #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
             pub(crate) fn client_try_from_bigint(
                 b: bigint::Integer,
                 large_safe_prime: &LargeSafePrime,
@@ -117,6 +120,7 @@ macro_rules! key_check_not_zero_initialization {
 
             // This should be used on the server.
             // Doesn't use TryFrom<BigInt> because it shows up in the public interface with no way to hide it
+            #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
             pub(crate) fn try_from_bigint(
                 b: bigint::Integer,
             ) -> Result<Self, InvalidPublicKeyError> {
@@ -155,6 +159,7 @@ macro_rules! key_no_checks_initialization {
             }
         }
 
+        #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
         impl From<bigint::Integer> for $name {
             fn from(b: bigint::Integer) -> Self {
                 let mut key = [0_u8; $size];
@@ -341,6 +346,7 @@ key_wrapper!(SessionKey; SESSION_KEY_LENGTH as usize);
 key_no_checks_initialization!(SessionKey; SESSION_KEY_LENGTH as usize);
 
 #[cfg(test)]
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 mod test {
 
     use crate::bigint::Integer;

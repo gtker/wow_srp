@@ -118,14 +118,19 @@ pub use primes::LARGE_SAFE_PRIME_BIG_ENDIAN;
 pub use primes::LARGE_SAFE_PRIME_LENGTH;
 pub use primes::LARGE_SAFE_PRIME_LITTLE_ENDIAN;
 
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 pub(crate) mod bigint;
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 pub mod client;
 pub mod error;
 mod key;
 pub mod normalized_string;
 pub(crate) mod primes;
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 pub mod server;
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 pub(crate) mod srp_internal;
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 pub(crate) mod srp_internal_client;
 pub mod vanilla_header;
 pub mod wrath_header;
