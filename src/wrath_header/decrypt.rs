@@ -1,21 +1,34 @@
 use crate::wrath_header::{
-    ClientHeader, ServerHeader, CLIENT_HEADER_LENGTH, R, S, SERVER_HEADER_LENGTH,
-    SERVER_HEADER_MAXIMUM_LENGTH,
+    ClientHeader, ServerHeader, CLIENT_HEADER_LENGTH, R, S, SERVER_HEADER_MAXIMUM_LENGTH,
+    SERVER_HEADER_MINIMUM_LENGTH,
 };
 use crate::SESSION_KEY_LENGTH;
 
 use crate::wrath_header::inner_crypto::InnerCrypto;
 use std::io::Read;
 
+/// Decryption part of a [`ServerCrypto`](crate::wrath_header::ServerCrypto).
+///
+/// Intended to be kept with the reader half of a connection.
 pub struct ServerDecrypterHalf {
     decrypt: InnerCrypto,
 }
 
 impl ServerDecrypterHalf {
+    /// Raw access to decryption.
+    ///
+    /// Use either [the server](Self::read_and_decrypt_client_header)
+    /// [`Read`](std::io::Read) function, or
+    /// [the server](Self::decrypt_client_header) array functions.
     pub fn decrypt(&mut self, data: &mut [u8]) {
         self.decrypt.apply(data);
     }
 
+    /// Convenience wrapper for [`ServerDecrypterHalf::read_and_decrypt_client_header`].
+    ///
+    /// # Errors
+    ///
+    /// Has the same errors as [`ServerDecrypterHalf::read_and_decrypt_client_header`].
     pub fn read_and_decrypt_client_header<R: Read>(
         &mut self,
         reader: &mut R,
@@ -26,6 +39,9 @@ impl ServerDecrypterHalf {
         Ok(self.decrypt_client_header(buf))
     }
 
+    /// Convenience wrapper for [`ServerDecrypterHalf::decrypt_client_header`].
+    ///
+    /// Prefer this over directly using [`Self::decrypt`].
     pub fn decrypt_client_header(
         &mut self,
         mut data: [u8; CLIENT_HEADER_LENGTH as usize],
@@ -45,15 +61,27 @@ impl ServerDecrypterHalf {
     }
 }
 
+/// Decryption part of a [`ClientCrypto`](crate::wrath_header::ClientCrypto).
+///
+/// Intended to be kept with the reader half of a connection.
 pub struct ClientDecrypterHalf {
     decrypt: InnerCrypto,
 }
 
 impl ClientDecrypterHalf {
+    /// Raw access to decryption.
+    ///
+    /// Use
+    /// [the server](Self::decrypt_server_header) array function instead of this.
     pub fn decrypt(&mut self, data: &mut [u8]) {
         self.decrypt.apply(data);
     }
 
+    /// Convenience wrapper for [`ServerDecrypterHalf::decrypt_client_header`].
+    ///
+    /// This handles situations where the size field is 3 bytes instead of 2.
+    ///
+    /// Prefer this over directly using [`Self::decrypt`].
     pub fn decrypt_server_header(
         &mut self,
         data: &[u8; SERVER_HEADER_MAXIMUM_LENGTH as usize],
@@ -75,7 +103,7 @@ impl ClientDecrypterHalf {
 
             ServerHeader { size, opcode }
         } else {
-            self.decrypt(&mut copied_data[1..SERVER_HEADER_LENGTH as usize]);
+            self.decrypt(&mut copied_data[1..SERVER_HEADER_MINIMUM_LENGTH as usize]);
             let size = u16::from_be_bytes([copied_data[0], copied_data[1]]);
             let opcode = u16::from_le_bytes([copied_data[2], copied_data[3]]);
 

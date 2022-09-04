@@ -1,21 +1,33 @@
 use crate::wrath_header::{
-    CLIENT_HEADER_LENGTH, R, S, SERVER_HEADER_LENGTH, SERVER_HEADER_MAXIMUM_LENGTH,
+    CLIENT_HEADER_LENGTH, R, S, SERVER_HEADER_MAXIMUM_LENGTH, SERVER_HEADER_MINIMUM_LENGTH,
 };
 use crate::SESSION_KEY_LENGTH;
 
 use crate::wrath_header::inner_crypto::InnerCrypto;
 use std::io::Write;
 
+/// Encryption part of a [`ServerCrypto`](crate::wrath_header::ServerCrypto).
+///
+/// Intended to be kept with the writer half of a connection.
 pub struct ServerEncrypterHalf {
     encrypt: InnerCrypto,
     server_header: [u8; SERVER_HEADER_MAXIMUM_LENGTH as usize],
 }
 
 impl ServerEncrypterHalf {
+    /// Use either
+    /// [the server](Self::write_encrypted_server_header)
+    /// [`Write`](std::io::Write) function, or
+    /// or [the server](Self::encrypt_server_header) array function.
     pub fn encrypt(&mut self, data: &mut [u8]) {
         self.encrypt.apply(data);
     }
 
+    /// [`Write`](std::io::Write) wrapper for [`Self::encrypt_server_header`].
+    ///
+    /// # Errors
+    ///
+    /// Has the same errors as [`std::io::Write::write_all`].
     pub fn write_encrypted_server_header<W: Write>(
         &mut self,
         write: &mut W,
@@ -29,6 +41,9 @@ impl ServerEncrypterHalf {
         Ok(())
     }
 
+    /// Convenience function for encrypting client headers.
+    ///
+    /// Prefer this over directly using [`Self::encrypt`].
     pub fn encrypt_server_header(&mut self, size: u32, opcode: u16) -> &[u8] {
         if size > 0x7FFF {
             let size = size.to_be_bytes();
@@ -68,7 +83,7 @@ impl ServerEncrypterHalf {
             self.server_header[2] = header[2];
             self.server_header[3] = header[3];
 
-            &self.server_header[0..SERVER_HEADER_LENGTH as usize]
+            &self.server_header[0..SERVER_HEADER_MINIMUM_LENGTH as usize]
         }
     }
 
@@ -79,15 +94,28 @@ impl ServerEncrypterHalf {
         }
     }
 }
+
+/// Encryption part of a [`ClientCrypto`](crate::wrath_header::ClientCrypto).
+///
+/// Intended to be kept with the writer half of a connection.
 pub struct ClientEncrypterHalf {
     encrypt: InnerCrypto,
 }
 
 impl ClientEncrypterHalf {
+    /// Use either
+    /// [the client](Self::write_encrypted_client_header)
+    /// [`Write`](std::io::Write) function, or
+    /// or [the client](Self::encrypt_client_header) array function.
     pub fn encrypt(&mut self, data: &mut [u8]) {
         self.encrypt.apply(data);
     }
 
+    /// [`Write`](std::io::Write) wrapper for [`Self::encrypt_client_header`].
+    ///
+    /// # Errors
+    ///
+    /// Has the same errors as [`std::io::Write::write_all`].
     pub fn write_encrypted_client_header<W: Write>(
         &mut self,
         write: &mut W,
@@ -101,6 +129,9 @@ impl ClientEncrypterHalf {
         Ok(())
     }
 
+    /// Convenience function for encrypting client headers.
+    ///
+    /// Prefer this over directly using [`Self::encrypt`].
     pub fn encrypt_client_header(
         &mut self,
         size: u16,

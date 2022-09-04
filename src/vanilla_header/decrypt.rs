@@ -8,8 +8,6 @@ use std::io::Read;
 /// Decryption part of a [`HeaderCrypto`](crate::vanilla_header::HeaderCrypto).
 ///
 /// Intended to be kept with the reader half of a connection.
-///
-/// Use the [`DecrypterHalf`] functions to decrypt.
 #[derive(Debug)]
 pub struct DecrypterHalf {
     pub(crate) session_key: [u8; SESSION_KEY_LENGTH as usize],

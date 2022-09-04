@@ -268,7 +268,7 @@ impl HeaderCrypto {
     ///
     /// # Errors
     ///
-    /// Has the same errors as [`Self::read_and_decrypt_server_header`].
+    /// Has the same errors as [`DecrypterHalf::read_and_decrypt_server_header`].
     pub fn read_and_decrypt_server_header<R: Read>(
         &mut self,
         reader: &mut R,
@@ -280,7 +280,7 @@ impl HeaderCrypto {
     ///
     /// # Errors
     ///
-    /// Has the same errors as [`Self::read_and_decrypt_client_header`].
+    /// Has the same errors as [`DecrypterHalf::read_and_decrypt_client_header`].
     pub fn read_and_decrypt_client_header<R: Read>(
         &mut self,
         reader: &mut R,
@@ -290,7 +290,7 @@ impl HeaderCrypto {
 
     /// Convenience wrapper for [`DecrypterHalf::decrypt_server_header`].
     ///
-    /// Prefer this over directly using [`Self::decrypt_server_header`].
+    /// Prefer this over directly using [`Self::decrypt`].
     pub fn decrypt_server_header(
         &mut self,
         data: [u8; SERVER_HEADER_LENGTH as usize],
