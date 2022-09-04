@@ -591,7 +591,7 @@ mod test {
         for line in contents.lines() {
             let mut line = line.split_whitespace();
 
-            let client_public_key = PublicKey::from_be_hex_str(&line.next().unwrap()).unwrap();
+            let client_public_key = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
 
             let client_proof = Proof::from_be_hex_str(line.next().unwrap());
 

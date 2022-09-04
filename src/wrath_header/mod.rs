@@ -11,7 +11,7 @@
 //! have a [minimum](SERVER_HEADER_MINIMUM_LENGTH) and a [maximum](SERVER_HEADER_MAXIMUM_LENGTH) length.
 //!
 //! Because the keys used to encrypt and decrypt for client and server differ slightly, clients will
-//! have to use [ClientCrypto] and servers will have to use [ServerCrypto].
+//! have to use [`ClientCrypto`] and servers will have to use [`ServerCrypto`].
 //!
 //! The [Typestate](https://yoric.github.io/post/rust-typestate/) pattern is used
 //! in order to prevent incorrect use.
@@ -473,7 +473,7 @@ mod test {
 
     #[test]
     fn verify_seed_proof() {
-        const FILE: &'static str = "tests/encryption/calculate_world_server_proof.txt";
+        const FILE: &str = "tests/encryption/calculate_world_server_proof.txt";
         let contents = read_to_string(FILE).unwrap();
         for line in contents.lines() {
             let mut line = line.split_whitespace();

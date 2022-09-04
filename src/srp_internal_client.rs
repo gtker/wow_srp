@@ -168,7 +168,7 @@ mod test {
 
         for line in contents.lines() {
             let mut line = line.split_whitespace();
-            let client_private_key = PrivateKey::from_be_hex_str(&line.next().unwrap());
+            let client_private_key = PrivateKey::from_be_hex_str(line.next().unwrap());
 
             let expected = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
 

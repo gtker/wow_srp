@@ -365,7 +365,7 @@ mod test {
 
     #[test]
     fn public_key_should_not_be_zero() {
-        let key = [0u8; PUBLIC_KEY_LENGTH as usize];
+        let key = [0_u8; PUBLIC_KEY_LENGTH as usize];
         let p = PublicKey::from_le_bytes(&key);
         assert!(p.is_err());
     }
@@ -380,7 +380,7 @@ mod test {
 
     #[test]
     fn client_public_key_should_not_be_zero() {
-        let key = Integer::from_bytes_le(&[0u8; PUBLIC_KEY_LENGTH as usize]);
+        let key = Integer::from_bytes_le(&[0_u8; PUBLIC_KEY_LENGTH as usize]);
         let large_safe_prime = LargeSafePrime::default();
         let p = PublicKey::client_try_from_bigint(key, &large_safe_prime);
         assert!(p.is_err());

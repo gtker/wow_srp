@@ -447,7 +447,7 @@ mod test {
 
     #[test]
     fn verify_seed_proof() {
-        const FILE: &'static str = "tests/encryption/calculate_world_server_proof.txt";
+        const FILE: &str = "tests/encryption/calculate_world_server_proof.txt";
         let contents = read_to_string(FILE).unwrap();
         for line in contents.lines() {
             let mut line = line.split_whitespace();
@@ -771,9 +771,9 @@ mod test {
             0x3d, 0x9a, 0xe1, 0x96, 0xef, 0x4f, 0x3d, 0x9a, 0xe1, 0x96, 0x3d, 0x9a, 0xe1, 0x96,
             0xef, 0x4f, 0x3d, 0x9a, 0xe1, 0x96,
         ];
-        let mut encrypt_data = original_data.clone();
+        let mut encrypt_data = original_data;
         let mut encrypted_data = Vec::new();
-        let mut decrypt_data = original_data.clone();
+        let mut decrypt_data = original_data;
         let decrypted_data = original_data.clone().to_vec();
 
         let client_proof = [

@@ -36,7 +36,7 @@ impl ServerEncrypterHalf {
     ) -> std::io::Result<()> {
         let buf = self.encrypt_server_header(size, opcode);
 
-        write.write_all(&buf)?;
+        write.write_all(buf)?;
 
         Ok(())
     }
