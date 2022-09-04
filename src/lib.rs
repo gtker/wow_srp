@@ -19,9 +19,12 @@
 //!
 //! The crate is split into:
 //! * A [`server`] module containing structs for use on the server.
+//! Either `srp-fast-math` or `srp-default-math` must be enabled to for this to be enabled.
 //! * A [`client`] module containing structs for use on the client.
+//! Either `srp-fast-math` or `srp-default-math` must be enabled to for this to be enabled.
 //! * A [`vanilla_header`] module containing structs for decrypting Vanilla and TBC world packets.
 //! * A [`wrath_header`] module containing structs for decrypting Wrath world packets.
+//! `wrath-header` must be enabled for this to be enabled.
 //! * An [`error`] module for errors that are shared by all modules.
 //! * A [`normalized_string`] module used for all modules to correctly handle strings.
 //!
@@ -55,23 +58,26 @@
 //! Two different arbitrary precision integer libraries can be used, either:
 //!
 //! * [num-bigint](https://crates.io/crates/num-bigint). A slow pure Rust implementation without
-//! external dependencies. This is enabled by default, and requires no opt in.
+//! external dependencies. It is enabled through the `srp-default-math` feature.
+//! This is enabled by default, and requires no opt in.
 //!
 //! * [rug](https://crates.io/crates/rug). A fast wrapper around the [GMP library](https://gmplib.org/)
 //! with external dependencies, as described in the [gmp_mpfr_sys documentation](https://docs.rs/gmp-mpfr-sys/1.4.6/gmp_mpfr_sys/index.html#building-on-gnulinux).
-//! This is enabled with the `fast-math` feature and disabling default features.
+//! This is enabled with the `srp-fast-math` feature and disabling default features.
 //! So **instead** of the above do this:
 //!
 //! ```toml
 //! [dependencies]
-//! wow_srp = { version = "0.4.2", default-features = false, features = ["fast-math"] }
+//! wow_srp = { version = "0.4.2", default-features = false, features = ["srp-fast-math", "wrath-header"] }
 //! ```
 //!
-//! The `fast-math` feature leads to a 50% decrease in total time. It is highly recommended to enable
+//! The `srp-fast-math` feature leads to a 50% decrease in total time. It is highly recommended to enable
 //! this feature for production usage since it also theoretically has better security.
 //!
 //! To see the performance difference on your setup you can run `cargo bench` for the default version,
-//! and `cargo bench --features fast-math --no-default-features` for the `fast-math` version.
+//! and `cargo bench --features srp-fast-math --no-default-features` for the `srp-fast-math` version.
+//!
+//! The `wrath-header` feature gates features and dependencies related to [`wrath_header`].
 //!
 //! # MSRV
 //!
@@ -133,6 +139,7 @@ pub(crate) mod srp_internal;
 #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 pub(crate) mod srp_internal_client;
 pub mod vanilla_header;
+#[cfg(feature = "wrath-header")]
 pub mod wrath_header;
 
 #[cfg(test)]
