@@ -21,6 +21,8 @@ pub const CLIENT_HEADER_LENGTH: u8 =
     (std::mem::size_of::<u16>() + std::mem::size_of::<u32>()) as u8;
 pub const SERVER_HEADER_LENGTH: u8 =
     (std::mem::size_of::<u16>() + std::mem::size_of::<u16>()) as u8;
+pub const SERVER_HEADER_MAXIMUM_LENGTH: u8 =
+    (std::mem::size_of::<u16>() + std::mem::size_of::<u16>() + std::mem::size_of::<u8>()) as u8;
 
 // Used for Client (Encryption) to Server (Decryption)
 const S: [u8; 16] = [
@@ -84,16 +86,9 @@ impl ClientCrypto {
         self.decrypt.decrypt(data);
     }
 
-    pub fn read_and_decrypt_server_header<R: Read>(
-        &mut self,
-        reader: &mut R,
-    ) -> std::io::Result<ServerHeader> {
-        self.decrypt.read_and_decrypt_server_header(reader)
-    }
-
     pub fn decrypt_server_header(
         &mut self,
-        data: [u8; SERVER_HEADER_LENGTH as usize],
+        data: &[u8; SERVER_HEADER_MAXIMUM_LENGTH as usize],
     ) -> ServerHeader {
         self.decrypt.decrypt_server_header(data)
     }
@@ -132,18 +127,14 @@ impl ServerCrypto {
     pub fn write_encrypted_server_header<W: Write>(
         &mut self,
         write: &mut W,
-        size: u16,
+        size: u32,
         opcode: u16,
     ) -> std::io::Result<()> {
         self.encrypt
             .write_encrypted_server_header(write, size, opcode)
     }
 
-    pub fn encrypt_server_header(
-        &mut self,
-        size: u16,
-        opcode: u16,
-    ) -> [u8; SERVER_HEADER_LENGTH as usize] {
+    pub fn encrypt_server_header(&mut self, size: u32, opcode: u16) -> &[u8] {
         self.encrypt.encrypt_server_header(size, opcode)
     }
 
@@ -259,7 +250,9 @@ mod test {
     use crate::hex::*;
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
-    use crate::wrath_header::{ClientCrypto, ProofSeed, ServerCrypto};
+    use crate::wrath_header::{
+        ClientCrypto, ProofSeed, ServerCrypto, SERVER_HEADER_LENGTH, SERVER_HEADER_MAXIMUM_LENGTH,
+    };
     use std::convert::TryInto;
 
     #[test]
@@ -458,5 +451,73 @@ mod test {
         }
     }
 
-    // fn verify_trait_helpers() { }
+    #[test]
+    fn verify_server_header() {
+        let session_key = [
+            1, 51, 81, 113, 146, 209, 181, 133, 131, 129, 50, 206, 122, 228, 208, 115, 52, 15, 132,
+            54, 189, 17, 178, 157, 178, 3, 35, 186, 202, 151, 226, 58, 162, 188, 65, 174, 60, 18,
+            152, 7,
+        ];
+
+        let mut server = ServerCrypto::new(session_key);
+        let mut client = ClientCrypto::new(session_key);
+
+        let header = server.encrypt_server_header(0x8008, 0x1ee);
+        let expected_header = [0x97, 0x27, 0x32, 0xa3, 0x1a];
+        assert_eq!(header, expected_header);
+
+        let header = client.decrypt_server_header(&header.try_into().unwrap());
+        assert_eq!(header.opcode, 0x1ee);
+        assert_eq!(header.size, 0x8008);
+
+        let header = server.encrypt_server_header(0x08, 0x1ee);
+        let expected_header = [0x89, 0x4F, 0xFE, 0x11];
+        assert_eq!(header, expected_header);
+
+        let mut arr = [0_u8; SERVER_HEADER_MAXIMUM_LENGTH as usize];
+        for (i, b) in header.iter().enumerate() {
+            arr[i] = *b;
+        }
+        let header = client.decrypt_server_header(&arr);
+        assert_eq!(header.opcode, 0x1ee);
+        assert_eq!(header.size, 0x08);
+    }
+
+    #[test]
+    fn verify_server_header_read_write() {
+        let session_key = [
+            1, 51, 81, 113, 146, 209, 181, 133, 131, 129, 50, 206, 122, 228, 208, 115, 52, 15, 132,
+            54, 189, 17, 178, 157, 178, 3, 35, 186, 202, 151, 226, 58, 162, 188, 65, 174, 60, 18,
+            152, 7,
+        ];
+
+        let mut server = ServerCrypto::new(session_key);
+        let mut client = ClientCrypto::new(session_key);
+
+        let mut header = [0_u8; SERVER_HEADER_MAXIMUM_LENGTH as usize];
+        server
+            .write_encrypted_server_header(&mut header.as_mut_slice(), 0x8008, 0x1ee)
+            .unwrap();
+        let expected_header = [0x97, 0x27, 0x32, 0xa3, 0x1a];
+        assert_eq!(header, expected_header);
+
+        let server_header = client.decrypt_server_header(&header);
+        assert_eq!(server_header.opcode, 0x1ee);
+        assert_eq!(server_header.size, 0x8008);
+
+        let mut header = [0_u8; SERVER_HEADER_LENGTH as usize];
+        server
+            .write_encrypted_server_header(&mut header.as_mut_slice(), 0x08, 0x1ee)
+            .unwrap();
+        let expected_header = [0x89_u8, 0x4F, 0xFE, 0x11];
+        assert_eq!(header, expected_header);
+
+        let mut arr = [0_u8; SERVER_HEADER_MAXIMUM_LENGTH as usize];
+        for (i, b) in header.iter().enumerate() {
+            arr[i] = *b;
+        }
+        let header = client.decrypt_server_header(&arr);
+        assert_eq!(header.opcode, 0x1ee);
+        assert_eq!(header.size, 0x08);
+    }
 }

@@ -102,6 +102,8 @@
     missing_docs
 )]
 
+extern crate core;
+
 pub use key::PublicKey;
 pub use key::PASSWORD_VERIFIER_LENGTH;
 pub use key::PROOF_LENGTH;

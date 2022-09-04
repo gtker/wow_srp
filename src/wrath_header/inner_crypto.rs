@@ -1,8 +1,7 @@
 use crate::SESSION_KEY_LENGTH;
+use hmac::{Hmac, Mac};
 use rc4::consts::U20;
 use rc4::{Rc4, StreamCipher};
-
-use hmac::{Hmac, Mac};
 use sha1::Sha1;
 
 pub struct InnerCrypto {
