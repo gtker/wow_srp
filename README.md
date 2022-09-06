@@ -49,7 +49,7 @@ The `wrath-header` feature gates features and dependencies related to [`wrath-he
 
 # MSRV
 
-`wow_srp` has a Minimum Supported Rust Version (MSRV) of 1.48.0.
+`wow_srp` has a Minimum Supported Rust Version (MSRV) of 1.57.0.
 The MSRV may be increased in `PATCH` versions before `wow_srp` reaches `1.0.0` (`MAJOR.MINOR.PATCH`).
 
 ## License
