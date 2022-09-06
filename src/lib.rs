@@ -48,7 +48,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! wow_srp = { version = "0.4.2" }
+//! wow_srp = { version = "0.5.0" }
 //! ```
 //!
 //! Then go to either the [`client`] module or [`server`] module for specific instructions.
@@ -68,7 +68,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! wow_srp = { version = "0.4.2", default-features = false, features = ["srp-fast-math", "wrath-header"] }
+//! wow_srp = { version = "0.5.0", default-features = false, features = ["srp-fast-math", "wrath-header"] }
 //! ```
 //!
 //! The `srp-fast-math` feature leads to a 50% decrease in total time. It is highly recommended to enable

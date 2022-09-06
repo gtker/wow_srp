@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.5.0] - 2022-09-06
+
+### Added
+
 * Supporting for encrypting/decrypting Wrath headers. This is enabled with the `wrath-header` feature.
 * Ability to not have a Bigint library dependency. Compiling with no features will no longer be a compile error.
 
@@ -17,15 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BREAKING: `header_crypto` moved to `vanilla_header` to make way for Wrath header crypto.
 * Updated `sha-1` dependency to `0.10.0` from `0.9`.
 
-### Deprecated
-
 ### Removed
 
 * BREAKING: `Decrypter` and `Encrypter` traits. Instead the `decrypter` and `encrypter` functions on the `HeaderCrypto` should be used. This is because the header crypto used for Wrath of the Lich King does not follow the same rules as `HeaderCrypto`, so there's no commonality.
-
-### Fixed
-
-### Security
 
 ## [0.4.2] - 2022-06-03
 
@@ -117,6 +125,7 @@ The smaller integer size indicates that the value fits into a u8 without truncat
 ### Added
 - Initial release
 
+[0.5.0]: https://github.com/gtker/wow_srp/releases/tag/v0.5.0
 [0.4.2]: https://github.com/gtker/wow_srp/releases/tag/v0.4.2
 [0.4.1]: https://github.com/gtker/wow_srp/releases/tag/v0.4.1
 [0.4.0]: https://github.com/gtker/wow_srp/releases/tag/v0.4.0
