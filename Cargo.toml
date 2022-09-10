@@ -12,9 +12,10 @@ edition = "2018"
 rust-version = "1.57.0"
 
 [features]
-default = ["srp-default-math", "wrath-header"]
+default = ["srp-default-math", "tbc-header", "wrath-header"]
 srp-default-math = ["num-bigint"]
 srp-fast-math = ["rug"]
+tbc-header = ["hmac"]
 wrath-header = ["rc4", "hmac"]
 
 [dependencies.sha-1]

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Support for encrypting/decrypting TBC headers. This was mistakenly thought to be doable through the Vanilla `HeaderCrypto`. This is enabled with the `tbc-header` feature.
+
 ### Changed
 
 ### Deprecated

@@ -22,7 +22,8 @@
 //! Either `srp-fast-math` or `srp-default-math` must be enabled to for this to be enabled.
 //! * A [`client`] module containing structs for use on the client.
 //! Either `srp-fast-math` or `srp-default-math` must be enabled to for this to be enabled.
-//! * A [`vanilla_header`] module containing structs for decrypting Vanilla and TBC world packets.
+//! * A [`vanilla_header`] module containing structs for decrypting Vanilla world packets.
+//! * A [`tbc_header`] module containing structs for decrypting TBC world packets.
 //! * A [`wrath_header`] module containing structs for decrypting Wrath world packets.
 //! `wrath-header` must be enabled for this to be enabled.
 //! * An [`error`] module for errors that are shared by all modules.
@@ -60,7 +61,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! wow_srp = { version = "0.5.0", default-features = false, features = ["srp-fast-math", "wrath-header"] }
+//! wow_srp = { version = "0.5.0", default-features = false, features = ["srp-fast-math", "tbc-header", "wrath-header"] }
 //! ```
 //!
 //! The `srp-fast-math` feature leads to a 50% decrease in total time. It is highly recommended to enable
@@ -70,6 +71,7 @@
 //! and `cargo bench --features srp-fast-math --no-default-features` for the `srp-fast-math` version.
 //!
 //! The `wrath-header` feature gates features and dependencies related to [`wrath_header`].
+//! The `tbc-header` feature gates features and dependencies related to [`tbc_header`].
 //!
 //! # MSRV
 //!
@@ -101,8 +103,6 @@
     missing_docs
 )]
 
-extern crate core;
-
 pub use key::PublicKey;
 pub use key::PASSWORD_VERIFIER_LENGTH;
 pub use key::PROOF_LENGTH;
@@ -130,6 +130,8 @@ pub mod server;
 pub(crate) mod srp_internal;
 #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 pub(crate) mod srp_internal_client;
+#[cfg(feature = "tbc-header")]
+pub mod tbc_header;
 pub mod vanilla_header;
 #[cfg(feature = "wrath-header")]
 pub mod wrath_header;
