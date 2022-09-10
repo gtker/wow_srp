@@ -28,14 +28,6 @@
 //! * An [`error`] module for errors that are shared by all modules.
 //! * A [`normalized_string`] module used for all modules to correctly handle strings.
 //!
-//! A server example can be found in `examples/server.rs`
-//! and a client example can be found in `examples/client.rs`.
-//! These examples will perform the full SRP6 connection and reconnection.
-//! The server will work with a 1.12.1 client,
-//! using the username and password `a` and `a`.
-//! The client will work not with any other server since it ignores everything
-//! that is not absolutely necessary for showcasing the crate.
-//!
 //! ## Examples
 //!
 //! The [`wow_messages`](https://github.com/gtker/wow_messages) repo has examples that uses the
