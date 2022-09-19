@@ -185,7 +185,7 @@ macro_rules! key_wrapper {
         /// Since the large safe prime multiplied by 2 results in a 33 byte value it is unrepresentable
         /// as a public key and thus the only two failure opportunities are if the key is exactly zero
         /// or if it is exactly equal to the large safe prime.
-        #[derive(Debug)]
+        #[derive(Debug, Clone, Copy, Ord, PartialOrd, PartialEq, Eq, Hash)]
         pub struct $name {
             key: [u8; $size],
         }
@@ -194,6 +194,7 @@ macro_rules! key_wrapper {
             /// Returns the value as little endian bytes.
             ///
             /// The bytes are stored internally as little endian, so this causes no reversal.
+            #[allow(unused)] // used in public API of PublicKey, unused by SKey
             pub const fn as_le(&self) -> &[u8; $size] {
                 &self.key
             }
@@ -219,21 +220,6 @@ macro_rules! key_wrapper {
                 let key = <[u8; $size]>::try_from(key).unwrap();
 
                 Self { key }
-            }
-        }
-
-        impl Eq for $name {}
-        impl PartialEq for $name {
-            fn eq(&self, other: &Self) -> bool {
-                let other = other.as_le();
-
-                for (i, value) in self.key.iter().enumerate() {
-                    if *value != other[i] {
-                        return false;
-                    }
-                }
-
-                return true;
             }
         }
     };

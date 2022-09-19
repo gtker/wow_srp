@@ -147,7 +147,7 @@ pub const SERVER_HEADER_LENGTH: u8 =
 /// Gotten from either
 /// [`decrypt_server_header`](DecrypterHalf::decrypt_server_header) or
 /// [`read_and_decrypt_server_header`](DecrypterHalf::read_and_decrypt_server_header).
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct ServerHeader {
     /// Size of the message in bytes.
     /// Includes the opcode field but not the size field
@@ -161,7 +161,7 @@ pub struct ServerHeader {
 /// Gotten from either
 /// [`decrypt_client_header`](DecrypterHalf::decrypt_client_header) or
 /// [`read_and_decrypt_server_header`](DecrypterHalf::read_and_decrypt_server_header).
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct ClientHeader {
     /// Size of the message in bytes.
     /// Includes the opcode field but not the size field
@@ -180,7 +180,7 @@ pub struct ClientHeader {
 /// Can be split into a [`EncrypterHalf`] and [`DecrypterHalf`] through
 /// the [`HeaderCrypto::split`] method. This is useful if you have this struct behind a
 /// mutex and don't want to lock both reading and writing at the same time.
-#[derive(Debug)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct HeaderCrypto {
     decrypt: DecrypterHalf,
     encrypt: EncrypterHalf,
@@ -342,6 +342,7 @@ impl HeaderCrypto {
 ///
 /// The [`ProofSeed::into_proof_and_header_crypto`] function is used by the client to
 /// prove to the server that the client knows the session key.
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct ProofSeed {
     seed: u32,
 }

@@ -199,6 +199,7 @@ use crate::{error::InvalidPublicKeyError, srp_internal};
 /// ```
 #[doc(alias = "v")]
 #[doc(alias = "salt")]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SrpVerifier {
     username: NormalizedString,
     password_verifier: Verifier,
@@ -378,13 +379,13 @@ impl SrpVerifier {
 /// # }
 /// ```
 ///
-#[derive(Debug)]
 #[doc(alias = "M")]
 #[doc(alias = "M1")]
 #[doc(alias = "M2")]
 #[doc(alias = "B")]
 #[doc(alias = "s")]
 #[doc(alias = "salt")]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SrpProof {
     username: NormalizedString,
     server_public_key: PublicKey,
@@ -598,6 +599,7 @@ impl SrpProof {
 /// }
 /// # }
 /// ```
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SrpServer {
     username: NormalizedString,
     session_key: SessionKey,

@@ -134,7 +134,7 @@ const R: [u8; 16] = [
 ///
 /// Different from the [vanilla version](crate::vanilla_header::ServerHeader) because the Wrath
 /// version needs to support 3-byte size values.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct ServerHeader {
     /// Size of the message in bytes.
     /// Includes the size of the opcode field but not the size of the size field.
@@ -367,6 +367,7 @@ impl ServerCrypto {
 ///
 /// The [`ProofSeed::into_proof_and_header_crypto`] function is used by the client to
 /// prove to the server that the client knows the session key.
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct ProofSeed {
     seed: u32,
 }

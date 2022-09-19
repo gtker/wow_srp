@@ -65,6 +65,7 @@ use crate::{srp_internal, srp_internal_client};
 /// [`SrpClient::calculate_reconnect_values`].
 ///
 /// Both arrays are **little endian**.
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Default, Hash)]
 pub struct SrpClientReconnection {
     /// Random data used in the reconnect challenge.
     pub challenge_data: [u8; RECONNECT_CHALLENGE_DATA_LENGTH as usize],
@@ -84,6 +85,7 @@ pub struct SrpClientReconnection {
 /// The session key is used later for encrypting/decrypting traffic.
 ///
 /// All arrays are **little endian**.
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SrpClient {
     username: NormalizedString,
     session_key: SessionKey,
@@ -136,6 +138,7 @@ impl SrpClient {
 /// All arrays are **little endian**.
 ///
 /// The CRC check also present in the same network packet is out of scope for this crate.
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SrpClientChallenge {
     username: NormalizedString,
     client_proof: Proof,
@@ -198,6 +201,7 @@ impl SrpClientChallenge {
 /// Uses [`NormalizedString`]s for the reasons described there.
 ///
 /// All arrays are **little endian**.
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SrpClientUser {
     username: NormalizedString,
     password: NormalizedString,

@@ -9,7 +9,7 @@ use std::io::Write;
 /// Intended to be kept with the writer half of a connection.
 ///
 /// Use the [`EncrypterHalf`] functions to encrypt.
-#[derive(Debug)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct EncrypterHalf {
     pub(crate) session_key: [u8; SESSION_KEY_LENGTH as usize],
     pub(crate) index: u8,

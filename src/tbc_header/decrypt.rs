@@ -8,7 +8,7 @@ use std::io::Read;
 /// Decryption part of a [`HeaderCrypto`](crate::vanilla_header::HeaderCrypto).
 ///
 /// Intended to be kept with the reader half of a connection.
-#[derive(Debug)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct DecrypterHalf {
     pub(crate) key: [u8; PROOF_LENGTH as usize],
     pub(crate) index: u8,
