@@ -9,7 +9,7 @@ Add the following to `Cargo.toml`:
 
 ```
 [dependencies]
-wow_srp = "0.5.1"
+wow_srp = "0.5.2"
 ```
 
 Or install with [cargo edit](https://crates.io/crates/cargo-edit):
