@@ -98,7 +98,7 @@ pub fn calculate_password_verifier(
     salt: &Salt,
     // Return an array instead of Verifier because this is never directly used to create a Verifier
 ) -> [u8; PASSWORD_VERIFIER_LENGTH as usize] {
-    let x = calculate_x(username, password, salt).to_bigint();
+    let x = calculate_x(username, password, salt).as_bigint();
 
     let generator = Generator::default().to_bigint();
     let large_safe_prime = LargeSafePrime::default().to_bigint();
@@ -116,8 +116,8 @@ pub fn calculate_server_public_key(
     let generator = Generator::default().to_bigint();
     let large_safe_prime = LargeSafePrime::default().to_bigint();
 
-    let server_public_key = (KValue::bigint() * password_verifier.to_bigint()
-        + generator.modpow(&server_private_key.to_bigint(), &large_safe_prime))
+    let server_public_key = (KValue::bigint() * password_verifier.as_bigint()
+        + generator.modpow(&server_private_key.as_bigint(), &large_safe_prime))
         % large_safe_prime;
 
     PublicKey::try_from_bigint(server_public_key)
@@ -143,18 +143,18 @@ pub fn calculate_S(
 ) -> SKey {
     let large_safe_prime = LargeSafePrime::default().to_bigint();
 
-    (client_public_key.to_bigint()
+    (client_public_key.as_bigint()
         * password_verifier
-            .to_bigint()
-            .modpow(&u.to_bigint(), &large_safe_prime))
-    .modpow(&server_private_key.to_bigint(), &large_safe_prime)
+            .as_bigint()
+            .modpow(&u.as_bigint(), &large_safe_prime))
+    .modpow(&server_private_key.as_bigint(), &large_safe_prime)
     .into()
 }
 
 /// Return value is big endian??
 #[allow(non_snake_case)]
 pub fn calculate_interleaved(S: &SKey) -> SessionKey {
-    let S = S.to_equal_slice();
+    let S = S.as_equal_slice();
 
     let mut E = [0_u8; (S_LENGTH / 2) as usize];
     for (i, e) in S.iter().step_by(2).enumerate() {

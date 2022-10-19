@@ -16,7 +16,7 @@ macro_rules! key_bigint {
     ($name: ident) => {
         #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
         impl $name {
-            pub(crate) fn to_bigint(&self) -> bigint::Integer {
+            pub(crate) fn as_bigint(&self) -> bigint::Integer {
                 bigint::Integer::from_bytes_le(&self.key)
             }
         }
@@ -290,7 +290,7 @@ pub const S_LENGTH: u8 = LARGE_SAFE_PRIME_LENGTH;
 key_wrapper!(SKey; S_LENGTH as usize);
 key_no_checks_initialization!(SKey; S_LENGTH as usize);
 impl SKey {
-    pub fn to_equal_slice(&self) -> &[u8] {
+    pub fn as_equal_slice(&self) -> &[u8] {
         let mut s = &self.key[..];
 
         let mut lead = 0;

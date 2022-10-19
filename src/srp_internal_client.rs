@@ -13,7 +13,7 @@ pub(super) fn calculate_client_public_key(
 ) -> Result<PublicKey, InvalidPublicKeyError> {
     // `A = g^a % N`
     let client_public_key = generator.to_bigint().modpow(
-        &client_private_key.to_bigint(),
+        &client_private_key.as_bigint(),
         &large_safe_prime.to_bigint(),
     );
 
@@ -31,12 +31,12 @@ pub(crate) fn calculate_client_S(
 ) -> SKey {
     let k = KValue::bigint();
     // S = ((B - k) * (g^x % N))^(a + u * x) % N
-    let S = (server_public_key.to_bigint()
+    let S = (server_public_key.as_bigint()
         - k * generator
             .to_bigint()
-            .modpow(&x.to_bigint(), &large_safe_prime.to_bigint()))
+            .modpow(&x.as_bigint(), &large_safe_prime.to_bigint()))
     .modpow(
-        &(client_private_key.to_bigint() + u.to_bigint() * x.to_bigint()),
+        &(client_private_key.as_bigint() + u.as_bigint() * x.as_bigint()),
         &large_safe_prime.to_bigint(),
     );
 
