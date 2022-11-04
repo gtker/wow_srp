@@ -9,8 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* `Debug` for `ServerEncrypterHalf`, `ServerDecrypterHalf`, `ClientEncrypterHalf`, and `ClientDecrypterHalf` in `wrath_header`.
-
 ### Changed
 
 ### Deprecated
@@ -20,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [0.5.3] - 2022-11-04
+
+### Added
+
+* `Debug` for `ServerEncrypterHalf`, `ServerDecrypterHalf`, `ClientEncrypterHalf`, and `ClientDecrypterHalf` in `wrath_header`.
 
 ## [0.5.2] - 2022-10-19
 
@@ -139,6 +143,7 @@ The smaller integer size indicates that the value fits into a u8 without truncat
 ### Added
 - Initial release
 
+[0.5.3]: https://github.com/gtker/wow_srp/releases/tag/v0.5.3
 [0.5.2]: https://github.com/gtker/wow_srp/releases/tag/v0.5.2
 [0.5.1]: https://github.com/gtker/wow_srp/releases/tag/v0.5.1
 [0.5.0]: https://github.com/gtker/wow_srp/releases/tag/v0.5.0

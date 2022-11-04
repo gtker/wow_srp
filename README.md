@@ -9,7 +9,7 @@ Add the following to `Cargo.toml`:
 
 ```
 [dependencies]
-wow_srp = "0.5.2"
+wow_srp = "0.5"
 ```
 
 Or install with [cargo edit](https://crates.io/crates/cargo-edit):
@@ -36,7 +36,7 @@ Two different arbitrary precision integer libraries can be used, either:
 
 ```toml
 [dependencies]
-wow_srp = { version = "0.5.1", default-features = false, features = ["srp-fast-math", "wrath-header"] }
+wow_srp = { version = "0.5", default-features = false, features = ["srp-fast-math", "wrath-header"] }
 ```
 
 The `srp-fast-math` feature leads to a 50% decrease in total time. It is highly recommended to enable
