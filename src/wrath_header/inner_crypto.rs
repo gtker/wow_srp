@@ -3,12 +3,20 @@ use hmac::{Hmac, Mac};
 use rc4::consts::U20;
 use rc4::{Rc4, StreamCipher};
 use sha1::Sha1;
+use std::fmt::{Debug, Formatter};
 
 pub struct InnerCrypto {
     inner: Rc4<U20>,
 }
 
 pub const KEY_LENGTH: u8 = 16;
+
+// Rc4 does not have a debug impl which is annoying because it prevents users from impl Debug
+impl Debug for InnerCrypto {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("InnerCrypto").finish_non_exhaustive()
+    }
+}
 
 impl InnerCrypto {
     pub fn apply(&mut self, data: &mut [u8]) {

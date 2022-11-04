@@ -9,6 +9,7 @@ use std::io::Write;
 /// Encryption part of a [`ServerCrypto`](crate::wrath_header::ServerCrypto).
 ///
 /// Intended to be kept with the writer half of a connection.
+#[derive(Debug)]
 pub struct ServerEncrypterHalf {
     encrypt: InnerCrypto,
     server_header: [u8; SERVER_HEADER_MAXIMUM_LENGTH as usize],
@@ -98,6 +99,7 @@ impl ServerEncrypterHalf {
 /// Encryption part of a [`ClientCrypto`](crate::wrath_header::ClientCrypto).
 ///
 /// Intended to be kept with the writer half of a connection.
+#[derive(Debug)]
 pub struct ClientEncrypterHalf {
     encrypt: InnerCrypto,
 }

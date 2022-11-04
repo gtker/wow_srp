@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* `Debug` for `ServerEncrypterHalf`, `ServerDecrypterHalf`, `ClientEncrypterHalf`, and `ClientDecrypterHalf` in `wrath_header`.
+
 ### Changed
 
 ### Deprecated
