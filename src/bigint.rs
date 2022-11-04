@@ -56,7 +56,7 @@ impl Integer {
 
     #[cfg(feature = "srp-fast-math")]
     pub fn from_bytes_le(v: &[u8]) -> Self {
-        Self::from_bigint(RugInt::from_digits(&v, Order::LsfLe))
+        Self::from_bigint(RugInt::from_digits(v, Order::LsfLe))
     }
     #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
     pub fn from_bytes_le(v: &[u8]) -> Self {

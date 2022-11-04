@@ -11,11 +11,11 @@ pub(crate) fn calculate_world_server_proof(
     client_seed: u32,
 ) -> Proof {
     let server_proof: [u8; PROOF_LENGTH as usize] = Sha1::new()
-        .chain_update(&username.as_ref())
+        .chain_update(username.as_ref())
         .chain_update(0_u32.to_le_bytes())
         .chain_update(client_seed.to_le_bytes())
         .chain_update(server_seed.to_le_bytes())
-        .chain_update(&session_key.as_le())
+        .chain_update(session_key.as_le())
         .finalize()
         .into();
 
