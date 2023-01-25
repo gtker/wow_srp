@@ -9,7 +9,7 @@ readme = "README.md"
 version = "0.5.3" # Remember to update docs in src/lib.rs, and README.md
 authors = ["Gtker <github@gtker.com"]
 edition = "2018"
-rust-version = "1.57.0"
+rust-version = "1.65.0"
 
 [features]
 default = ["srp-default-math", "tbc-header", "wrath-header"]
