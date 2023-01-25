@@ -29,11 +29,13 @@
 //! * An [`error`] module for errors that are shared by all modules.
 //! * A [`normalized_string`] module used for all modules to correctly handle strings.
 //!
-//! ## Examples
+//! ## Examples and Tests
 //!
 //! The [`wow_messages`](https://github.com/gtker/wow_messages) repo has examples that uses the
 //! [`wow_login_messages`](https://docs.rs/wow_login_messages/latest/wow_login_messages/)
-//! and `wow_vanilla_messages` library message definitions to showcase both crates.
+//! and `wow_world_messages` library message definitions to showcase both crates.
+//!
+//! These can also be used for testing that the crate works with real clients.
 //!
 //! ## Usage
 //!
