@@ -125,21 +125,25 @@ impl NormalizedString {
     /// Use the [`NormalizedString::from_string`] or [`NormalizedString::from`] conversions if you don't care about this.
     ///
     pub fn new(s: impl Into<String>) -> Result<Self, NormalizedStringError> {
-        let s: String = s.into();
-
-        if s.len() > MAXIMUM_STRING_LENGTH_IN_BYTES as usize || s.is_empty() {
-            return Err(NormalizedStringError::StringTooLong);
-        }
-
-        for c in s.chars() {
-            if !c.is_ascii() || c.is_ascii_control() {
-                return Err(NormalizedStringError::CharacterNotAllowed(c));
+        fn inner(s: String) -> Result<NormalizedString, NormalizedStringError> {
+            if s.len() > MAXIMUM_STRING_LENGTH_IN_BYTES as usize || s.is_empty() {
+                return Err(NormalizedStringError::StringTooLong);
             }
+
+            for c in s.chars() {
+                if !c.is_ascii() || c.is_ascii_control() {
+                    return Err(NormalizedStringError::CharacterNotAllowed(c));
+                }
+            }
+
+            Ok(NormalizedString {
+                s: s.to_ascii_uppercase(),
+            })
         }
 
-        Ok(Self {
-            s: s.to_ascii_uppercase(),
-        })
+        // Compile time optimization
+        // https://matklad.github.io/2021/09/04/fast-rust-builds.html#Keeping-Instantiations-In-Check
+        inner(s.into())
     }
 
     /// Checks for non-ASCII characters and too large of a string
