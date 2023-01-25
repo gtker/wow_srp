@@ -112,15 +112,12 @@ mod test {
             assert_eq!(
                 expected,
                 client_proof,
-                "{}",
-                format!(
-                    "Username: '{}',\n session_key: '{}',\n client_public_key: '{}',\n server_public_key: '{}',\n salt: '{}'",
-                    username,
-                    &session_key.to_be_hex_string(),
-                    &client_public_key.to_be_hex_string(),
-                    &server_public_key.to_be_hex_string(),
-                    &salt.to_be_hex_string(),
-                )
+                "Username: '{}',\n session_key: '{}',\n client_public_key: '{}',\n server_public_key: '{}',\n salt: '{}'",
+                username,
+                &session_key.to_be_hex_string(),
+                &client_public_key.to_be_hex_string(),
+                &server_public_key.to_be_hex_string(),
+                &salt.to_be_hex_string(),
             );
         }
     }
@@ -150,11 +147,8 @@ mod test {
             assert_eq!(
                 expected,
                 S,
-                "{}",
-                format!(
-                    "client_private_key: '{}'",
-                    &client_private_key.to_be_hex_string()
-                )
+                "client_private_key: '{}'",
+                &client_private_key.to_be_hex_string()
             );
         }
     }
@@ -180,8 +174,8 @@ mod test {
             assert_eq!(
                 expected,
                 client_public_key,
-                "{}",
-                format!("a: '{}'", &client_private_key.to_be_hex_string())
+                "a: '{}'",
+                &client_private_key.to_be_hex_string()
             );
         }
     }
