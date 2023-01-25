@@ -43,7 +43,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! wow_srp = { version = "0.5" }
+//! wow_srp = { version = "0.5", features = ["srp-default-math", "tbc-header", "wrath-header"] }
 //! ```
 //!
 //! Then go to either the [`client`] module or [`server`] module for specific instructions.
