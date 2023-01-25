@@ -314,7 +314,7 @@ mod test {
             let x = calculate_x(&username, &password, &salt);
 
             // Normalize hex values to uppercase
-            assert_eq!(expected, x, "Salt: '{}'", &salt.to_be_hex_string());
+            assert_eq!(expected, x, "Salt: '{}'", &salt.as_be_hex_string());
         }
     }
 
@@ -333,7 +333,7 @@ mod test {
             let x = calculate_x(&username, &password, &salt);
 
             // Normalize hex values to uppercase
-            assert_eq!(expected, x, "Salt: '{}'", &salt.to_be_hex_string());
+            assert_eq!(expected, x, "Salt: '{}'", &salt.as_be_hex_string());
         }
     }
 
@@ -360,7 +360,7 @@ mod test {
                 "Username: '{}',\n Password: '{}',\n Salt: '{}'",
                 username,
                 password,
-                &salt.to_be_hex_string()
+                &salt.as_be_hex_string()
             );
         }
     }
@@ -385,8 +385,8 @@ mod test {
                 expected,
                 server_public_key,
                 "v: '{}',\n b: '{}'",
-                verifier.to_be_hex_string(),
-                server_private_key.to_be_hex_string(),
+                verifier.as_be_hex_string(),
+                server_private_key.as_be_hex_string(),
             );
         }
     }
@@ -410,8 +410,8 @@ mod test {
                 expected,
                 u,
                 "A: '{}',\n B: '{}'",
-                client_public_key.to_be_hex_string(),
-                server_public_key.to_be_hex_string()
+                client_public_key.as_be_hex_string(),
+                server_public_key.as_be_hex_string()
             );
         }
     }
@@ -446,10 +446,10 @@ mod test {
                 expected,
                 S,
                 "A: '{}',\n v: '{}',\n u: '{}',\n b: '{}'",
-                client_public_key.to_be_hex_string(),
-                password_verifier.to_be_hex_string(),
-                u.to_be_hex_string(),
-                server_private_key.to_be_hex_string(),
+                client_public_key.as_be_hex_string(),
+                password_verifier.as_be_hex_string(),
+                u.as_be_hex_string(),
+                server_private_key.as_be_hex_string(),
             );
         }
     }
@@ -470,7 +470,7 @@ mod test {
             let interleaved = calculate_interleaved(&S);
 
             // Normalize hex values to uppercase
-            assert_eq!(expected, interleaved, "S: '{}'", &S.to_be_hex_string());
+            assert_eq!(expected, interleaved, "S: '{}'", &S.as_be_hex_string());
         }
     }
 
@@ -502,10 +502,10 @@ mod test {
                     expected,
                     session_key,
                     "client_public_key: '{}',\n password_verifier: '{}',\n server_private_key: '{}',\n server_public_key: '{}'",
-                    &client_public_key.to_be_hex_string(),
-                    &password_verifier.to_be_hex_string(),
-                    &server_private_key.to_be_hex_string(),
-                    &server_public_key.to_be_hex_string(),
+                    &client_public_key.as_be_hex_string(),
+                    &password_verifier.as_be_hex_string(),
+                    &server_private_key.as_be_hex_string(),
+                    &server_public_key.as_be_hex_string(),
                 );
         }
     }
@@ -543,10 +543,10 @@ mod test {
                     client_proof,
                     "Username: '{}',\n session_key: '{}',\n client_public_key: '{}',\n server_public_key: '{}',\n salt: '{}'",
                     username,
-                    &session_key.to_be_hex_string(),
-                    &client_public_key.to_be_hex_string(),
-                    &server_public_key.to_be_hex_string(),
-                    &salt.to_be_hex_string(),
+                    &session_key.as_be_hex_string(),
+                    &client_public_key.as_be_hex_string(),
+                    &server_public_key.as_be_hex_string(),
+                    &salt.as_be_hex_string(),
                 );
         }
     }
@@ -573,9 +573,9 @@ mod test {
                 expected,
                 server_proof,
                 "Client public key: '{}',\n client_proof: '{}',\n session_key: '{}'",
-                client_public_key.to_be_hex_string(),
-                client_proof.to_be_hex_string(),
-                session_key.to_be_hex_string(),
+                client_public_key.as_be_hex_string(),
+                client_proof.as_be_hex_string(),
+                session_key.as_be_hex_string(),
             );
         }
     }

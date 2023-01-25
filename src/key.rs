@@ -201,7 +201,7 @@ macro_rules! key_wrapper {
 
             #[allow(dead_code)]
             #[cfg(test)]
-            pub(crate) fn to_be_hex_string(&self) -> String {
+            pub(crate) fn as_be_hex_string(&self) -> String {
                 let mut key = self.key;
                 key.reverse();
 
@@ -398,6 +398,6 @@ mod test {
             "00000000000000000000000000000000000000000000000000000000DEADBEEF";
         const DEADBEEF: &str = "DEADBEEF";
         let k = PrivateKey::from_be_hex_str(DEADBEEF);
-        assert_eq!(&k.to_be_hex_string(), PADDED_DEADBEEF);
+        assert_eq!(&k.as_be_hex_string(), PADDED_DEADBEEF);
     }
 }

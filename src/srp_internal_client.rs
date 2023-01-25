@@ -114,10 +114,10 @@ mod test {
                 client_proof,
                 "Username: '{}',\n session_key: '{}',\n client_public_key: '{}',\n server_public_key: '{}',\n salt: '{}'",
                 username,
-                &session_key.to_be_hex_string(),
-                &client_public_key.to_be_hex_string(),
-                &server_public_key.to_be_hex_string(),
-                &salt.to_be_hex_string(),
+                &session_key.as_be_hex_string(),
+                &client_public_key.as_be_hex_string(),
+                &server_public_key.as_be_hex_string(),
+                &salt.as_be_hex_string(),
             );
         }
     }
@@ -148,7 +148,7 @@ mod test {
                 expected,
                 S,
                 "client_private_key: '{}'",
-                &client_private_key.to_be_hex_string()
+                &client_private_key.as_be_hex_string()
             );
         }
     }
@@ -175,7 +175,7 @@ mod test {
                 expected,
                 client_public_key,
                 "a: '{}'",
-                &client_private_key.to_be_hex_string()
+                &client_private_key.as_be_hex_string()
             );
         }
     }
