@@ -100,7 +100,7 @@
 //!     // Gotten from client
 //!     let client_public_key = [ 105, 93, 211, 227, 214, 155, 247, 119, 156, 33, 156, 79, 15, 139, 100, 120, 1, 180, 32, 66, 165, 41, 175, 146, 216, 251, 25, 207, 18, 14, 35, 68, ];
 //!     // Can fail on invalid public key. See PublicKey for more info.
-//!     let client_public_key = PublicKey::from_le_bytes(&client_public_key)?;
+//!     let client_public_key = PublicKey::from_le_bytes(client_public_key)?;
 //!
 //!     let client_proof = [ 228, 40, 212, 74, 196, 143, 169, 148, 201, 150, 184, 123, 205, 40, 103, 234, 99, 155, 193, 7, ];
 //!
@@ -364,7 +364,7 @@ impl SrpVerifier {
 /// # let client_public_key = [255u8; PUBLIC_KEY_LENGTH as usize];
 ///
 /// // Public key gotten from client
-/// let client_public_key = PublicKey::from_le_bytes(&client_public_key);
+/// let client_public_key = PublicKey::from_le_bytes(client_public_key);
 /// let client_public_key = match client_public_key {
 ///     Ok(c) => {c}
 ///     Err(_) => {
@@ -469,7 +469,7 @@ impl SrpProof {
     /// # let client_public_key = [255u8; PUBLIC_KEY_LENGTH as usize];
     /// // This will panic because the public key, username, passwords and proofs are not related
     /// // Public key gotten from client
-    /// let client_public_key = PublicKey::from_le_bytes(&client_public_key);
+    /// let client_public_key = PublicKey::from_le_bytes(client_public_key);
     /// let client_public_key = match client_public_key {
     ///     Ok(c) => {c}
     ///     Err(_) => {
@@ -564,7 +564,7 @@ impl SrpProof {
 /// let username = "Alice";
 /// # let verifier = SrpVerifier::from_username_and_password(NormalizedString::new(username).unwrap(), NormalizedString::new("password123").unwrap());
 /// # let proof = verifier.into_proof();
-/// # let client_public_key = PublicKey::from_le_bytes(&[1u8; PUBLIC_KEY_LENGTH as usize]).unwrap();
+/// # let client_public_key = PublicKey::from_le_bytes([1u8; PUBLIC_KEY_LENGTH as usize]).unwrap();
 /// # let client_proof = [1u8; PROOF_LENGTH as usize];
 /// let mut authenticated_clients = HashMap::new();
 ///

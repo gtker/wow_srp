@@ -65,10 +65,10 @@ macro_rules! key_check_not_zero_initialization {
             ///
             /// Will error if the public key is invalid. See [`PublicKey`] for specifics.
             ///
-            pub fn from_le_bytes(key: &[u8; $size]) -> Result<Self, InvalidPublicKeyError> {
-                let key_is_valid = check_public_key(key);
+            pub fn from_le_bytes(key: [u8; $size]) -> Result<Self, InvalidPublicKeyError> {
+                let key_is_valid = check_public_key(&key);
                 match key_is_valid {
-                    Ok(_) => Ok(Self { key: *key }),
+                    Ok(_) => Ok(Self { key }),
                     Err(e) => Err(e),
                 }
             }
@@ -92,7 +92,7 @@ macro_rules! key_check_not_zero_initialization {
 
                 let key = <[u8; $size]>::try_from(key).unwrap();
 
-                Self::from_le_bytes(&key)
+                Self::from_le_bytes(key)
             }
 
             // Keep a separate validation function for clients because the large safe prime
@@ -129,7 +129,7 @@ macro_rules! key_check_not_zero_initialization {
                 let b = b.to_bytes_le().to_vec();
                 key[0..b.len()].clone_from_slice(&b);
 
-                Self::from_le_bytes(&key)
+                Self::from_le_bytes(key)
             }
         }
     };
@@ -352,7 +352,7 @@ mod test {
     #[test]
     fn public_key_should_not_be_zero() {
         let key = [0_u8; PUBLIC_KEY_LENGTH as usize];
-        let p = PublicKey::from_le_bytes(&key);
+        let p = PublicKey::from_le_bytes(key);
         assert!(p.is_err());
     }
 
@@ -380,7 +380,7 @@ mod test {
 
     #[test]
     fn public_key_should_not_be_mod_large_safe_prime() {
-        let p = PublicKey::from_le_bytes(&LARGE_SAFE_PRIME_LITTLE_ENDIAN);
+        let p = PublicKey::from_le_bytes(LARGE_SAFE_PRIME_LITTLE_ENDIAN);
         assert!(p.is_err());
     }
 

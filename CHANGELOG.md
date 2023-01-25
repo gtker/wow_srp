@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BREAKING: `must_use` for all functions that do not return a `Result` type. This make it more difficult to use the library incorrectly.
 
 
+### Changed
+
+* BREAKING: `PublicKey::from_le_bytes` from taking a `&[u8; 32]` to a `[u8; 32]` to remain consistent with the remaining API.
+
+
 ## [0.5.3] - 2022-11-04
 
 ### Added

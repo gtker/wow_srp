@@ -108,7 +108,7 @@ fn authentication_logon_challenge(stream: &mut TcpStream, client: &mut Vec<SrpSe
     stream.read(&mut buffer).unwrap();
     let mut client_public_key = [0u8; PUBLIC_KEY_LENGTH as usize];
     client_public_key.clone_from_slice(&buffer[1..1 + PUBLIC_KEY_LENGTH as usize]);
-    let client_public_key = PublicKey::from_le_bytes(&client_public_key);
+    let client_public_key = PublicKey::from_le_bytes(client_public_key);
     let client_public_key = match client_public_key {
         Ok(p) => p,
         Err(_) => {

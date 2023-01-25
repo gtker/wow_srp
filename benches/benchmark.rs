@@ -59,7 +59,7 @@ fn get_verifier_and_client_values(
     let challenge = client.into_challenge(
         GENERATOR,
         LARGE_SAFE_PRIME_LITTLE_ENDIAN,
-        PublicKey::from_le_bytes(proof.server_public_key()).unwrap(),
+        PublicKey::from_le_bytes(*proof.server_public_key()).unwrap(),
         *proof.salt(),
     );
 
@@ -77,7 +77,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
             let _server = proof
                 .into_server(
-                    PublicKey::from_le_bytes(challenge.client_public_key()).unwrap(),
+                    PublicKey::from_le_bytes(*challenge.client_public_key()).unwrap(),
                     *challenge.client_proof(),
                 )
                 .unwrap();
@@ -95,7 +95,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
             let _server = proof_1
                 .into_server(
-                    PublicKey::from_le_bytes(challenge_1.client_public_key()).unwrap(),
+                    PublicKey::from_le_bytes(*challenge_1.client_public_key()).unwrap(),
                     *challenge_1.client_proof(),
                 )
                 .unwrap();
@@ -105,14 +105,14 @@ fn criterion_benchmark(c: &mut Criterion) {
 
             let _server = proof_2
                 .into_server(
-                    PublicKey::from_le_bytes(challenge_2.client_public_key()).unwrap(),
+                    PublicKey::from_le_bytes(*challenge_2.client_public_key()).unwrap(),
                     *challenge_2.client_proof(),
                 )
                 .unwrap();
 
             let _server = proof_3
                 .into_server(
-                    PublicKey::from_le_bytes(challenge_3.client_public_key()).unwrap(),
+                    PublicKey::from_le_bytes(*challenge_3.client_public_key()).unwrap(),
                     *challenge_3.client_proof(),
                 )
                 .unwrap();

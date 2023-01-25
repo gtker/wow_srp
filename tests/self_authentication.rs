@@ -25,13 +25,13 @@ fn authenticate_with_self() {
     let client = client.into_challenge(
         GENERATOR,
         LARGE_SAFE_PRIME_LITTLE_ENDIAN,
-        PublicKey::from_le_bytes(server.server_public_key()).unwrap(),
+        PublicKey::from_le_bytes(*server.server_public_key()).unwrap(),
         *server.salt(),
     );
     let client_public_key = *client.client_public_key();
 
     let (mut server, server_proof) = match server.into_server(
-        PublicKey::from_le_bytes(&client_public_key).unwrap(),
+        PublicKey::from_le_bytes(client_public_key).unwrap(),
         *client.client_proof(),
     ) {
         Ok(s) => s,
