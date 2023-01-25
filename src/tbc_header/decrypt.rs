@@ -5,7 +5,7 @@ use sha1::Sha1;
 use std::convert::TryInto;
 use std::io::Read;
 
-/// Decryption part of a [`HeaderCrypto`](crate::vanilla_header::HeaderCrypto).
+/// Decryption part of a [`HeaderCrypto`](crate::tbc_header::HeaderCrypto).
 ///
 /// Intended to be kept with the reader half of a connection.
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]

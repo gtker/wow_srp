@@ -5,7 +5,7 @@ use sha1::Sha1;
 use std::convert::TryInto;
 use std::io::Write;
 
-/// Encryption part of a [`HeaderCrypto`].
+/// Encryption part of a [`HeaderCrypto`](crate::tbc_header::HeaderCrypto).
 ///
 /// Intended to be kept with the writer half of a connection.
 ///
