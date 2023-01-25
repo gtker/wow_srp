@@ -97,7 +97,7 @@ fn authentication_logon_challenge(stream: &mut TcpStream, client: &mut Vec<SrpSe
     const LOGIN_PROOF: u8 = 1;
     send[35] = LOGIN_PROOF;
     send[36] = GENERATOR;
-    send[37] = LARGE_SAFE_PRIME_LENGTH as u8;
+    send[37] = LARGE_SAFE_PRIME_LENGTH;
     send[38..38 + LARGE_SAFE_PRIME_LENGTH as usize]
         .clone_from_slice(&LARGE_SAFE_PRIME_LITTLE_ENDIAN);
     send[70..70 + SALT_LENGTH as usize].clone_from_slice(s.salt());

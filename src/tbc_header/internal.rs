@@ -51,7 +51,7 @@ mod test {
             let expected = Proof::from_le_hex_str(line.next().unwrap());
 
             let result = calculate_world_server_proof(
-                &NormalizedString::new(&username.to_string()).unwrap(),
+                &NormalizedString::new(username.to_string()).unwrap(),
                 &session_key,
                 server_seed,
                 client_seed,

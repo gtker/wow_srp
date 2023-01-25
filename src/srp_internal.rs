@@ -218,7 +218,7 @@ pub(crate) fn calculate_xor_hash(
 
     let mut xor_hash = [0_u8; SHA1_HASH_LENGTH as usize];
     for (i, n) in large_safe_prime_hash.iter().enumerate() {
-        xor_hash[i] = *n as u8 ^ g_hash[i];
+        xor_hash[i] = *n ^ g_hash[i];
     }
 
     Sha1Hash::from_le_bytes(xor_hash)

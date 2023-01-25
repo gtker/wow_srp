@@ -119,7 +119,7 @@ pub(crate) fn decrypt(
         let unencrypted = encrypted.wrapping_sub(*previous_value) ^ session_key[*index as usize];
 
         // Use session key as circular buffer
-        *index = (*index + 1) % SESSION_KEY_LENGTH as u8;
+        *index = (*index + 1) % SESSION_KEY_LENGTH;
 
         *previous_value = *encrypted;
         *encrypted = unencrypted;
