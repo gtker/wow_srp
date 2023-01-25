@@ -265,7 +265,7 @@ impl SrpClientUser {
         salt: [u8; SALT_LENGTH as usize],
     ) -> SrpClientChallenge {
         let generator = Generator::from(generator);
-        let large_safe_prime = LargeSafePrime::from_le_bytes(&large_safe_prime);
+        let large_safe_prime = LargeSafePrime::from_le_bytes(large_safe_prime);
 
         // Creating an invalid public key is extremely rare and is more likely bad crypto
         let client_public_key = srp_internal_client::calculate_client_public_key(
