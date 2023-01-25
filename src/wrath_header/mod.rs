@@ -389,7 +389,7 @@ impl ProofSeed {
     }
 
     #[cfg(test)]
-    fn from_specific_seed(server_seed: u32) -> Self {
+    const fn from_specific_seed(server_seed: u32) -> Self {
         Self { seed: server_seed }
     }
 

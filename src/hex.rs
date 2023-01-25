@@ -31,7 +31,7 @@ pub fn hex_decode(s: &str) -> Vec<u8> {
     key
 }
 
-fn letters_to_numbers(c: char) -> u8 {
+const fn letters_to_numbers(c: char) -> u8 {
     match c {
         '0' => 0x0,
         '1' => 0x1,
@@ -53,7 +53,7 @@ fn letters_to_numbers(c: char) -> u8 {
     }
 }
 
-fn numbers_to_letters(b: u8) -> char {
+const fn numbers_to_letters(b: u8) -> char {
     match b {
         0x0 => '0',
         0x1 => '1',
