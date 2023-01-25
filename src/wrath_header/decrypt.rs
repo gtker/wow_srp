@@ -43,6 +43,7 @@ impl ServerDecrypterHalf {
     /// Convenience wrapper for [`ServerDecrypterHalf::decrypt_client_header`].
     ///
     /// Prefer this over directly using [`Self::decrypt`].
+    #[must_use]
     pub fn decrypt_client_header(
         &mut self,
         mut data: [u8; CLIENT_HEADER_LENGTH as usize],
@@ -84,6 +85,7 @@ impl ClientDecrypterHalf {
     /// This handles situations where the size field is 3 bytes instead of 2.
     ///
     /// Prefer this over directly using [`Self::decrypt`].
+    #[must_use]
     pub fn decrypt_server_header(
         &mut self,
         data: &[u8; SERVER_HEADER_MAXIMUM_LENGTH as usize],

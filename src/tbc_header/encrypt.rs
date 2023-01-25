@@ -66,6 +66,7 @@ impl EncrypterHalf {
     /// Convenience function for encrypting client headers.
     ///
     /// Prefer this over directly using [`EncrypterHalf::encrypt`].
+    #[must_use]
     pub fn encrypt_server_header(
         &mut self,
         size: u16,
@@ -84,6 +85,7 @@ impl EncrypterHalf {
     /// Convenience function for encrypting client headers.
     ///
     /// Prefer this over directly using [`EncrypterHalf::encrypt`].
+    #[must_use]
     pub fn encrypt_client_header(
         &mut self,
         size: u16,

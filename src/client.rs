@@ -98,6 +98,7 @@ impl SrpClient {
     /// created from 2 SHA-1 hashes of [20 bytes (160 bits)](PROOF_LENGTH).
     #[doc(alias = "S")]
     #[doc(alias = "K")]
+    #[must_use]
     pub const fn session_key(&self) -> [u8; SESSION_KEY_LENGTH as usize] {
         *self.session_key.as_le()
     }
@@ -109,6 +110,7 @@ impl SrpClient {
     /// packet.
     ///
     /// The client challenge, and therefore also the proof, is changed every time this is called.
+    #[must_use]
     pub fn calculate_reconnect_values(
         &self,
         server_challenge_data: [u8; RECONNECT_CHALLENGE_DATA_LENGTH as usize],
@@ -153,6 +155,7 @@ impl SrpClientChallenge {
     #[doc(alias = "M")]
     #[doc(alias = "M1")]
     #[doc(alias = "M2")]
+    #[must_use]
     pub const fn client_proof(&self) -> &[u8; PROOF_LENGTH as usize] {
         self.client_proof.as_le()
     }
@@ -161,6 +164,7 @@ impl SrpClientChallenge {
     /// Also sometimes referred to as `a`, although this is the abbreviation of the private key.
     /// If the lowercase version appears in a packet table it is referring to the public key.
     #[doc(alias = "A")]
+    #[must_use]
     pub const fn client_public_key(&self) -> &[u8; PUBLIC_KEY_LENGTH as usize] {
         self.client_public_key.as_le()
     }
@@ -212,6 +216,7 @@ impl SrpClientUser {
     /// Creates a new [`SrpClientUser`] from username and password.
     ///
     /// [`NormalizedString`] is used for the reasons described there.
+    #[must_use]
     pub fn new(username: NormalizedString, password: NormalizedString) -> Self {
         let client_private_key = PrivateKey::randomized();
 
@@ -251,6 +256,7 @@ impl SrpClientUser {
     /// It is significantly more likely that the RNG of the system has been compromised in which case
     /// authentication is not possible.
     ///
+    #[must_use]
     pub fn into_challenge(
         self,
         generator: u8,

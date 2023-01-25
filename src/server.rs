@@ -212,6 +212,7 @@ impl SrpVerifier {
     /// see that for more details.
     ///
     /// Called `U` and `<username>` in [RFC2945](https://tools.ietf.org/html/rfc2945).
+    #[must_use]
     pub fn username(&self) -> &str {
         self.username.as_ref()
     }
@@ -224,6 +225,7 @@ impl SrpVerifier {
     /// Always [32 bytes (256 bits)](crate::PASSWORD_VERIFIER_LENGTH) in length
     /// since the value is generated through
     /// the remainder of a [32 byte value](crate::LARGE_SAFE_PRIME_LENGTH).
+    #[must_use]
     pub const fn password_verifier(&self) -> &[u8; PASSWORD_VERIFIER_LENGTH as usize] {
         self.password_verifier.as_le()
     }
@@ -235,6 +237,7 @@ impl SrpVerifier {
     /// Called `s`, `<salt from passwd file>` and `<salt>` in [RFC2945](https://tools.ietf.org/html/rfc2945).
     /// Always [32 bytes (256 bits)](crate::SALT_LENGTH) in length since the packet sent to
     /// the client has a fixed width.
+    #[must_use]
     pub const fn salt(&self) -> &[u8; SALT_LENGTH as usize] {
         self.salt.as_le()
     }
@@ -242,6 +245,7 @@ impl SrpVerifier {
     /// See [`normalized_string`](`crate::normalized_string`) for more information on the format.
     /// Only use this for generating verifiers and salts to save to the database.
     /// Never use this by saving raw usernames and passwords on the database.
+    #[must_use]
     pub fn from_username_and_password(
         username: NormalizedString,
         password: NormalizedString,
@@ -253,6 +257,7 @@ impl SrpVerifier {
 
     /// See [`normalized_string`](`crate::normalized_string`) for more information on the string format.
     /// Both arrays are **little endian**.
+    #[must_use]
     pub const fn from_database_values(
         username: NormalizedString,
         password_verifier: [u8; PASSWORD_VERIFIER_LENGTH as usize],
@@ -283,6 +288,7 @@ impl SrpVerifier {
     #[doc(alias = "M")]
     #[doc(alias = "M1")]
     #[doc(alias = "M2")]
+    #[must_use]
     pub fn into_proof(self) -> SrpProof {
         let server_private_key = PrivateKey::randomized();
 
@@ -403,6 +409,7 @@ impl SrpProof {
     /// Called `B` in [RFC2945](https://tools.ietf.org/html/rfc2945).
     /// Always [32 bytes (256 bits)](crate::PUBLIC_KEY_LENGTH) in length since the packet sent to the client has a fixed width.
     #[doc(alias = "B")]
+    #[must_use]
     pub const fn server_public_key(&self) -> &[u8; PUBLIC_KEY_LENGTH as usize] {
         self.server_public_key.as_le()
     }
@@ -413,6 +420,7 @@ impl SrpProof {
     /// Called `s`, `<salt from passwd file>` or `<salt>` in [RFC2945](https://tools.ietf.org/html/rfc2945).
     /// Always [32 bytes (256 bits)](crate::SALT_LENGTH) in length since the packet sent to the client has a fixed width.
     #[doc(alias = "s")]
+    #[must_use]
     pub const fn salt(&self) -> &[u8; SALT_LENGTH as usize] {
         self.salt.as_le()
     }
@@ -617,6 +625,7 @@ impl SrpServer {
     /// created from 2 SHA-1 hashes of [20 bytes (160 bits)](PROOF_LENGTH).
     #[doc(alias = "K")]
     #[doc(alias = "S")]
+    #[must_use]
     pub const fn session_key(&self) -> &[u8; SESSION_KEY_LENGTH as usize] {
         self.session_key.as_le()
     }
@@ -631,6 +640,7 @@ impl SrpServer {
     /// Not mentioned in [RFC2945](https://tools.ietf.org/html/rfc2945) at all.
     ///
     /// See [`verify_reconnection_attempt`](SrpServer::verify_reconnection_attempt) for more.
+    #[must_use]
     pub const fn reconnect_challenge_data(
         &self,
     ) -> &[u8; RECONNECT_CHALLENGE_DATA_LENGTH as usize] {
@@ -654,6 +664,7 @@ impl SrpServer {
     /// computed.
     ///
     /// Not mentioned in [RFC2945](https://tools.ietf.org/html/rfc2945) at all.
+    #[must_use]
     pub fn verify_reconnection_attempt(
         &mut self,
         client_data: [u8; RECONNECT_CHALLENGE_DATA_LENGTH as usize],

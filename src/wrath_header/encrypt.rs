@@ -45,6 +45,7 @@ impl ServerEncrypterHalf {
     /// Convenience function for encrypting client headers.
     ///
     /// Prefer this over directly using [`Self::encrypt`].
+    #[must_use]
     pub fn encrypt_server_header(&mut self, size: u32, opcode: u16) -> &[u8] {
         if size > 0x7FFF {
             let size = size.to_be_bytes();
@@ -134,6 +135,7 @@ impl ClientEncrypterHalf {
     /// Convenience function for encrypting client headers.
     ///
     /// Prefer this over directly using [`Self::encrypt`].
+    #[must_use]
     pub fn encrypt_client_header(
         &mut self,
         size: u16,

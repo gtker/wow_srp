@@ -63,6 +63,7 @@ impl DecrypterHalf {
     /// Convenience function for decrypting server headers.
     ///
     /// Prefer this over directly using [`DecrypterHalf::decrypt`].
+    #[must_use]
     pub fn decrypt_server_header(
         &mut self,
         mut data: [u8; SERVER_HEADER_LENGTH as usize],
@@ -78,6 +79,7 @@ impl DecrypterHalf {
     /// Convenience function for decrypting client headers.
     ///
     /// Prefer this over directly using [`DecrypterHalf::decrypt`].
+    #[must_use]
     pub fn decrypt_client_header(
         &mut self,
         mut data: [u8; CLIENT_HEADER_LENGTH as usize],
@@ -95,6 +97,7 @@ impl DecrypterHalf {
     /// and can be [`EncrypterHalf::unsplit`].
     ///
     /// Same as [`EncrypterHalf::is_pair_of`], provided for convenience/readability.
+    #[must_use]
     pub fn is_pair_of(&self, other: &EncrypterHalf) -> bool {
         other.is_pair_of(self)
     }

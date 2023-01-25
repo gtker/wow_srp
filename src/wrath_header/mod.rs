@@ -164,11 +164,13 @@ pub struct ClientCrypto {
 
 impl ClientCrypto {
     /// Direct access to the internal [`ClientDecrypterHalf`].
+    #[must_use]
     pub fn decrypter(&mut self) -> &mut ClientDecrypterHalf {
         &mut self.decrypt
     }
 
     /// Direct access to the internal [`ClientEncrypterHalf`].
+    #[must_use]
     pub fn encrypter(&mut self) -> &mut ClientEncrypterHalf {
         &mut self.encrypt
     }
@@ -198,6 +200,7 @@ impl ClientCrypto {
     }
 
     /// Convenience wrapper for [`ClientEncrypterHalf::encrypt_client_header`].
+    #[must_use]
     pub fn encrypt_client_header(
         &mut self,
         size: u16,
@@ -217,6 +220,7 @@ impl ClientCrypto {
     /// Convenience wrapper for [`ClientDecrypterHalf::decrypt_server_header`].
     ///
     /// Prefer this over directly using [`Self::decrypt`].
+    #[must_use]
     pub fn decrypt_server_header(
         &mut self,
         data: &[u8; SERVER_HEADER_MAXIMUM_LENGTH as usize],
@@ -241,6 +245,7 @@ impl ClientCrypto {
     /// read and write halves, and you have some reason for not just keeping the crypto together
     /// like if you don't want locking encryption to also lock decryption in a mutex.
     #[allow(clippy::missing_const_for_fn)] // Clippy does not consider `self` arg
+    #[must_use]
     pub fn split(self) -> (ClientEncrypterHalf, ClientDecrypterHalf) {
         (self.encrypt, self.decrypt)
     }
@@ -263,11 +268,13 @@ pub struct ServerCrypto {
 
 impl ServerCrypto {
     /// Direct access to the internal [`ServerDecrypterHalf`].
+    #[must_use]
     pub fn decrypter(&mut self) -> &mut ServerDecrypterHalf {
         &mut self.decrypt
     }
 
     /// Direct access to the internal [`ServerEncrypterHalf`].
+    #[must_use]
     pub fn encrypter(&mut self) -> &mut ServerEncrypterHalf {
         &mut self.encrypt
     }
@@ -297,6 +304,7 @@ impl ServerCrypto {
     }
 
     /// Convenience wrapper for [`ServerEncrypterHalf::encrypt_server_header`].
+    #[must_use]
     pub fn encrypt_server_header(&mut self, size: u32, opcode: u16) -> &[u8] {
         self.encrypt.encrypt_server_header(size, opcode)
     }
@@ -325,6 +333,7 @@ impl ServerCrypto {
     /// Convenience wrapper for [`ServerDecrypterHalf::decrypt_client_header`].
     ///
     /// Prefer this over directly using [`Self::decrypt`].
+    #[must_use]
     pub fn decrypt_client_header(
         &mut self,
         mut data: [u8; CLIENT_HEADER_LENGTH as usize],
@@ -354,6 +363,7 @@ impl ServerCrypto {
     /// read and write halves, and you have some reason for not just keeping the crypto together
     /// like if you don't want locking encryption to also lock decryption in a mutex.
     #[allow(clippy::missing_const_for_fn)] // Clippy does not consider `self` arg
+    #[must_use]
     pub fn split(self) -> (ServerEncrypterHalf, ServerDecrypterHalf) {
         (self.encrypt, self.decrypt)
     }
@@ -388,6 +398,7 @@ impl ProofSeed {
     ///
     /// [`SMSG_AUTH_CHALLENGE`]: https://wowdev.wiki/SMSG_AUTH_CHALLENGE
     /// [`CMSG_AUTH_SESSION`]: https://wowdev.wiki/CMSG_AUTH_SESSION
+    #[must_use]
     pub const fn seed(&self) -> u32 {
         self.seed
     }
@@ -397,6 +408,7 @@ impl ProofSeed {
     /// This is not valid until the server has responded with a successful [`SMSG_AUTH_RESPONSE`].
     ///
     /// [`SMSG_AUTH_RESPONSE`]: https://wowdev.wiki/SMSG_AUTH_RESPONSE
+    #[must_use]
     pub fn into_proof_and_header_crypto(
         self,
         username: &NormalizedString,

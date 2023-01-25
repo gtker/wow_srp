@@ -188,11 +188,13 @@ pub struct HeaderCrypto {
 
 impl HeaderCrypto {
     /// Direct access to the internal [`DecrypterHalf`].
+    #[must_use]
     pub fn decrypter(&mut self) -> &mut DecrypterHalf {
         &mut self.decrypt
     }
 
     /// Direct access to the internal [`EncrypterHalf`].
+    #[must_use]
     pub fn encrypter(&mut self) -> &mut EncrypterHalf {
         &mut self.encrypt
     }
@@ -237,6 +239,7 @@ impl HeaderCrypto {
     }
 
     /// Convenience wrapper for [`EncrypterHalf::encrypt_server_header`].
+    #[must_use]
     pub fn encrypt_server_header(
         &mut self,
         size: u16,
@@ -246,6 +249,7 @@ impl HeaderCrypto {
     }
 
     /// Convenience wrapper for [`EncrypterHalf::encrypt_client_header`].
+    #[must_use]
     pub fn encrypt_client_header(
         &mut self,
         size: u16,
@@ -290,6 +294,7 @@ impl HeaderCrypto {
     /// Convenience wrapper for [`DecrypterHalf::decrypt_server_header`].
     ///
     /// Prefer this over directly using [`Self::decrypt`].
+    #[must_use]
     pub fn decrypt_server_header(
         &mut self,
         data: [u8; SERVER_HEADER_LENGTH as usize],
@@ -300,6 +305,7 @@ impl HeaderCrypto {
     /// Convenience wrapper for [`DecrypterHalf::decrypt_client_header`].
     ///
     /// Prefer this over directly using [`Self::decrypt`].
+    #[must_use]
     pub fn decrypt_client_header(
         &mut self,
         mut data: [u8; CLIENT_HEADER_LENGTH as usize],
@@ -322,6 +328,7 @@ impl HeaderCrypto {
     /// read and write halves, and you have some reason for not just keeping the crypto together
     /// like if you don't want locking encryption to also lock decryption in a mutex.
     #[allow(clippy::missing_const_for_fn)] // Clippy does not consider `self` arg
+    #[must_use]
     pub fn split(self) -> (EncrypterHalf, DecrypterHalf) {
         (self.encrypt, self.decrypt)
     }
@@ -349,6 +356,7 @@ pub struct ProofSeed {
 
 impl ProofSeed {
     /// Creates a new, random, seed.
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -363,6 +371,7 @@ impl ProofSeed {
     ///
     /// [`SMSG_AUTH_CHALLENGE`]: https://wowdev.wiki/SMSG_AUTH_CHALLENGE
     /// [`CMSG_AUTH_SESSION`]: https://wowdev.wiki/CMSG_AUTH_SESSION
+    #[must_use]
     pub const fn seed(&self) -> u32 {
         self.seed
     }
@@ -372,6 +381,7 @@ impl ProofSeed {
     /// This is not valid until the server has responded with a successful [`SMSG_AUTH_RESPONSE`].
     ///
     /// [`SMSG_AUTH_RESPONSE`]: https://wowdev.wiki/SMSG_AUTH_RESPONSE
+    #[must_use]
     pub fn into_proof_and_header_crypto(
         self,
         username: &NormalizedString,
