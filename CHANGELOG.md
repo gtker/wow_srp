@@ -5,19 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
-
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
++<!-- next-header -->
++## [Unreleased] - ReleaseDate
 
 ## [0.5.3] - 2022-11-04
 
@@ -143,6 +132,8 @@ The smaller integer size indicates that the value fits into a u8 without truncat
 ### Added
 - Initial release
 
+<!-- next-url -->
+[Unreleased]: https://github.com/gtker/wow_srp/compare/v0.5.3...HEAD
 [0.5.3]: https://github.com/gtker/wow_srp/releases/tag/v0.5.3
 [0.5.2]: https://github.com/gtker/wow_srp/releases/tag/v0.5.2
 [0.5.1]: https://github.com/gtker/wow_srp/releases/tag/v0.5.1
