@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * BREAKING: `PublicKey::from_le_bytes` from taking a `&[u8; 32]` to a `[u8; 32]` to remain consistent with the remaining API.
+* BREAKING: `PublicKey::as_le` renamed to `PublicKey::as_le_bytes` for consistency with the standard library and other functions in this library.
 
 
 ## [0.5.3] - 2022-11-04

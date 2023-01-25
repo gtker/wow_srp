@@ -195,7 +195,7 @@ macro_rules! key_wrapper {
             ///
             /// The bytes are stored internally as little endian, so this causes no reversal.
             #[allow(unused)] // used in public API of PublicKey, unused by SKey
-            pub const fn as_le(&self) -> &[u8; $size] {
+            pub const fn as_le_bytes(&self) -> &[u8; $size] {
                 &self.key
             }
 

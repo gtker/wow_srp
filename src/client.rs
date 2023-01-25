@@ -100,7 +100,7 @@ impl SrpClient {
     #[doc(alias = "K")]
     #[must_use]
     pub const fn session_key(&self) -> [u8; SESSION_KEY_LENGTH as usize] {
-        *self.session_key.as_le()
+        *self.session_key.as_le_bytes()
     }
 
     /// Calculates the client challenge data and proof found in [`SrpClientReconnection`].
@@ -125,8 +125,8 @@ impl SrpClient {
         );
 
         SrpClientReconnection {
-            challenge_data: *client_challenge.as_le(),
-            proof: *client_proof.as_le(),
+            challenge_data: *client_challenge.as_le_bytes(),
+            proof: *client_proof.as_le_bytes(),
         }
     }
 }
@@ -157,7 +157,7 @@ impl SrpClientChallenge {
     #[doc(alias = "M2")]
     #[must_use]
     pub const fn client_proof(&self) -> &[u8; PROOF_LENGTH as usize] {
-        self.client_proof.as_le()
+        self.client_proof.as_le_bytes()
     }
 
     /// Called `A` in [RFC2945](https://tools.ietf.org/html/rfc2945).
@@ -166,7 +166,7 @@ impl SrpClientChallenge {
     #[doc(alias = "A")]
     #[must_use]
     pub const fn client_public_key(&self) -> &[u8; PUBLIC_KEY_LENGTH as usize] {
-        self.client_public_key.as_le()
+        self.client_public_key.as_le_bytes()
     }
 
     /// Verifies that the server knows the same password as was initially used in [`SrpClientUser::new`].
@@ -188,8 +188,8 @@ impl SrpClientChallenge {
         let server_proof = Proof::from_le_bytes(server_proof);
         if server_proof != client_server_proof {
             return Err(MatchProofsError {
-                client_proof: *client_server_proof.as_le(),
-                server_proof: *server_proof.as_le(),
+                client_proof: *client_server_proof.as_le_bytes(),
+                server_proof: *server_proof.as_le_bytes(),
             });
         }
 
@@ -220,7 +220,7 @@ impl SrpClientUser {
     pub fn new(username: NormalizedString, password: NormalizedString) -> Self {
         let client_private_key = PrivateKey::randomized();
 
-        Self::with_specific_private_key(username, password, *client_private_key.as_le())
+        Self::with_specific_private_key(username, password, *client_private_key.as_le_bytes())
     }
 
     pub(crate) const fn with_specific_private_key(

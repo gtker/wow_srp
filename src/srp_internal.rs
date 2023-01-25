@@ -62,7 +62,7 @@ pub fn calculate_x(
         .finalize();
 
     let x = Sha1::new()
-        .chain_update(salt.as_le())
+        .chain_update(salt.as_le_bytes())
         .chain_update(p)
         .finalize();
 
@@ -126,8 +126,8 @@ pub fn calculate_server_public_key(
 /// Calculate the parameter `u` used for generating the session key.
 pub fn calculate_u(client_public_key: &PublicKey, server_public_key: &PublicKey) -> Sha1Hash {
     let s = Sha1::new()
-        .chain_update(client_public_key.as_le())
-        .chain_update(server_public_key.as_le())
+        .chain_update(client_public_key.as_le_bytes())
+        .chain_update(server_public_key.as_le_bytes())
         .finalize();
     Sha1Hash::from_le_bytes(s.into())
 }
@@ -198,9 +198,9 @@ pub fn calculate_server_proof(
     session_key: &SessionKey,
 ) -> Proof {
     let s = Sha1::new()
-        .chain_update(client_public_key.as_le())
-        .chain_update(client_proof.as_le())
-        .chain_update(session_key.as_le())
+        .chain_update(client_public_key.as_le_bytes())
+        .chain_update(client_proof.as_le_bytes())
+        .chain_update(session_key.as_le_bytes())
         .finalize();
 
     Proof::from_le_bytes(s.into())
@@ -236,10 +236,10 @@ pub fn calculate_client_proof(
     let out: [u8; PROOF_LENGTH as usize] = Sha1::new()
         .chain_update(PRECALCULATED_XOR_HASH)
         .chain_update(username_hash)
-        .chain_update(salt.as_le())
-        .chain_update(client_public_key.as_le())
-        .chain_update(server_public_key.as_le())
-        .chain_update(session_key.as_le())
+        .chain_update(salt.as_le_bytes())
+        .chain_update(client_public_key.as_le_bytes())
+        .chain_update(server_public_key.as_le_bytes())
+        .chain_update(session_key.as_le_bytes())
         .finalize()
         .into();
 
@@ -254,9 +254,9 @@ pub fn calculate_reconnect_proof(
 ) -> Proof {
     let s = Sha1::new()
         .chain_update(username.as_ref())
-        .chain_update(client_data.as_le())
-        .chain_update(server_data.as_le())
-        .chain_update(session_key.as_le())
+        .chain_update(client_data.as_le_bytes())
+        .chain_update(server_data.as_le_bytes())
+        .chain_update(session_key.as_le_bytes())
         .finalize();
 
     Proof::from_le_bytes(s.into())
@@ -630,6 +630,6 @@ mod test {
         let generator = Generator::default();
         let xor_hash = calculate_xor_hash(&large_safe_prime, &generator);
 
-        assert_eq!(xor_hash.as_le(), &PRECALCULATED_XOR_HASH);
+        assert_eq!(xor_hash.as_le_bytes(), &PRECALCULATED_XOR_HASH);
     }
 }

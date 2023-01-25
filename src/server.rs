@@ -227,7 +227,7 @@ impl SrpVerifier {
     /// the remainder of a [32 byte value](crate::LARGE_SAFE_PRIME_LENGTH).
     #[must_use]
     pub const fn password_verifier(&self) -> &[u8; PASSWORD_VERIFIER_LENGTH as usize] {
-        self.password_verifier.as_le()
+        self.password_verifier.as_le_bytes()
     }
 
     #[doc(alias = "s")]
@@ -239,7 +239,7 @@ impl SrpVerifier {
     /// the client has a fixed width.
     #[must_use]
     pub const fn salt(&self) -> &[u8; SALT_LENGTH as usize] {
-        self.salt.as_le()
+        self.salt.as_le_bytes()
     }
 
     /// See [`normalized_string`](`crate::normalized_string`) for more information on the format.
@@ -304,7 +304,7 @@ impl SrpVerifier {
         let password_verifier =
             srp_internal::calculate_password_verifier(&username, &password, salt);
 
-        Self::from_database_values(username, password_verifier, *salt.as_le())
+        Self::from_database_values(username, password_verifier, *salt.as_le_bytes())
     }
 
     fn with_specific_private_key(
@@ -411,7 +411,7 @@ impl SrpProof {
     #[doc(alias = "B")]
     #[must_use]
     pub const fn server_public_key(&self) -> &[u8; PUBLIC_KEY_LENGTH as usize] {
-        self.server_public_key.as_le()
+        self.server_public_key.as_le_bytes()
     }
 
     /// Salt value used for calculating verifier. Is sent to the client.
@@ -422,7 +422,7 @@ impl SrpProof {
     #[doc(alias = "s")]
     #[must_use]
     pub const fn salt(&self) -> &[u8; SALT_LENGTH as usize] {
-        self.salt.as_le()
+        self.salt.as_le_bytes()
     }
 
     /// Converts to an [`SrpServer`] and server proof by using the client supplied public key and proof,
@@ -516,8 +516,8 @@ impl SrpProof {
         let client_calculated_proof = Proof::from_le_bytes(client_proof);
         if client_calculated_proof != server_calculated_proof {
             return Err(MatchProofsError {
-                client_proof: *client_calculated_proof.as_le(),
-                server_proof: *server_calculated_proof.as_le(),
+                client_proof: *client_calculated_proof.as_le_bytes(),
+                server_proof: *server_calculated_proof.as_le_bytes(),
             });
         }
 
@@ -535,7 +535,7 @@ impl SrpProof {
                 session_key,
                 reconnect_challenge_data,
             },
-            *server_proof.as_le(),
+            *server_proof.as_le_bytes(),
         ))
     }
 }
@@ -627,7 +627,7 @@ impl SrpServer {
     #[doc(alias = "S")]
     #[must_use]
     pub const fn session_key(&self) -> &[u8; SESSION_KEY_LENGTH as usize] {
-        self.session_key.as_le()
+        self.session_key.as_le_bytes()
     }
 
     /// Server data to be included in the reconnection challenge.
@@ -644,7 +644,7 @@ impl SrpServer {
     pub const fn reconnect_challenge_data(
         &self,
     ) -> &[u8; RECONNECT_CHALLENGE_DATA_LENGTH as usize] {
-        self.reconnect_challenge_data.as_le()
+        self.reconnect_challenge_data.as_le_bytes()
     }
 
     /// Computes a proof from the username, randomized client data, randomized server data,
@@ -732,7 +732,7 @@ mod test {
         let client_proof = Proof::from_be_hex_str("b91e6e0c8c06969c44585d9f66d73454f60a43e6");
 
         let (_s, server_proof) = s
-            .into_server(client_public_key, *client_proof.as_le())
+            .into_server(client_public_key, *client_proof.as_le_bytes())
             .unwrap();
         let server_proof = Proof::from_le_bytes(server_proof);
 

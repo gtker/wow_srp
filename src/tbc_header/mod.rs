@@ -397,7 +397,7 @@ impl ProofSeed {
 
         let crypto = HeaderCrypto::new(session_key);
 
-        (*client_proof.as_le(), crypto)
+        (*client_proof.as_le_bytes(), crypto)
     }
 
     /// Asserts that the client knows the session key.
@@ -428,7 +428,7 @@ impl ProofSeed {
         if server_proof != Proof::from_le_bytes(client_proof) {
             return Err(MatchProofsError {
                 client_proof,
-                server_proof: *server_proof.as_le(),
+                server_proof: *server_proof.as_le_bytes(),
             });
         }
 
@@ -473,7 +473,7 @@ mod test {
 
             let (proof, _) = client_seed.into_proof_and_header_crypto(
                 &username.try_into().unwrap(),
-                *session_key.as_le(),
+                *session_key.as_le_bytes(),
                 server_seed,
             );
 
@@ -637,11 +637,11 @@ mod test {
 
             let original_data = data.clone();
 
-            let mut client = HeaderCrypto::new(*session_key.as_le());
+            let mut client = HeaderCrypto::new(*session_key.as_le_bytes());
             client.encrypt(&mut data);
             assert_eq!(data, expected_client);
 
-            let mut server = HeaderCrypto::new(*session_key.as_le());
+            let mut server = HeaderCrypto::new(*session_key.as_le_bytes());
             server.decrypt(&mut data);
             assert_eq!(data, original_data);
 
@@ -667,11 +667,11 @@ mod test {
 
             let original_data = data.clone();
 
-            let (mut client_enc, mut client_dec) = HeaderCrypto::new(*session_key.as_le()).split();
+            let (mut client_enc, mut client_dec) = HeaderCrypto::new(*session_key.as_le_bytes()).split();
             client_enc.encrypt(&mut data);
             assert_eq!(data, expected_client);
 
-            let (mut server_enc, mut server_dec) = HeaderCrypto::new(*session_key.as_le()).split();
+            let (mut server_enc, mut server_dec) = HeaderCrypto::new(*session_key.as_le_bytes()).split();
             server_dec.decrypt(&mut data);
             assert_eq!(data, original_data);
 

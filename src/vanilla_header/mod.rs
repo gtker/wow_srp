@@ -397,7 +397,7 @@ impl ProofSeed {
 
         let crypto = HeaderCrypto::new(session_key);
 
-        (*client_proof.as_le(), crypto)
+        (*client_proof.as_le_bytes(), crypto)
     }
 
     /// Asserts that the client knows the session key.
@@ -428,7 +428,7 @@ impl ProofSeed {
         if server_proof != Proof::from_le_bytes(client_proof) {
             return Err(MatchProofsError {
                 client_proof,
-                server_proof: *server_proof.as_le(),
+                server_proof: *server_proof.as_le_bytes(),
             });
         }
 
@@ -473,7 +473,7 @@ mod test {
 
             let (proof, _) = client_seed.into_proof_and_header_crypto(
                 &username.try_into().unwrap(),
-                *session_key.as_le(),
+                *session_key.as_le_bytes(),
                 server_seed,
             );
 
@@ -635,7 +635,7 @@ mod test {
             let expected = hex_decode(line.next().unwrap());
 
             // Bypass checking seeds and proofs because they aren't there
-            let mut encryption = HeaderCrypto::new(*session_key.as_le());
+            let mut encryption = HeaderCrypto::new(*session_key.as_le_bytes());
 
             encryption.encrypt(&mut data);
 
@@ -645,13 +645,13 @@ mod test {
                 "Session Key: {},
                  data: {},
                  Got data: {}",
-                hex_encode(session_key.as_le()),
+                hex_encode(session_key.as_le_bytes()),
                 hex_encode(&original_data),
                 hex_encode(&data)
             );
 
             // Bypass checking seeds and proofs because they aren't there
-            let full = HeaderCrypto::new(*session_key.as_le());
+            let full = HeaderCrypto::new(*session_key.as_le_bytes());
             let (mut enc, _dec) = full.split();
 
             enc.encrypt(&mut split_data);
@@ -662,7 +662,7 @@ mod test {
                 "Session Key: {},
                  data: {},
                  Got data: {}",
-                hex_encode(session_key.as_le()),
+                hex_encode(session_key.as_le_bytes()),
                 hex_encode(&original_data),
                 hex_encode(&split_data)
             );
@@ -878,7 +878,7 @@ mod test {
             let original_data = data.clone();
             let expected = hex_decode(line.next().unwrap());
 
-            let mut encryption = HeaderCrypto::new(*session_key.as_le());
+            let mut encryption = HeaderCrypto::new(*session_key.as_le_bytes());
 
             encryption.decrypt(&mut data);
 
@@ -888,12 +888,12 @@ mod test {
                 "Session Key: {},
                  data: {},
                  Got data: {}",
-                hex_encode(session_key.as_le()),
+                hex_encode(session_key.as_le_bytes()),
                 hex_encode(&original_data),
                 hex_encode(&data)
             );
 
-            let full = HeaderCrypto::new(*session_key.as_le());
+            let full = HeaderCrypto::new(*session_key.as_le_bytes());
             let (_enc, mut dec) = full.split();
 
             dec.decrypt(&mut split_data);
@@ -904,7 +904,7 @@ mod test {
                 "Session Key: {},
                  data: {},
                  Got data: {}",
-                hex_encode(session_key.as_le()),
+                hex_encode(session_key.as_le_bytes()),
                 hex_encode(&original_data),
                 hex_encode(&split_data),
             );

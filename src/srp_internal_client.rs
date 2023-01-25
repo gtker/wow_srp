@@ -57,12 +57,12 @@ pub(crate) fn calculate_client_proof_with_custom_value(
     let username_hash = Sha1::new().chain_update(username.as_ref()).finalize();
 
     let out: [u8; PROOF_LENGTH as usize] = Sha1::new()
-        .chain_update(xor_hash.as_le())
+        .chain_update(xor_hash.as_le_bytes())
         .chain_update(username_hash)
-        .chain_update(salt.as_le())
-        .chain_update(client_public_key.as_le())
-        .chain_update(server_public_key.as_le())
-        .chain_update(session_key.as_le())
+        .chain_update(salt.as_le_bytes())
+        .chain_update(client_public_key.as_le_bytes())
+        .chain_update(server_public_key.as_le_bytes())
+        .chain_update(session_key.as_le_bytes())
         .finalize()
         .into();
 
