@@ -667,11 +667,13 @@ mod test {
 
             let original_data = data.clone();
 
-            let (mut client_enc, mut client_dec) = HeaderCrypto::new(*session_key.as_le_bytes()).split();
+            let (mut client_enc, mut client_dec) =
+                HeaderCrypto::new(*session_key.as_le_bytes()).split();
             client_enc.encrypt(&mut data);
             assert_eq!(data, expected_client);
 
-            let (mut server_enc, mut server_dec) = HeaderCrypto::new(*session_key.as_le_bytes()).split();
+            let (mut server_enc, mut server_dec) =
+                HeaderCrypto::new(*session_key.as_le_bytes()).split();
             server_dec.decrypt(&mut data);
             assert_eq!(data, original_data);
 
