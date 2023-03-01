@@ -31,7 +31,7 @@ impl ServerEncrypterHalf {
     /// Has the same errors as [`std::io::Write::write_all`].
     pub fn write_encrypted_server_header<W: Write>(
         &mut self,
-        write: &mut W,
+        mut write: W,
         size: u32,
         opcode: u16,
     ) -> std::io::Result<()> {
@@ -121,7 +121,7 @@ impl ClientEncrypterHalf {
     /// Has the same errors as [`std::io::Write::write_all`].
     pub fn write_encrypted_client_header<W: Write>(
         &mut self,
-        write: &mut W,
+        mut write: W,
         size: u16,
         opcode: u32,
     ) -> std::io::Result<()> {

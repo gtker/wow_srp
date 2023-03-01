@@ -66,7 +66,7 @@
 //!     // Send the first server message
 //! }
 //!
-//! fn decrypt_header<R: Read>(r: &mut R, raw_data: &mut [u8], encryption: &mut HeaderCrypto) {
+//! fn decrypt_header<R: Read>(r: R, raw_data: &mut [u8], encryption: &mut HeaderCrypto) {
 //!     let client_header = encryption.read_and_decrypt_server_header(r);
 //!     match client_header {
 //!         Ok(c) => {}
@@ -85,7 +85,7 @@
 //!     encryption.decrypt(raw_data);
 //! }
 //!
-//! fn encrypt<W: Write>(w: &mut W, raw_data: &mut [u8], encryption: &mut HeaderCrypto) {
+//! fn encrypt<W: Write>(w: W, raw_data: &mut [u8], encryption: &mut HeaderCrypto) {
 //!     let result = encryption.write_encrypted_server_header(w, 4, 0xFF);
 //!     match result {
 //!         Ok(_) => {}
@@ -216,7 +216,7 @@ impl HeaderCrypto {
     /// Has the same errors as [`EncrypterHalf::write_encrypted_server_header`].
     pub fn write_encrypted_server_header<W: Write>(
         &mut self,
-        write: &mut W,
+        write: W,
         size: u16,
         opcode: u16,
     ) -> std::io::Result<()> {
@@ -231,7 +231,7 @@ impl HeaderCrypto {
     /// Has the same errors as [`EncrypterHalf::write_encrypted_client_header`].
     pub fn write_encrypted_client_header<W: Write>(
         &mut self,
-        write: &mut W,
+        write: W,
         size: u16,
         opcode: u32,
     ) -> std::io::Result<()> {
@@ -275,7 +275,7 @@ impl HeaderCrypto {
     /// Has the same errors as [`DecrypterHalf::read_and_decrypt_server_header`].
     pub fn read_and_decrypt_server_header<R: Read>(
         &mut self,
-        reader: &mut R,
+        reader: R,
     ) -> std::io::Result<ServerHeader> {
         self.decrypt.read_and_decrypt_server_header(reader)
     }
@@ -287,7 +287,7 @@ impl HeaderCrypto {
     /// Has the same errors as [`DecrypterHalf::read_and_decrypt_client_header`].
     pub fn read_and_decrypt_client_header<R: Read>(
         &mut self,
-        reader: &mut R,
+        reader: R,
     ) -> std::io::Result<ClientHeader> {
         self.decrypt.read_and_decrypt_client_header(reader)
     }

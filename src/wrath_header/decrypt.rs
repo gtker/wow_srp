@@ -32,7 +32,7 @@ impl ServerDecrypterHalf {
     /// Has the same errors as [`ServerDecrypterHalf::read_and_decrypt_client_header`].
     pub fn read_and_decrypt_client_header<R: Read>(
         &mut self,
-        reader: &mut R,
+        mut reader: R,
     ) -> std::io::Result<ClientHeader> {
         let mut buf = [0_u8; CLIENT_HEADER_LENGTH as usize];
         reader.read_exact(&mut buf)?;

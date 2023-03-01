@@ -191,7 +191,7 @@ impl ClientCrypto {
     /// Has the same errors as [`ClientEncrypterHalf::write_encrypted_client_header`].
     pub fn write_encrypted_client_header<W: Write>(
         &mut self,
-        write: &mut W,
+        write: W,
         size: u16,
         opcode: u32,
     ) -> std::io::Result<()> {
@@ -295,7 +295,7 @@ impl ServerCrypto {
     /// Has the same errors as [`ServerEncrypterHalf::write_encrypted_server_header`].
     pub fn write_encrypted_server_header<W: Write>(
         &mut self,
-        write: &mut W,
+        write: W,
         size: u32,
         opcode: u16,
     ) -> std::io::Result<()> {
@@ -325,7 +325,7 @@ impl ServerCrypto {
     /// Has the same errors as [`ServerDecrypterHalf::read_and_decrypt_client_header`].
     pub fn read_and_decrypt_client_header<R: Read>(
         &mut self,
-        reader: &mut R,
+        reader: R,
     ) -> std::io::Result<ClientHeader> {
         self.decrypt.read_and_decrypt_client_header(reader)
     }
