@@ -140,3 +140,5 @@ pub mod wrath_header;
 
 #[cfg(test)]
 pub(crate) mod hex;
+#[cfg(all(test, any(feature = "srp-default-math", feature = "srp-fast-math")))]
+mod test;

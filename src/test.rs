@@ -1,8 +1,7 @@
-#![cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
-use wow_srp::client::SrpClientUser;
-use wow_srp::normalized_string::NormalizedString;
-use wow_srp::server::SrpVerifier;
-use wow_srp::{PublicKey, GENERATOR, LARGE_SAFE_PRIME_LITTLE_ENDIAN};
+use crate::client::SrpClientUser;
+use crate::normalized_string::NormalizedString;
+use crate::server::SrpVerifier;
+use crate::{PublicKey, GENERATOR, LARGE_SAFE_PRIME_LITTLE_ENDIAN};
 
 #[test]
 fn authenticate_with_self() {
