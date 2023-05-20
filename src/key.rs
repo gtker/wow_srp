@@ -54,87 +54,6 @@ fn check_public_key(key: &[u8; PUBLIC_KEY_LENGTH as usize]) -> Result<(), Invali
     }
 }
 
-macro_rules! key_check_not_zero_initialization {
-    ($name: ident; $size: expr) => {
-        impl $name {
-            /// Creates the struct from little endian bytes.
-            ///
-            /// Values are stored internally as little endian so no reversal occurs.
-            ///
-            /// # Errors
-            ///
-            /// Will error if the public key is invalid. See [`PublicKey`] for specifics.
-            ///
-            pub fn from_le_bytes(key: [u8; $size]) -> Result<Self, InvalidPublicKeyError> {
-                let key_is_valid = check_public_key(&key);
-                match key_is_valid {
-                    Ok(_) => Ok(Self { key }),
-                    Err(e) => Err(e),
-                }
-            }
-
-            #[cfg(test)]
-            pub(crate) fn from_be_hex_str(s: &str) -> Result<Self, InvalidPublicKeyError> {
-                let mut key = hex_decode(&s);
-                key.reverse();
-
-                if key.len() > $size {
-                    panic!(
-                        "{} from_be_hex_str length is greater than {}",
-                        stringify!($name),
-                        $size
-                    );
-                }
-
-                while key.len() < $size {
-                    key.push(0);
-                }
-
-                let key = <[u8; $size]>::try_from(key).unwrap();
-
-                Self::from_le_bytes(key)
-            }
-
-            // Keep a separate validation function for clients because the large safe prime
-            // can't be known ahead of time, meaning we don't have the guarantees for it
-            // that we do for the server prime.
-            #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
-            pub(crate) fn client_try_from_bigint(
-                b: bigint::Integer,
-                large_safe_prime: &LargeSafePrime,
-            ) -> Result<Self, InvalidPublicKeyError> {
-                if b.is_zero() {
-                    return Err(InvalidPublicKeyError::PublicKeyIsZero);
-                }
-                if b.mod_large_safe_prime_is_zero(&large_safe_prime) {
-                    return Err(InvalidPublicKeyError::PublicKeyModLargeSafePrimeIsZero);
-                }
-
-                let mut key = [0_u8; $size];
-
-                let b = b.to_bytes_le().to_vec();
-                key[0..b.len()].clone_from_slice(&b);
-
-                Ok(Self { key })
-            }
-
-            // This should be used on the server.
-            // Doesn't use TryFrom<BigInt> because it shows up in the public interface with no way to hide it
-            #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
-            pub(crate) fn try_from_bigint(
-                b: bigint::Integer,
-            ) -> Result<Self, InvalidPublicKeyError> {
-                let mut key = [0_u8; $size];
-
-                let b = b.to_bytes_le().to_vec();
-                key[0..b.len()].clone_from_slice(&b);
-
-                Self::from_le_bytes(key)
-            }
-        }
-    };
-}
-
 macro_rules! key_no_checks_initialization {
     ($name: ident; $size: expr) => {
         impl $name {
@@ -255,7 +174,82 @@ key_no_checks_initialization!(PrivateKey; PRIVATE_KEY_LENGTH as usize);
 pub const PUBLIC_KEY_LENGTH: u8 = LARGE_SAFE_PRIME_LENGTH;
 key_wrapper!(PublicKey; PUBLIC_KEY_LENGTH as usize);
 key_bigint!(PublicKey);
-key_check_not_zero_initialization!(PublicKey; PUBLIC_KEY_LENGTH as usize);
+
+impl PublicKey {
+    /// Creates the struct from little endian bytes.
+    ///
+    /// Values are stored internally as little endian so no reversal occurs.
+    ///
+    /// # Errors
+    ///
+    /// Will error if the public key is invalid. See [`PublicKey`] for specifics.
+    ///
+    pub fn from_le_bytes(
+        key: [u8; PUBLIC_KEY_LENGTH as usize],
+    ) -> Result<Self, InvalidPublicKeyError> {
+        let key_is_valid = check_public_key(&key);
+        match key_is_valid {
+            Ok(_) => Ok(Self { key }),
+            Err(e) => Err(e),
+        }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn from_be_hex_str(s: &str) -> Result<Self, InvalidPublicKeyError> {
+        let mut key = hex_decode(&s);
+        key.reverse();
+
+        if key.len() > PUBLIC_KEY_LENGTH as usize {
+            panic!(
+                "PublicKey from_be_hex_str length is greater than {}",
+                PUBLIC_KEY_LENGTH
+            );
+        }
+
+        while key.len() < PUBLIC_KEY_LENGTH as usize {
+            key.push(0);
+        }
+
+        let key = <[u8; PUBLIC_KEY_LENGTH as usize]>::try_from(key).unwrap();
+
+        Self::from_le_bytes(key)
+    }
+
+    // Keep a separate validation function for clients because the large safe prime
+    // can't be known ahead of time, meaning we don't have the guarantees for it
+    // that we do for the server prime.
+    #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
+    pub(crate) fn client_try_from_bigint(
+        b: bigint::Integer,
+        large_safe_prime: &LargeSafePrime,
+    ) -> Result<Self, InvalidPublicKeyError> {
+        if b.is_zero() {
+            return Err(InvalidPublicKeyError::PublicKeyIsZero);
+        }
+        if b.mod_large_safe_prime_is_zero(&large_safe_prime) {
+            return Err(InvalidPublicKeyError::PublicKeyModLargeSafePrimeIsZero);
+        }
+
+        let mut key = [0_u8; PUBLIC_KEY_LENGTH as usize];
+
+        let b = b.to_bytes_le().to_vec();
+        key[0..b.len()].clone_from_slice(&b);
+
+        Ok(Self { key })
+    }
+
+    // This should be used on the server.
+    // Doesn't use TryFrom<BigInt> because it shows up in the public interface with no way to hide it
+    #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
+    pub(crate) fn try_from_bigint(b: bigint::Integer) -> Result<Self, InvalidPublicKeyError> {
+        let mut key = [0_u8; PUBLIC_KEY_LENGTH as usize];
+
+        let b = b.to_bytes_le().to_vec();
+        key[0..b.len()].clone_from_slice(&b);
+
+        Self::from_le_bytes(key)
+    }
+}
 
 /// A SHA1 hash is always 20 bytes (160 bits) as specified in [RFC3174](https://tools.ietf.org/html/rfc3174).
 pub const SHA1_HASH_LENGTH: u8 = 20;
