@@ -4,14 +4,11 @@ use num_bigint::BigInt;
 #[cfg(feature = "srp-fast-math")]
 use rug::integer::Order;
 #[cfg(feature = "srp-fast-math")]
-use rug::Integer as RugInt;
+use rug::Integer as BigInt;
 use std::ops;
 
 pub(crate) struct Integer {
-    #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
     value: BigInt,
-    #[cfg(feature = "srp-fast-math")]
-    value: RugInt,
 }
 
 impl Integer {
@@ -65,15 +62,10 @@ impl Integer {
         }
         #[cfg(feature = "srp-fast-math")]
         {
-            Self::from_bigint(RugInt::from_digits(v, Order::LsfLe))
+            Self::from_bigint(BigInt::from_digits(v, Order::LsfLe))
         }
     }
 
-    #[cfg(feature = "srp-fast-math")]
-    const fn from_bigint(bigint: RugInt) -> Self {
-        Self { value: bigint }
-    }
-    #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
     const fn from_bigint(bigint: BigInt) -> Self {
         Self { value: bigint }
     }
@@ -81,14 +73,7 @@ impl Integer {
 
 impl From<u8> for Integer {
     fn from(v: u8) -> Self {
-        #[cfg(feature = "srp-fast-math")]
-        {
-            Self::from_bigint(RugInt::from(v))
-        }
-        #[cfg(all(not(feature = "srp-fast-math"), feature = "srp-default-math"))]
-        {
-            Self::from_bigint(BigInt::from(v))
-        }
+        Self::from_bigint(BigInt::from(v))
     }
 }
 
