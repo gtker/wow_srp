@@ -123,9 +123,8 @@ use rand::{thread_rng, RngCore};
 
 pub(crate) mod decrypt;
 pub(crate) mod encrypt;
-mod internal;
 
-pub(crate) use internal::calculate_world_server_proof;
+use crate::vanilla_header::calculate_world_server_proof;
 
 /// Size in bytes of the client [world packet] header.
 ///
