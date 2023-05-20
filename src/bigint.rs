@@ -1,6 +1,6 @@
 use crate::primes::LargeSafePrime;
 #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
-use num_bigint::{BigInt, Sign};
+use num_bigint::BigInt;
 #[cfg(feature = "srp-fast-math")]
 use rug::integer::Order;
 #[cfg(feature = "srp-fast-math")]
@@ -32,35 +32,41 @@ impl Integer {
         (&self.value % large_safe_prime.to_bigint().value) == Integer::from(0).value
     }
 
-    #[cfg(feature = "srp-fast-math")]
     pub fn to_bytes_le(&self) -> Vec<u8> {
-        self.value.to_digits(Order::LsfLe)
-    }
-    #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
-    pub fn to_bytes_le(&self) -> Vec<u8> {
-        self.value.to_bytes_le().1
+        #[cfg(feature = "srp-fast-math")]
+        {
+            self.value.to_digits(Order::LsfLe)
+        }
+        #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
+        {
+            self.value.to_bytes_le().1
+        }
     }
 
-    #[cfg(feature = "srp-fast-math")]
     pub fn modpow(&self, exponent: &Self, modulus: &Self) -> Self {
-        Self::from_bigint(
-            self.value
-                .clone()
-                .secure_pow_mod(&exponent.value, &modulus.value),
-        )
-    }
-    #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
-    pub fn modpow(&self, exponent: &Self, modulus: &Self) -> Self {
-        Self::from_bigint(self.value.modpow(&exponent.value, &modulus.value))
+        #[cfg(feature = "srp-fast-math")]
+        {
+            Self::from_bigint(
+                self.value
+                    .clone()
+                    .secure_pow_mod(&exponent.value, &modulus.value),
+            )
+        }
+        #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
+        {
+            Self::from_bigint(self.value.modpow(&exponent.value, &modulus.value))
+        }
     }
 
-    #[cfg(feature = "srp-fast-math")]
     pub fn from_bytes_le(v: &[u8]) -> Self {
-        Self::from_bigint(RugInt::from_digits(v, Order::LsfLe))
-    }
-    #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
-    pub fn from_bytes_le(v: &[u8]) -> Self {
-        Self::from_bigint(BigInt::from_bytes_le(Sign::Plus, v))
+        #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
+        {
+            Self::from_bigint(BigInt::from_bytes_le(num_bigint::Sign::Plus, v))
+        }
+        #[cfg(feature = "srp-fast-math")]
+        {
+            Self::from_bigint(RugInt::from_digits(v, Order::LsfLe))
+        }
     }
 
     #[cfg(feature = "srp-fast-math")]
@@ -74,14 +80,15 @@ impl Integer {
 }
 
 impl From<u8> for Integer {
-    #[cfg(feature = "srp-fast-math")]
     fn from(v: u8) -> Self {
-        Self::from_bigint(RugInt::from(v))
-    }
-
-    #[cfg(all(not(feature = "srp-fast-math"), feature = "srp-default-math"))]
-    fn from(v: u8) -> Self {
-        Self::from_bigint(BigInt::from(v))
+        #[cfg(feature = "srp-fast-math")]
+        {
+            Self::from_bigint(RugInt::from(v))
+        }
+        #[cfg(all(not(feature = "srp-fast-math"), feature = "srp-default-math"))]
+        {
+            Self::from_bigint(BigInt::from(v))
+        }
     }
 }
 
