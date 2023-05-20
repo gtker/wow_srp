@@ -196,7 +196,7 @@ impl PublicKey {
 
     #[cfg(test)]
     pub(crate) fn from_be_hex_str(s: &str) -> Result<Self, InvalidPublicKeyError> {
-        let mut key = hex_decode(&s);
+        let mut key = hex_decode(s);
         key.reverse();
 
         if key.len() > PUBLIC_KEY_LENGTH as usize {
@@ -226,7 +226,7 @@ impl PublicKey {
         if b.is_zero() {
             return Err(InvalidPublicKeyError::PublicKeyIsZero);
         }
-        if b.mod_large_safe_prime_is_zero(&large_safe_prime) {
+        if b.mod_large_safe_prime_is_zero(large_safe_prime) {
             return Err(InvalidPublicKeyError::PublicKeyModLargeSafePrimeIsZero);
         }
 
