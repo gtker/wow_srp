@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+### Changed
+
+BREAKING: `ProofSeed::into_header_crypto` renamed to `ProofSeed::into_server_header_crypto`.
+BREAKING: `ProofSeed::into_proof_and_header_crypto` renamed to `ProofSeed::into_client_header_crypto`.
+
 ## [0.6.0] - 2023-05-20
 
 ### Added
@@ -108,7 +113,7 @@ This is in order to not be locked into specific libraries.
 - BREAKING: `EncrypterHalf::unsplit` is now fallible and returns a `Result<HeaderCrypto, UnsplitCryptoError>`.
 
 ### Removed
-- BREAKING: `HeaderCrypto::new`. Use `ProofSeed::into_header_crypto` instead.
+- BREAKING: `HeaderCrypto::new`. Use `ProofSeed::into_server_header_crypto` instead.
 
 ## [0.2.0] - 2021-07-05
 

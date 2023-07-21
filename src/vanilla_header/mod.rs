@@ -26,7 +26,7 @@
 //! 2. Send the seed to the client in a [`SMSG_AUTH_CHALLENGE`] message.
 //! 3. Receive the username, proof and seed in the [`CMSG_AUTH_SESSION`] message.
 //! 4. Retrieve the session key from the login server.
-//! 5. Create the [`HeaderCrypto`] struct through [`ProofSeed::into_header_crypto`].
+//! 5. Create the [`HeaderCrypto`] struct through [`ProofSeed::into_server_header_crypto`].
 //! 6. Optionally, split the [`HeaderCrypto`] into [`EncrypterHalf`] and [`DecrypterHalf`] through
 //! [`HeaderCrypto::split`].
 //! 7. Optionally, unsplit them through [`EncrypterHalf::unsplit`].
@@ -61,7 +61,7 @@
 //!     // Send seed to client
 //!     seed.seed();
 //!     // Get username from client, fetch session key from login server
-//!     let encryption = seed.into_header_crypto(&username, session_key, client_proof, client_seed);
+//!     let encryption = seed.into_server_header_crypto(&username, session_key, client_proof, client_seed);
 //!
 //!     // Send the first server message
 //! }
@@ -173,7 +173,7 @@ pub struct ClientHeader {
 
 /// Main struct for encryption or decryption.
 ///
-/// Created from [`ProofSeed::into_header_crypto`].
+/// Created from [`ProofSeed::into_server_header_crypto`].
 ///
 /// Handles both encryption and decryption of headers through the
 /// [`EncrypterHalf`] and [`DecrypterHalf`] structs.
@@ -345,10 +345,10 @@ impl HeaderCrypto {
 /// Random Seed part of the calculation needed to verify
 /// that a client knows the session key.
 ///
-/// The [`ProofSeed::into_header_crypto`] function is used by the server to verify
+/// The [`ProofSeed::into_server_header_crypto`] function is used by the server to verify
 /// that a client knows the session key.
 ///
-/// The [`ProofSeed::into_proof_and_header_crypto`] function is used by the client to
+/// The [`ProofSeed::into_client_header_crypto`] function is used by the client to
 /// prove to the server that the client knows the session key.
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct ProofSeed {
@@ -382,7 +382,7 @@ impl ProofSeed {
     ///
     /// [`SMSG_AUTH_RESPONSE`]: https://wowdev.wiki/SMSG_AUTH_RESPONSE
     #[must_use]
-    pub fn into_proof_and_header_crypto(
+    pub fn into_client_header_crypto(
         self,
         username: &NormalizedString,
         session_key: [u8; SESSION_KEY_LENGTH as _],
@@ -411,7 +411,7 @@ impl ProofSeed {
     /// * The session key might be out of date.
     /// * The client is not well behaved and deliberately trying to get past the login server.
     ///
-    pub fn into_header_crypto(
+    pub fn into_server_header_crypto(
         self,
         username: &NormalizedString,
         session_key: [u8; SESSION_KEY_LENGTH as _],
@@ -471,7 +471,7 @@ mod test {
             ));
             let expected: [u8; 20] = hex_decode(line.next().unwrap()).try_into().unwrap();
 
-            let (proof, _) = client_seed.into_proof_and_header_crypto(
+            let (proof, _) = client_seed.into_client_header_crypto(
                 &username.try_into().unwrap(),
                 *session_key.as_le_bytes(),
                 server_seed,
@@ -496,10 +496,10 @@ mod test {
         let server_seed = ProofSeed::new();
 
         let (client_proof, mut client_crypto) =
-            client_seed.into_proof_and_header_crypto(&username, session_key, server_seed.seed());
+            client_seed.into_client_header_crypto(&username, session_key, server_seed.seed());
 
         let mut server_crypto = server_seed
-            .into_header_crypto(&username, session_key, client_proof, client_seed_value)
+            .into_server_header_crypto(&username, session_key, client_proof, client_seed_value)
             .unwrap();
 
         let original_data = hex_decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca");
@@ -531,7 +531,7 @@ mod test {
             124,
         ];
         let mut encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
-            .into_header_crypto(
+            .into_server_header_crypto(
                 &NormalizedString::new("A").unwrap(),
                 session_key,
                 client_proof,
@@ -571,7 +571,7 @@ mod test {
         ];
         let client_seed = 12589856;
         let mut encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
-            .into_header_crypto(
+            .into_server_header_crypto(
                 &NormalizedString::new("A").unwrap(),
                 session_key,
                 client_proof,
@@ -618,7 +618,8 @@ mod test {
         ];
 
         let seed = ProofSeed::from_specific_seed(server_seed);
-        let encryption = seed.into_header_crypto(&username, session_key, client_proof, client_seed);
+        let encryption =
+            seed.into_server_header_crypto(&username, session_key, client_proof, client_seed);
         assert!(encryption.is_ok());
     }
 
@@ -688,7 +689,7 @@ mod test {
         ];
 
         let mut encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
-            .into_header_crypto(
+            .into_server_header_crypto(
                 &NormalizedString::new("A").unwrap(),
                 session_key,
                 client_proof,
@@ -734,7 +735,7 @@ mod test {
         ];
 
         let mut encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
-            .into_header_crypto(
+            .into_server_header_crypto(
                 &NormalizedString::new("A").unwrap(),
                 session_key,
                 client_proof,
@@ -792,7 +793,7 @@ mod test {
         ];
 
         let mut encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
-            .into_header_crypto(
+            .into_server_header_crypto(
                 &NormalizedString::new("A").unwrap(),
                 session_key,
                 client_proof,
@@ -800,7 +801,7 @@ mod test {
             )
             .unwrap();
         let mut helper_encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
-            .into_header_crypto(
+            .into_server_header_crypto(
                 &NormalizedString::new("A").unwrap(),
                 session_key,
                 client_proof,
