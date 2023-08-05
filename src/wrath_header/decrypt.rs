@@ -10,7 +10,7 @@ use std::io::Read;
 /// Decryption part of a [`ServerCrypto`](crate::wrath_header::ServerCrypto).
 ///
 /// Intended to be kept with the reader half of a connection.
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct ServerDecrypterHalf {
     decrypt: InnerCrypto,
 }
@@ -66,7 +66,7 @@ impl ServerDecrypterHalf {
 /// Decryption part of a [`ClientCrypto`](crate::wrath_header::ClientCrypto).
 ///
 /// Intended to be kept with the reader half of a connection.
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct ClientDecrypterHalf {
     decrypt: InnerCrypto,
 }

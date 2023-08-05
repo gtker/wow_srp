@@ -1,22 +1,17 @@
+mod rc4;
+
+use crate::wrath_header::inner_crypto::rc4::Rc4;
 use crate::SESSION_KEY_LENGTH;
 use hmac::{Hmac, Mac};
-use rc4::consts::U20;
-use rc4::{Rc4, StreamCipher};
 use sha1::Sha1;
-use std::fmt::{Debug, Formatter};
+use std::fmt::Debug;
 
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct InnerCrypto {
-    inner: Rc4<U20>,
+    inner: Rc4,
 }
 
 pub const KEY_LENGTH: u8 = 16;
-
-// Rc4 does not have a debug impl which is annoying because it prevents users from impl Debug
-impl Debug for InnerCrypto {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("InnerCrypto").finish_non_exhaustive()
-    }
-}
 
 impl InnerCrypto {
     pub fn apply(&mut self, data: &mut [u8]) {
@@ -31,10 +26,7 @@ impl InnerCrypto {
         hmac.update(&session_key);
         let hmac = hmac.finalize();
 
-        let mut inner = {
-            use rc4::KeyInit;
-            Rc4::new_from_slice(&hmac.into_bytes()).unwrap()
-        };
+        let mut inner = Rc4::new(hmac.into_bytes().as_slice());
 
         // This variant is actually RC4-drop1024
         let mut pad_data = [0_u8; 1024];

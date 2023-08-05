@@ -18,17 +18,12 @@ default = ["srp-default-math", "tbc-header", "wrath-header"]
 srp-default-math = ["num-bigint"]
 srp-fast-math = ["rug"]
 tbc-header = ["hmac"]
-wrath-header = ["rc4", "hmac"]
+wrath-header = ["hmac"]
 
 [dependencies.sha-1]
 # Required for SRP6 algorithm
 version = "0.10.0"
 default-features = false
-
-[dependencies.rc4]
-# Required for Wrath header crypto
-version = "0.1.0"
-optional = true
 
 [dependencies.hmac]
 # Required for Wrath header crypto
