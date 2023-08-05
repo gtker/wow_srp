@@ -116,6 +116,46 @@ impl ClientDecrypterHalf {
         }
     }
 
+    /// Convenience function for [Read]ing header directly.
+    /// Prefer this over directly using [`Self::decrypt`].
+    ///
+    /// # Errors
+    ///
+    /// Has the same errors as [`Read::read_exact`].
+    pub fn read_and_decrypt_server_header<R: Read>(
+        &mut self,
+        mut reader: R,
+    ) -> std::io::Result<ServerHeader> {
+        let mut msb = [0_u8; 1];
+        reader.read_exact(&mut msb)?;
+        self.decrypt(&mut msb);
+
+        let (size, opcode) = if msb[0] & 0x80 != 0 {
+            let mut data = [0_u8; 4];
+            reader.read_exact(&mut data)?;
+
+            // The most significant bit of the most significant byte is set
+            // in order to indicate that this is a 3-byte size.
+            // The 0x80 indicator must be cleared, otherwise the size is off
+            let most_significant_byte = data[0] & 0x7F;
+
+            let size = u32::from_be_bytes([0, most_significant_byte, data[0], data[1]]);
+            let opcode = u16::from_le_bytes([data[2], data[3]]);
+
+            (size, opcode)
+        } else {
+            let mut data = [0_u8; 3];
+            reader.read_exact(&mut data)?;
+
+            let size = u16::from_be_bytes([msb[0], data[1]]);
+            let opcode = u16::from_le_bytes([data[2], data[3]]);
+
+            (size.into(), opcode)
+        };
+
+        Ok(ServerHeader { size, opcode })
+    }
+
     pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
         Self {
             decrypt: InnerCrypto::new(session_key, &R),

@@ -222,6 +222,16 @@ impl ClientCrypto {
         self.decrypt.decrypt_server_header(data)
     }
 
+    /// Convenience wrapper for [`ClientDecrypterHalf::read_and_decrypt_server_header`].
+    ///
+    /// Prefer this over directly using [`Self::decrypt`].
+    pub fn read_and_decrypt_server_header<R: Read>(
+        &mut self,
+        reader: R,
+    ) -> std::io::Result<ServerHeader> {
+        self.decrypt.read_and_decrypt_server_header(reader)
+    }
+
     pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
         Self {
             decrypt: ClientDecrypterHalf::new(session_key),

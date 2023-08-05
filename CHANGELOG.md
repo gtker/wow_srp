@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * `Ord`, `PartialOrd`, `Eq`, `PartialEq`, and `Hash` for `wrath_header` types.
+* `read_and_decrypt_server_header` to `wrath_header::ClientDecrypterHalf` and `wrath_header::ClientCrypto`.
 
 ### Changed
 
