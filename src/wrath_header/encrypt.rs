@@ -51,10 +51,7 @@ impl ServerEncrypterHalf {
             let size = size.to_be_bytes();
             let opcode = opcode.to_le_bytes();
 
-            // The most significant bit of the 3rd byte must be set in order to indicate
-            // that this is a 3-byte size. This must be cleared on decryption in order to
-            // not report the wrong size.
-            let most_significant_byte = size[1] | 0x80;
+            let most_significant_byte = set_large_header(size[1]);
             let mut header = [
                 most_significant_byte,
                 size[2],
@@ -155,4 +152,11 @@ impl ClientEncrypterHalf {
             encrypt: InnerCrypto::new(session_key, &S),
         }
     }
+}
+
+const fn set_large_header(v: u8) -> u8 {
+    // The most significant bit of the 3rd byte must be set in order to indicate
+    // that this is a 3-byte size. This must be cleared on decryption in order to
+    // not report the wrong size.
+    v | 0x80
 }

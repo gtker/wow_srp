@@ -211,15 +211,20 @@ impl ClientCrypto {
         self.decrypt.decrypt(data);
     }
 
-    /// Convenience wrapper for [`ClientDecrypterHalf::decrypt_server_header`].
+    /// Convenience wrapper for [`ClientDecrypterHalf::get_header_buffer`].
     ///
     /// Prefer this over directly using [`Self::decrypt`].
     #[must_use]
-    pub fn decrypt_server_header(
-        &mut self,
-        data: [u8; SERVER_HEADER_MAXIMUM_LENGTH as usize],
-    ) -> ServerHeader {
-        self.decrypt.decrypt_server_header(data)
+    pub fn get_header_buffer(&mut self, byte: u8) -> &mut [u8] {
+        self.decrypt.get_header_buffer(byte)
+    }
+
+    /// Convenience wrapper for [`ClientDecrypterHalf::decrypt_internal_server_header`].
+    ///
+    /// Prefer this over directly using [`Self::decrypt`].
+    #[must_use]
+    pub fn decrypt_internal_server_header(&mut self) -> ServerHeader {
+        self.decrypt.decrypt_internal_server_header()
     }
 
     /// Convenience wrapper for [`ClientDecrypterHalf::read_and_decrypt_server_header`].
@@ -703,7 +708,12 @@ mod test {
         let expected_header = [0x97, 0x27, 0x32, 0xa3, 0x1a];
         assert_eq!(header, expected_header);
 
-        let header = client.decrypt_server_header(header.try_into().unwrap());
+        let buf = client.get_header_buffer(header[0]);
+        for (i, b) in buf.iter_mut().enumerate() {
+            *b = header[i + 1];
+        }
+
+        let header = client.decrypt_internal_server_header();
         assert_eq!(header.opcode, 0x1ee);
         assert_eq!(header.size, 0x8008);
 
@@ -711,11 +721,15 @@ mod test {
         let expected_header = [0x89, 0x4F, 0xFE, 0x11];
         assert_eq!(header, expected_header);
 
-        let mut arr = [0_u8; SERVER_HEADER_MAXIMUM_LENGTH as usize];
+        let mut arr = [0_u8; SERVER_HEADER_MINIMUM_LENGTH as usize];
         for (i, b) in header.iter().enumerate() {
             arr[i] = *b;
         }
-        let header = client.decrypt_server_header(arr);
+        let buf = client.get_header_buffer(arr[0]);
+        for (i, b) in buf.iter_mut().enumerate() {
+            *b = arr[i + 1];
+        }
+        let header = client.decrypt_internal_server_header();
         assert_eq!(header.opcode, 0x1ee);
         assert_eq!(header.size, 0x08);
     }
@@ -738,7 +752,11 @@ mod test {
         let expected_header = [0x97, 0x27, 0x32, 0xa3, 0x1a];
         assert_eq!(header, expected_header);
 
-        let server_header = client.decrypt_server_header(header);
+        let buf = client.get_header_buffer(header[0]);
+        for (i, b) in buf.iter_mut().enumerate() {
+            *b = header[i + 1];
+        }
+        let server_header = client.decrypt_internal_server_header();
         assert_eq!(server_header.opcode, 0x1ee);
         assert_eq!(server_header.size, 0x8008);
 
@@ -749,11 +767,15 @@ mod test {
         let expected_header = [0x89_u8, 0x4F, 0xFE, 0x11];
         assert_eq!(header, expected_header);
 
-        let mut arr = [0_u8; SERVER_HEADER_MAXIMUM_LENGTH as usize];
+        let mut arr = [0_u8; SERVER_HEADER_MINIMUM_LENGTH as usize];
         for (i, b) in header.iter().enumerate() {
             arr[i] = *b;
         }
-        let header = client.decrypt_server_header(arr);
+        let buf = client.get_header_buffer(arr[0]);
+        for (i, b) in buf.iter_mut().enumerate() {
+            *b = arr[i + 1];
+        }
+        let header = client.decrypt_internal_server_header();
         assert_eq!(header.opcode, 0x1ee);
         assert_eq!(header.size, 0x08);
     }

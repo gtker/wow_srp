@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * `Ord`, `PartialOrd`, `Eq`, `PartialEq`, and `Hash` for `wrath_header` types.
 * `read_and_decrypt_server_header` to `wrath_header::ClientDecrypterHalf` and `wrath_header::ClientCrypto`.
+* BREAKING: `ClientDecrypterHalf/ClientCrypto::get_header_buffer` and `*::decrypt_internal_server_header`.
+This handles the problem of Wrath big headers better than supplying a fixed array.
 
 ### Changed
 
@@ -24,6 +26,8 @@ This makes it align more with the rest of the library.
 ### Removed
 
 * `rc4` dependency. 
+* BREAKING: `ClientDecrypterHalf::decrypt_server_header` and `ClientCrypto::decrypt_server_header`.
+These have been replaced by a better API in `decrypt_internal_server_header` and `get_header_buffer`.
 
 ## [0.6.0] - 2023-05-20
 

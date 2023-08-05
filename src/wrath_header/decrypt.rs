@@ -70,50 +70,81 @@ impl ServerDecrypterHalf {
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct ClientDecrypterHalf {
     decrypt: InnerCrypto,
+    header: [u8; SERVER_HEADER_MAXIMUM_LENGTH as usize],
 }
 
 impl ClientDecrypterHalf {
     /// Raw access to decryption.
     ///
     /// Use
-    /// [the server](Self::decrypt_server_header) array function instead of this.
+    /// [the server](Self::decrypt_internal_server_header) array function instead of this.
     pub fn decrypt(&mut self, data: &mut [u8]) {
         self.decrypt.apply(data);
     }
 
-    /// Convenience function for decrypting a server header.
+    /// Provides an internal buffer for reading headers into that is decrypted using [`Self::decrypt_internal_server_header`].
     ///
-    /// This handles situations where the size field is 3 bytes instead of 2.
+    /// This function does not progress the internal state of the encryption, and it **MUST** be
+    /// followed by a call to [`Self::decrypt_internal_server_header`].
     ///
-    /// Prefer this over directly using [`Self::decrypt`].
+    /// See [`Self::decrypt_internal_server_header`] for more.
     #[must_use]
-    pub fn decrypt_server_header(
-        &mut self,
-        mut data: [u8; SERVER_HEADER_MAXIMUM_LENGTH as usize],
-    ) -> ServerHeader {
-        self.decrypt.apply(&mut data[0..1]);
+    pub fn get_header_buffer(&mut self, byte: u8) -> &mut [u8] {
+        self.header[0] = byte;
 
-        if data[0] & 0x80 != 0 {
-            self.decrypt(&mut data[1..]);
-
-            // The most significant bit of the most significant byte is set
-            // in order to indicate that this is a 3-byte size.
-            // The 0x80 indicator must be cleared, otherwise the size is off
-            let most_significant_byte = data[0] & 0x7F;
-            let size = u32::from_be_bytes([0, most_significant_byte, data[1], data[2]]);
-            let opcode = u16::from_le_bytes([data[3], data[4]]);
-
-            ServerHeader { size, opcode }
+        if large_header(self.decrypt.peek(byte)) {
+            &mut self.header[1..]
         } else {
-            self.decrypt(&mut data[1..SERVER_HEADER_MINIMUM_LENGTH as usize]);
-            let size = u16::from_be_bytes([data[0], data[1]]);
-            let opcode = u16::from_le_bytes([data[2], data[3]]);
-
-            ServerHeader {
-                size: size.into(),
-                opcode,
-            }
+            &mut self.header[1..SERVER_HEADER_MINIMUM_LENGTH as usize]
         }
+    }
+
+    /// Decrypts the internal buffer provided by [`Self::get_header_buffer`].
+    ///
+    /// This function and [`Self::get_header_buffer`] is for streams that don't support [Read] like various
+    /// async frameworks.
+    /// If your stream supports [Read] use [`Self::read_and_decrypt_server_header`] instead.
+    ///
+    /// [`Self::get_header_buffer`] **MUST** be called before this, otherwise
+    /// the decrypter will enter an invalid state and the connection will have to be terminated.
+    ///
+    /// Unlike other versinos, Wrath messages from the server (`SMSG`) can have a dynamic size field
+    /// of either 2 **or** 3 bytes.
+    /// This means that reading the first 4 bytes of a message and passing it as an array won't work.
+    ///
+    /// To properly use this API, read a single byte from your stream and pass it to [`Self::get_header_buffer`].
+    /// This will return a buffer where you can `read_exact` or similar into.
+    /// The buffer is automatically sized correctly, so do not bother matching on the length, just fill it up.
+    /// Then call this function to decrypt.
+    #[must_use]
+    pub fn decrypt_internal_server_header(&mut self) -> ServerHeader {
+        self.decrypt.apply(&mut self.header[0..1]);
+
+        let large_header = large_header(self.header[0]);
+
+        let header = if large_header {
+            &mut self.header[1..]
+        } else {
+            &mut self.header[1..SERVER_HEADER_MINIMUM_LENGTH as usize]
+        };
+
+        self.decrypt.apply(header);
+
+        let (size, opcode) = if large_header {
+            let most_significant_byte = clear_large_header(self.header[0]);
+            let size =
+                u32::from_be_bytes([0, most_significant_byte, self.header[1], self.header[2]]);
+            let opcode = u16::from_le_bytes([self.header[3], self.header[4]]);
+
+            (size, opcode)
+        } else {
+            let size = u16::from_be_bytes([self.header[0], self.header[1]]);
+            let opcode = u16::from_le_bytes([self.header[2], self.header[3]]);
+
+            (size.into(), opcode)
+        };
+
+        ServerHeader { size, opcode }
     }
 
     /// Convenience function for [Read]ing header directly.
@@ -126,39 +157,29 @@ impl ClientDecrypterHalf {
         &mut self,
         mut reader: R,
     ) -> std::io::Result<ServerHeader> {
-        let mut msb = [0_u8; 1];
-        reader.read_exact(&mut msb)?;
-        self.decrypt(&mut msb);
+        let msb = [0_u8; 1];
+        let mut header = self.get_header_buffer(msb[0]);
 
-        let (size, opcode) = if msb[0] & 0x80 != 0 {
-            let mut data = [0_u8; 4];
-            reader.read_exact(&mut data)?;
+        reader.read_exact(&mut header)?;
 
-            // The most significant bit of the most significant byte is set
-            // in order to indicate that this is a 3-byte size.
-            // The 0x80 indicator must be cleared, otherwise the size is off
-            let most_significant_byte = data[0] & 0x7F;
-
-            let size = u32::from_be_bytes([0, most_significant_byte, data[0], data[1]]);
-            let opcode = u16::from_le_bytes([data[2], data[3]]);
-
-            (size, opcode)
-        } else {
-            let mut data = [0_u8; 3];
-            reader.read_exact(&mut data)?;
-
-            let size = u16::from_be_bytes([msb[0], data[1]]);
-            let opcode = u16::from_le_bytes([data[2], data[3]]);
-
-            (size.into(), opcode)
-        };
-
-        Ok(ServerHeader { size, opcode })
+        Ok(self.decrypt_internal_server_header())
     }
 
     pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
         Self {
             decrypt: InnerCrypto::new(session_key, &R),
+            header: [0_u8; SERVER_HEADER_MAXIMUM_LENGTH as usize],
         }
     }
+}
+
+const fn clear_large_header(v: u8) -> u8 {
+    v & 0x7F
+}
+
+const fn large_header(v: u8) -> bool {
+    // The most significant bit of the most significant byte is set
+    // in order to indicate that this is a 3-byte size.
+    // The 0x80 indicator must be cleared, otherwise the size is off
+    v & 0x80 != 0
 }
