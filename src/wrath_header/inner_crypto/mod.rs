@@ -7,14 +7,14 @@ use sha1::Sha1;
 use std::fmt::Debug;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct InnerCrypto {
+pub(crate) struct InnerCrypto {
     inner: Rc4,
 }
 
 pub const KEY_LENGTH: u8 = 16;
 
 impl InnerCrypto {
-    pub fn apply(&mut self, data: &mut [u8]) {
+    pub(crate) fn apply(&mut self, data: &mut [u8]) {
         self.inner.apply_keystream(data);
     }
 
