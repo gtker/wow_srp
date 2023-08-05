@@ -145,7 +145,34 @@ pub struct ServerHeader {
     pub opcode: u16,
 }
 
+impl ServerHeader {
+    /// Construct a header from **unencrypted** data.
+    ///
+    /// This function is for when you know that the large header bit isn't set.
+    pub const fn from_small_array(b: [u8; SERVER_HEADER_MINIMUM_LENGTH as usize]) -> Self {
+        let size = u16::from_be_bytes([b[0], b[1]]);
+        let opcode = u16::from_le_bytes([b[2], b[3]]);
+
+        Self {
+            size: size as u32,
+            opcode,
+        }
+    }
+
+    /// Construct a header from **unencrypted** data.
+    ///
+    /// This function is for when you know that the large header bit is set.
+    pub const fn from_large_array(b: [u8; SERVER_HEADER_MAXIMUM_LENGTH as usize]) -> Self {
+        let most_significant_byte = clear_large_header(b[0]);
+        let size = u32::from_be_bytes([0, most_significant_byte, b[1], b[2]]);
+        let opcode = u16::from_le_bytes([b[3], b[4]]);
+
+        Self { size, opcode }
+    }
+}
+
 pub use crate::vanilla_header::ClientHeader;
+use crate::wrath_header::decrypt::clear_large_header;
 
 /// Main struct for enccryption and decryption for clients.
 ///
@@ -350,10 +377,7 @@ impl ServerCrypto {
     ) -> ClientHeader {
         self.decrypt(&mut data);
 
-        let size: u16 = u16::from_be_bytes([data[0], data[1]]);
-        let opcode: u32 = u32::from_le_bytes([data[2], data[3], data[4], data[5]]);
-
-        ClientHeader { size, opcode }
+        ClientHeader::from_array(data)
     }
 
     pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {

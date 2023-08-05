@@ -126,6 +126,9 @@ pub(crate) mod encrypt;
 
 use crate::vanilla_header::calculate_world_server_proof;
 
+pub use crate::vanilla_header::ClientHeader;
+pub use crate::vanilla_header::ServerHeader;
+
 /// Size in bytes of the client [world packet] header.
 ///
 /// Always 6 bytes because the size is 2 bytes and the opcode is 4 bytes.
@@ -140,34 +143,6 @@ pub const CLIENT_HEADER_LENGTH: u8 =
 /// [world packet]: https://wowdev.wiki/World_Packet
 pub const SERVER_HEADER_LENGTH: u8 =
     (std::mem::size_of::<u16>() + std::mem::size_of::<u16>()) as u8;
-
-/// Decrypted values from a server.
-///
-/// Gotten from either
-/// [`decrypt_server_header`](DecrypterHalf::decrypt_server_header) or
-/// [`read_and_decrypt_server_header`](DecrypterHalf::read_and_decrypt_server_header).
-#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct ServerHeader {
-    /// Size of the message in bytes.
-    /// Includes the opcode field but not the size field
-    pub size: u16,
-    /// Opcode of the message. Note that the size is not the same as the [`ClientHeader`].
-    pub opcode: u16,
-}
-
-/// Decrypted values from a client.
-///
-/// Gotten from either
-/// [`decrypt_client_header`](DecrypterHalf::decrypt_client_header) or
-/// [`read_and_decrypt_server_header`](DecrypterHalf::read_and_decrypt_server_header).
-#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct ClientHeader {
-    /// Size of the message in bytes.
-    /// Includes the opcode field but not the size field
-    pub size: u16,
-    /// Opcode of the message. Note that the size is not the same as the [`ServerHeader`].
-    pub opcode: u32,
-}
 
 /// Main struct for encryption or decryption.
 ///
@@ -307,14 +282,9 @@ impl HeaderCrypto {
     #[must_use]
     pub fn decrypt_client_header(
         &mut self,
-        mut data: [u8; CLIENT_HEADER_LENGTH as usize],
+        data: [u8; CLIENT_HEADER_LENGTH as usize],
     ) -> ClientHeader {
-        self.decrypt(&mut data);
-
-        let size: u16 = u16::from_be_bytes([data[0], data[1]]);
-        let opcode: u32 = u32::from_le_bytes([data[2], data[3], data[4], data[5]]);
-
-        ClientHeader { size, opcode }
+        self.decrypt.decrypt_client_header(data)
     }
 
     /// Split the [`HeaderCrypto`] into two parts for use with split connections.

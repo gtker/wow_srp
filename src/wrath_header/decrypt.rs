@@ -51,10 +51,7 @@ impl ServerDecrypterHalf {
     ) -> ClientHeader {
         self.decrypt(&mut data);
 
-        let size: u16 = u16::from_be_bytes([data[0], data[1]]);
-        let opcode: u32 = u32::from_le_bytes([data[2], data[3], data[4], data[5]]);
-
-        ClientHeader { size, opcode }
+        ClientHeader::from_array(data)
     }
 
     pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
@@ -130,21 +127,16 @@ impl ClientDecrypterHalf {
 
         self.decrypt.apply(header);
 
-        let (size, opcode) = if large_header {
-            let most_significant_byte = clear_large_header(self.header[0]);
-            let size =
-                u32::from_be_bytes([0, most_significant_byte, self.header[1], self.header[2]]);
-            let opcode = u16::from_le_bytes([self.header[3], self.header[4]]);
-
-            (size, opcode)
+        if large_header {
+            ServerHeader::from_large_array(self.header)
         } else {
-            let size = u16::from_be_bytes([self.header[0], self.header[1]]);
-            let opcode = u16::from_le_bytes([self.header[2], self.header[3]]);
-
-            (size.into(), opcode)
-        };
-
-        ServerHeader { size, opcode }
+            ServerHeader::from_small_array([
+                self.header[0],
+                self.header[1],
+                self.header[2],
+                self.header[3],
+            ])
+        }
     }
 
     /// Convenience function for [Read]ing header directly.
@@ -173,7 +165,7 @@ impl ClientDecrypterHalf {
     }
 }
 
-const fn clear_large_header(v: u8) -> u8 {
+pub(crate) const fn clear_large_header(v: u8) -> u8 {
     v & 0x7F
 }
 

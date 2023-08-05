@@ -64,10 +64,7 @@ impl DecrypterHalf {
     ) -> ServerHeader {
         self.decrypt(&mut data);
 
-        let size = u16::from_be_bytes([data[0], data[1]]);
-        let opcode = u16::from_le_bytes([data[2], data[3]]);
-
-        ServerHeader { size, opcode }
+        ServerHeader::from_array(data)
     }
 
     /// Convenience function for decrypting client headers.
@@ -79,10 +76,7 @@ impl DecrypterHalf {
     ) -> ClientHeader {
         self.decrypt(&mut data);
 
-        let size: u16 = u16::from_be_bytes([data[0], data[1]]);
-        let opcode: u32 = u32::from_le_bytes([data[2], data[3], data[4], data[5]]);
-
-        ClientHeader { size, opcode }
+        ClientHeader::from_array(data)
     }
 
     pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {

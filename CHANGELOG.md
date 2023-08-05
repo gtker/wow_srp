@@ -22,6 +22,8 @@ This handles the problem of Wrath big headers better than supplying a fixed arra
 * BREAKING: `ClientCrypto::decrypt_server_header` `data` parameter changed from `&[u8]` to `[u8]`.
 This makes it align more with the rest of the library.
 * Updated `criterion` to `0.5` from `0.3`.
+* BREAKING: Deduplicated header struct types. There is now only one `ClientHeader` and one vanilla/TBC `ServerHeader`
+plus a Wrath `ServerHeader`.
 
 ### Removed
 

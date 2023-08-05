@@ -145,9 +145,7 @@ pub const SERVER_HEADER_LENGTH: u8 =
 
 /// Decrypted values from a server.
 ///
-/// Gotten from either
-/// [`decrypt_server_header`](DecrypterHalf::decrypt_server_header) or
-/// [`read_and_decrypt_server_header`](DecrypterHalf::read_and_decrypt_server_header).
+/// Gotten from either the various reader methods.
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct ServerHeader {
     /// Size of the message in bytes.
@@ -157,11 +155,19 @@ pub struct ServerHeader {
     pub opcode: u16,
 }
 
+impl ServerHeader {
+    /// Construct a header from **unencrypted** data.
+    pub const fn from_array(b: [u8; SERVER_HEADER_LENGTH as usize]) -> Self {
+        let size = u16::from_be_bytes([b[0], b[1]]);
+        let opcode = u16::from_le_bytes([b[2], b[3]]);
+
+        Self { size, opcode }
+    }
+}
+
 /// Decrypted values from a client.
 ///
-/// Gotten from either
-/// [`decrypt_client_header`](DecrypterHalf::decrypt_client_header) or
-/// [`read_and_decrypt_server_header`](DecrypterHalf::read_and_decrypt_server_header).
+/// Gotten from either the various reader methods.
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct ClientHeader {
     /// Size of the message in bytes.
@@ -169,6 +175,16 @@ pub struct ClientHeader {
     pub size: u16,
     /// Opcode of the message. Note that the size is not the same as the [`ServerHeader`].
     pub opcode: u32,
+}
+
+impl ClientHeader {
+    /// Construct a header from **unencrypted** data.
+    pub const fn from_array(b: [u8; CLIENT_HEADER_LENGTH as usize]) -> Self {
+        let size: u16 = u16::from_be_bytes([b[0], b[1]]);
+        let opcode: u32 = u32::from_le_bytes([b[2], b[3], b[4], b[5]]);
+
+        Self { size, opcode }
+    }
 }
 
 /// Main struct for encryption or decryption.
