@@ -50,7 +50,7 @@ optional = true
 
 [dev-dependencies.criterion]
 # Required for benchmarking.
-version = "0.3"
+version = "0.5"
 
 [[bench]]
 name = "benchmark"
