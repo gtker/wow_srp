@@ -88,28 +88,25 @@ impl ClientDecrypterHalf {
     #[must_use]
     pub fn decrypt_server_header(
         &mut self,
-        data: &[u8; SERVER_HEADER_MAXIMUM_LENGTH as usize],
+        mut data: [u8; SERVER_HEADER_MAXIMUM_LENGTH as usize],
     ) -> ServerHeader {
-        let mut copied_data = *data;
+        self.decrypt.apply(&mut data[0..1]);
 
-        self.decrypt.apply(&mut copied_data[0..1]);
-
-        if copied_data[0] & 0x80 != 0 {
-            self.decrypt(&mut copied_data[1..]);
+        if data[0] & 0x80 != 0 {
+            self.decrypt(&mut data[1..]);
 
             // The most significant bit of the most significant byte is set
             // in order to indicate that this is a 3-byte size.
             // The 0x80 indicator must be cleared, otherwise the size is off
-            let most_significant_byte = copied_data[0] & 0x7F;
-            let size =
-                u32::from_be_bytes([0, most_significant_byte, copied_data[1], copied_data[2]]);
-            let opcode = u16::from_le_bytes([copied_data[3], copied_data[4]]);
+            let most_significant_byte = data[0] & 0x7F;
+            let size = u32::from_be_bytes([0, most_significant_byte, data[1], data[2]]);
+            let opcode = u16::from_le_bytes([data[3], data[4]]);
 
             ServerHeader { size, opcode }
         } else {
-            self.decrypt(&mut copied_data[1..SERVER_HEADER_MINIMUM_LENGTH as usize]);
-            let size = u16::from_be_bytes([copied_data[0], copied_data[1]]);
-            let opcode = u16::from_le_bytes([copied_data[2], copied_data[3]]);
+            self.decrypt(&mut data[1..SERVER_HEADER_MINIMUM_LENGTH as usize]);
+            let size = u16::from_be_bytes([data[0], data[1]]);
+            let opcode = u16::from_le_bytes([data[2], data[3]]);
 
             ServerHeader {
                 size: size.into(),

@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 BREAKING: `ProofSeed::into_header_crypto` renamed to `ProofSeed::into_server_header_crypto`.
 BREAKING: `ProofSeed::into_proof_and_header_crypto` renamed to `ProofSeed::into_client_header_crypto`.
+BREAKING: `ClientCrypto::decrypt_server_header` `data` parameter changed from `&[u8]` to `[u8]`.
+This makes it align more with the rest of the library.
 
 ## [0.6.0] - 2023-05-20
 

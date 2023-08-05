@@ -223,7 +223,7 @@ impl ClientCrypto {
     #[must_use]
     pub fn decrypt_server_header(
         &mut self,
-        data: &[u8; SERVER_HEADER_MAXIMUM_LENGTH as usize],
+        data: [u8; SERVER_HEADER_MAXIMUM_LENGTH as usize],
     ) -> ServerHeader {
         self.decrypt.decrypt_server_header(data)
     }
@@ -698,7 +698,7 @@ mod test {
         let expected_header = [0x97, 0x27, 0x32, 0xa3, 0x1a];
         assert_eq!(header, expected_header);
 
-        let header = client.decrypt_server_header(&header.try_into().unwrap());
+        let header = client.decrypt_server_header(header.try_into().unwrap());
         assert_eq!(header.opcode, 0x1ee);
         assert_eq!(header.size, 0x8008);
 
@@ -710,7 +710,7 @@ mod test {
         for (i, b) in header.iter().enumerate() {
             arr[i] = *b;
         }
-        let header = client.decrypt_server_header(&arr);
+        let header = client.decrypt_server_header(arr);
         assert_eq!(header.opcode, 0x1ee);
         assert_eq!(header.size, 0x08);
     }
@@ -733,7 +733,7 @@ mod test {
         let expected_header = [0x97, 0x27, 0x32, 0xa3, 0x1a];
         assert_eq!(header, expected_header);
 
-        let server_header = client.decrypt_server_header(&header);
+        let server_header = client.decrypt_server_header(header);
         assert_eq!(server_header.opcode, 0x1ee);
         assert_eq!(server_header.size, 0x8008);
 
@@ -748,7 +748,7 @@ mod test {
         for (i, b) in header.iter().enumerate() {
             arr[i] = *b;
         }
-        let header = client.decrypt_server_header(&arr);
+        let header = client.decrypt_server_header(arr);
         assert_eq!(header.opcode, 0x1ee);
         assert_eq!(header.size, 0x08);
     }
