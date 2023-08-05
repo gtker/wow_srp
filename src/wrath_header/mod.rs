@@ -107,7 +107,7 @@ pub const SERVER_HEADER_MINIMUM_LENGTH: u8 =
 
 /// Maximum size in bytes of the server [world packet] header.
 ///
-/// The minimum is always 5 bytes because because the size is 3 bytes
+/// The maximum is always 5 bytes because because the size is 3 bytes
 /// and the opcode is 2 bytes.
 ///
 /// The [minimum](SERVER_HEADER_MAXIMUM_LENGTH) is always 4 bytes.
@@ -176,11 +176,7 @@ impl ClientCrypto {
         &mut self.encrypt
     }
 
-    /// Raw access to the encryption.
-    ///
-    /// Use either [the client](Self::write_encrypted_client_header)
-    /// [`Write`](std::io::Write) function, or
-    /// [the client](Self::encrypt_client_header)  array function.
+    /// Convenience wrapper for [`ClientEncrypterHalf::encrypt`].
     pub fn encrypt(&mut self, data: &mut [u8]) {
         self.encrypt.encrypt(data);
     }
@@ -210,10 +206,7 @@ impl ClientCrypto {
         self.encrypt.encrypt_client_header(size, opcode)
     }
 
-    /// Raw access to decryption.
-    ///
-    /// Use the
-    /// [the client](Self::decrypt_server_header) array function.
+    /// Convenience wrapper for [`ClientDecrypterHalf::decrypt`].
     pub fn decrypt(&mut self, data: &mut [u8]) {
         self.decrypt.decrypt(data);
     }

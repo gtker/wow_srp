@@ -25,11 +25,12 @@ impl ServerDecrypterHalf {
         self.decrypt.apply(data);
     }
 
-    /// Convenience wrapper for [`ServerDecrypterHalf::read_and_decrypt_client_header`].
+    /// Convenience function for [Read]ing header directly.
+    /// Prefer this over directly using [`Self::decrypt`].
     ///
     /// # Errors
     ///
-    /// Has the same errors as [`ServerDecrypterHalf::read_and_decrypt_client_header`].
+    /// Has the same errors as [`Read::read_exact`].
     pub fn read_and_decrypt_client_header<R: Read>(
         &mut self,
         mut reader: R,
@@ -40,7 +41,7 @@ impl ServerDecrypterHalf {
         Ok(self.decrypt_client_header(buf))
     }
 
-    /// Convenience wrapper for [`ServerDecrypterHalf::decrypt_client_header`].
+    /// Convenience function for decrypting the header from a statically known header array.
     ///
     /// Prefer this over directly using [`Self::decrypt`].
     #[must_use]
@@ -80,7 +81,7 @@ impl ClientDecrypterHalf {
         self.decrypt.apply(data);
     }
 
-    /// Convenience wrapper for [`ServerDecrypterHalf::decrypt_client_header`].
+    /// Convenience function for decrypting a server header.
     ///
     /// This handles situations where the size field is 3 bytes instead of 2.
     ///
