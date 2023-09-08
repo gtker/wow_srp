@@ -257,6 +257,10 @@ impl ClientCrypto {
     /// Convenience wrapper for [`ClientDecrypterHalf::read_and_decrypt_server_header`].
     ///
     /// Prefer this over directly using [`Self::decrypt`].
+    ///
+    /// # Errors
+    ///
+    /// Has the same errors as [`ClientDecrypterHalf::read_and_decrypt_server_header`].
     pub fn read_and_decrypt_server_header<R: Read>(
         &mut self,
         reader: R,

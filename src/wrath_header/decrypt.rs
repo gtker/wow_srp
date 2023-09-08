@@ -150,9 +150,9 @@ impl ClientDecrypterHalf {
         mut reader: R,
     ) -> std::io::Result<ServerHeader> {
         let msb = [0_u8; 1];
-        let mut header = self.get_header_buffer(msb[0]);
+        let header = self.get_header_buffer(msb[0]);
 
-        reader.read_exact(&mut header)?;
+        reader.read_exact(header)?;
 
         Ok(self.decrypt_internal_server_header())
     }

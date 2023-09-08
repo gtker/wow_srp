@@ -22,7 +22,7 @@ impl Rc4 {
     }
 
     // Decode one without advancing keystream
-    pub(super) fn peek_keystream(&self, s: u8) -> u8 {
+    pub(super) const fn peek_keystream(&self, s: u8) -> u8 {
         s ^ self.peek_pseudo_random_generation()
     }
 
@@ -64,7 +64,7 @@ impl Rc4 {
         self.state[index]
     }
 
-    fn peek_pseudo_random_generation(&self) -> u8 {
+    const fn peek_pseudo_random_generation(&self) -> u8 {
         let i = self.i.wrapping_add(1);
         let j = self.j.wrapping_add(self.state[i as usize]);
 

@@ -18,7 +18,7 @@ impl InnerCrypto {
         self.inner.apply_keystream(data);
     }
 
-    pub(crate) fn peek(&self, v: u8) -> u8 {
+    pub(crate) const fn peek(&self, v: u8) -> u8 {
         self.inner.peek_keystream(v)
     }
 
