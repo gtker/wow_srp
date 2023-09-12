@@ -552,22 +552,48 @@ mod test {
                 client_seed,
             )
             .unwrap();
+        let mut write_encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                client_seed,
+            )
+            .unwrap();
+
+        let mut buf = [0_u8; 4];
 
         let header = encryption.encrypt_server_header(12, 494);
         let expected_header = [239, 86, 206, 186];
         assert_eq!(header, expected_header);
+        write_encryption
+            .write_encrypted_server_header(&mut &mut buf[..], 12, 494)
+            .unwrap();
+        assert_eq!(header, buf);
 
         let header = encryption.encrypt_server_header(170, 59);
         let expected_header = [104, 222, 119, 123];
         assert_eq!(header, expected_header);
+        write_encryption
+            .write_encrypted_server_header(&mut &mut buf[..], 170, 59)
+            .unwrap();
+        assert_eq!(header, buf);
 
         let header = encryption.encrypt_server_header(6, 477);
         let expected_header = [5, 67, 190, 101];
         assert_eq!(header, expected_header);
+        write_encryption
+            .write_encrypted_server_header(&mut &mut buf[..], 6, 477)
+            .unwrap();
+        assert_eq!(header, buf);
 
         let header = encryption.encrypt_server_header(6, 477);
         let expected_header = [239, 141, 238, 129];
         assert_eq!(header, expected_header);
+        write_encryption
+            .write_encrypted_server_header(&mut &mut buf[..], 6, 477)
+            .unwrap();
+        assert_eq!(header, buf);
     }
 
     #[test]
@@ -592,6 +618,14 @@ mod test {
                 client_seed,
             )
             .unwrap();
+        let mut read_encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                client_seed,
+            )
+            .unwrap();
 
         let header = [9, 96, 220, 67, 72, 254];
         let c = encryption.decrypt_client_header(header);
@@ -599,6 +633,10 @@ mod test {
         let expected_opcode = 55; // CMSG_CHAR_ENUM
         assert_eq!(c.opcode, expected_opcode);
         assert_eq!(c.size, expected_size);
+        let read_c = read_encryption
+            .read_and_decrypt_client_header(&mut &header[..])
+            .unwrap();
+        assert_eq!(read_c, c);
 
         let expected_size = 12;
         let expected_opcode = 476; // CMSG_PING
@@ -611,8 +649,12 @@ mod test {
         ];
         for header in headers.iter() {
             let c = encryption.decrypt_client_header(*header);
+            let read_c = read_encryption
+                .read_and_decrypt_client_header(&mut &header[..])
+                .unwrap();
             assert_eq!(c.opcode, expected_opcode);
             assert_eq!(c.size, expected_size);
+            assert_eq!(c, read_c);
         }
     }
 
