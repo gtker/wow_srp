@@ -29,10 +29,13 @@ default-features = false
 # Required for Wrath header crypto
 version = "0.12.1"
 optional = true
+default-features = false
 
 [dependencies.rand]
 # Required for generating private keys
 version = "0.8"
+default-features = false
+features = ["std", "std_rng"]
 
 [dependencies.num-bigint]
 # Required for SRP6 algorithm.
