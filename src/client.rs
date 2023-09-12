@@ -99,8 +99,8 @@ impl SrpClient {
     #[doc(alias = "S")]
     #[doc(alias = "K")]
     #[must_use]
-    pub const fn session_key(&self) -> [u8; SESSION_KEY_LENGTH as usize] {
-        *self.session_key.as_le_bytes()
+    pub const fn session_key(&self) -> &[u8; SESSION_KEY_LENGTH as usize] {
+        self.session_key.as_le_bytes()
     }
 
     /// Calculates the client challenge data and proof found in [`SrpClientReconnection`].

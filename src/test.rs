@@ -75,7 +75,7 @@ fn authenticate_with_self() {
         }
     };
 
-    assert_eq!(*server.session_key(), client.session_key());
+    assert_eq!(server.session_key(), client.session_key());
     let reconnection_data = client.calculate_reconnect_values(*server.reconnect_challenge_data());
 
     let verified = server
