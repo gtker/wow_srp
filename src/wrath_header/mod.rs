@@ -326,7 +326,7 @@ impl ServerCrypto {
     /// Raw access to the encryption.
     ///
     /// Use either [the server](Self::write_encrypted_server_header)
-    /// [`Write`](std::io::Write) function, or
+    /// [`Write`] function, or
     /// [the server](Self::encrypt_server_header)  array function.
     pub fn encrypt(&mut self, data: &mut [u8]) {
         self.encrypt.encrypt(data);
@@ -356,7 +356,7 @@ impl ServerCrypto {
     /// Raw access to decryption.
     ///
     /// Use either [the server](Self::read_and_decrypt_client_header)
-    /// [`Read`](std::io::Read) function, or
+    /// [`Read`] function, or
     /// [the server](Self::decrypt_client_header) array functions.
     pub fn decrypt(&mut self, data: &mut [u8]) {
         self.decrypt.decrypt(data);

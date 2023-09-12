@@ -73,7 +73,7 @@ impl ClientDecrypterHalf {
     /// Raw access to decryption.
     ///
     /// Use
-    /// [the server](Self::decrypt_internal_server_header) array function instead of this.
+    /// [the server](Self::attempt_decrypt_server_header) array function instead of this.
     pub fn decrypt(&mut self, data: &mut [u8]) {
         self.decrypt.apply(data);
     }
@@ -166,7 +166,7 @@ impl ClientDecrypterHalf {
 pub enum WrathServerAttempt {
     /// The message header has been fully decrypted and you should do nothing until the next message.
     Header(ServerHeader),
-    /// Call [`ClientDecrypterHalf::decrypt_internal_server_header`]
+    /// Call [`ClientDecrypterHalf::decrypt_large_server_header`]
     AdditionalByteRequired,
 }
 

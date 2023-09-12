@@ -218,7 +218,7 @@ impl HeaderCrypto {
 
     /// Use either [the client](Self::write_encrypted_client_header)
     /// or [the server](Self::write_encrypted_server_header)
-    /// [`Write`](std::io::Write) functions, or
+    /// [`Write`] functions, or
     /// [the client](Self::encrypt_client_header)
     /// or [the server](Self::encrypt_server_header) array functions.
     pub fn encrypt(&mut self, data: &mut [u8]) {
@@ -277,7 +277,7 @@ impl HeaderCrypto {
 
     /// Use either [the client](Self::read_and_decrypt_client_header)
     /// or [the server](Self::read_and_decrypt_server_header)
-    /// [`Read`](std::io::Read) functions, or
+    /// [`Read`] functions, or
     /// [the client](Self::decrypt_client_header)
     /// or [the server](Self::decrypt_server_header) array functions.
     pub fn decrypt(&mut self, data: &mut [u8]) {
