@@ -771,6 +771,50 @@ mod test {
             original_data, expected_encrypt, encrypt_data
         );
     }
+    #[test]
+    fn verify_inner_access() {
+        let session_key = [
+            0x2E, 0xFE, 0xE7, 0xB0, 0xC1, 0x77, 0xEB, 0xBD, 0xFF, 0x66, 0x76, 0xC5, 0x6E, 0xFC,
+            0x23, 0x39, 0xBE, 0x9C, 0xAD, 0x14, 0xBF, 0x8B, 0x54, 0xBB, 0x5A, 0x86, 0xFB, 0xF8,
+            0x1F, 0x6D, 0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
+        ];
+
+        let original_data = hex_decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca");
+        let mut encrypt_data = original_data.clone();
+        let mut decrypt_data = original_data.clone();
+
+        let client_proof = [
+            171, 16, 181, 52, 139, 193, 19, 213, 173, 100, 0, 37, 65, 184, 70, 148, 36, 169, 17,
+            228,
+        ];
+
+        let mut encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                0,
+            )
+            .unwrap();
+
+        let enc = encryption.encrypter();
+        enc.encrypt(&mut encrypt_data);
+        let dec = encryption.decrypter();
+        dec.decrypt(&mut decrypt_data);
+
+        let expected_decrypt = hex_decode("13a3a0059817e73404d97cd455159b50d40af74a22f719aacb6a9a2e991982c61a6f0285f880cc8512ec2ef1c98fa923512f");
+        let expected_encrypt = hex_decode("13777da3d109b912322a08841e3ff5bc92f4e98b77bb03997da999b22ae0b926a3b1e56580314b3932499ee11b9f7deb6915");
+        assert_eq!(
+            expected_decrypt, decrypt_data,
+            "Original data: {:?}, expected: {:?}, got: {:?}",
+            original_data, expected_decrypt, decrypt_data
+        );
+        assert_eq!(
+            expected_encrypt, encrypt_data,
+            "Original data: {:?}, expected: {:?}, got: {:?}",
+            original_data, expected_encrypt, encrypt_data
+        );
+    }
 
     #[test]
     fn verify_splitting() {
@@ -824,6 +868,127 @@ mod test {
             "Original data: {:?}, expected: {:?}, got: {:?}",
             original_data, expected_encrypt, encrypt_data
         );
+    }
+
+    #[test]
+    fn verify_unsplit_errors() {
+        let session_key1 = [
+            0x2E, 0xFE, 0xE7, 0xB0, 0xC1, 0x77, 0xEB, 0xBD, 0xFF, 0x66, 0x76, 0xC5, 0x6E, 0xFC,
+            0x23, 0x39, 0xBE, 0x9C, 0xAD, 0x14, 0xBF, 0x8B, 0x54, 0xBB, 0x5A, 0x86, 0xFB, 0xF8,
+            0x1F, 0x6D, 0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
+        ];
+        let client_proof1 = [
+            171, 16, 181, 52, 139, 193, 19, 213, 173, 100, 0, 37, 65, 184, 70, 148, 36, 169, 17,
+            228,
+        ];
+
+        let session_key2 = [
+            115, 0, 100, 222, 18, 15, 156, 194, 27, 1, 216, 229, 165, 207, 78, 233, 183, 241, 248,
+            73, 190, 142, 14, 89, 44, 235, 153, 190, 103, 206, 34, 88, 45, 199, 104, 175, 79, 108,
+            93, 48,
+        ];
+        let client_proof2 = [
+            202, 54, 102, 180, 90, 87, 9, 107, 217, 97, 235, 56, 221, 203, 108, 19, 109, 141, 137,
+            7,
+        ];
+
+        let (encryptions1, _) = ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key1,
+                client_proof1,
+                0,
+            )
+            .unwrap()
+            .split();
+        let (_, decryptions2) = ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key2,
+                client_proof2,
+                1266519981,
+            )
+            .unwrap()
+            .split();
+
+        assert!(!decryptions2.is_pair_of(&encryptions1));
+
+        assert!(encryptions1.unsplit(decryptions2).is_err());
+    }
+
+    #[test]
+    fn verify_errors() {
+        let mut session_key = [
+            0x2E, 0xFE, 0xE7, 0xB0, 0xC1, 0x77, 0xEB, 0xBD, 0xFF, 0x66, 0x76, 0xC5, 0x6E, 0xFC,
+            0x23, 0x39, 0xBE, 0x9C, 0xAD, 0x14, 0xBF, 0x8B, 0x54, 0xBB, 0x5A, 0x86, 0xFB, 0xF8,
+            0x1F, 0x6D, 0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
+        ];
+        let mut client_proof = [
+            171, 16, 181, 52, 139, 193, 19, 213, 173, 100, 0, 37, 65, 184, 70, 148, 36, 169, 17,
+            228,
+        ];
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                1, // Should be 0
+            )
+            .is_err());
+
+        client_proof[0] += 1;
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof, // [0] should be -1
+                0,
+            )
+            .is_err());
+
+        client_proof[0] -= 1;
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                0,
+            )
+            .is_ok());
+
+        session_key[0] += 1;
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key, // [0] should be -1
+                client_proof,
+                0,
+            )
+            .is_err());
+
+        session_key[0] -= 1;
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                0,
+            )
+            .is_ok());
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("B").unwrap(), // should be A
+                session_key,
+                client_proof,
+                0,
+            )
+            .is_err());
     }
 
     #[test]
