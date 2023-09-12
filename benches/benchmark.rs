@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use wow_srp::client::{SrpClientChallenge, SrpClientUser};
+use wow_srp::client::SrpClientChallenge;
 use wow_srp::normalized_string::NormalizedString;
 use wow_srp::server::{SrpProof, SrpVerifier};
 use wow_srp::{
@@ -55,8 +55,9 @@ fn get_verifier_and_client_values(
     // Client does not have black boxes since that not who we're measuring
     let username = NormalizedString::new(username).unwrap();
     let password = NormalizedString::new(password).unwrap();
-    let client = SrpClientUser::new(username, password);
-    let challenge = client.into_challenge(
+    let challenge = SrpClientChallenge::new(
+        username,
+        password,
         GENERATOR,
         LARGE_SAFE_PRIME_LITTLE_ENDIAN,
         PublicKey::from_le_bytes(*proof.server_public_key()).unwrap(),

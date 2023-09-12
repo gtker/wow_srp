@@ -12,7 +12,7 @@
 //!
 //! The state machine goes like this:
 //! ```text
-//! SrpClientUser -> SrpClientChallenge -> SrpClient -| -> SrpClientReconnection
+//! SrpClientChallenge -> SrpClient -| -> SrpClientReconnection
 //!                                            ^      |
 //!                                            |------|
 //! ```
@@ -25,7 +25,7 @@
 //!
 //! # Example
 //!
-//! The chain starts with an [`SrpClientUser`], then goes to an [`SrpClientChallenge`] and ends
+//! The process starts with an [`SrpClientChallenge`] and ends
 //! with the [`SrpClient`] which returns [`SrpClientReconnection`]s for reconnecting challenges.
 //!
 //! The full example including network code can be found in `examples/client.rs`.
@@ -47,9 +47,8 @@
 
 use crate::error::MatchProofsError;
 use crate::key::{
-    PrivateKey, Proof, PublicKey, ReconnectData, Salt, SessionKey, PRIVATE_KEY_LENGTH,
-    PROOF_LENGTH, PUBLIC_KEY_LENGTH, RECONNECT_CHALLENGE_DATA_LENGTH, SALT_LENGTH,
-    SESSION_KEY_LENGTH,
+    PrivateKey, Proof, PublicKey, ReconnectData, Salt, SessionKey, PROOF_LENGTH, PUBLIC_KEY_LENGTH,
+    RECONNECT_CHALLENGE_DATA_LENGTH, SALT_LENGTH, SESSION_KEY_LENGTH,
 };
 use crate::normalized_string::NormalizedString;
 use crate::primes::{Generator, LargeSafePrime, LARGE_SAFE_PRIME_LENGTH};
@@ -131,7 +130,7 @@ impl SrpClient {
     }
 }
 
-/// Second step of the client connection. First is [`SrpClientUser`]. Next is [`SrpClient`].
+/// First step of the client connection. Next is [`SrpClient`].
 ///
 /// The client proof and public key must be sent to the server in the
 /// [`CMD_AUTH_LOGON_PROOF_Client`](https://wowdev.wiki/CMD_AUTH_LOGON_PROOF_Client)
@@ -150,6 +149,79 @@ pub struct SrpClientChallenge {
 }
 
 impl SrpClientChallenge {
+    /// Takes the server supplied variables and computes the next step.
+    ///
+    /// The generator and large safe prime are **not** checked for validity.
+    ///
+    /// All arrays are **little endian**.
+    ///
+    /// # Panics
+    ///
+    /// Panics on the extremely unlikely chance that the generated public key is invalid.
+    /// See [`PublicKey`] for details on validity.
+    ///
+    /// There are only two invalid states for the randomly generated server public key:
+    /// * All zeros.
+    /// * Exactly the same as [the large safe prime](`crate::LARGE_SAFE_PRIME_LITTLE_ENDIAN`).
+    ///
+    /// This is 2 out of `2^256` possible states. The chances of this occurring naturally are very slim.
+    /// It is significantly more likely that the RNG of the system has been compromised in which case
+    /// authentication is not possible.
+    ///
+    #[must_use]
+    pub fn new(
+        username: NormalizedString,
+        password: NormalizedString,
+        generator: u8,
+        large_safe_prime: [u8; LARGE_SAFE_PRIME_LENGTH as usize],
+        server_public_key: PublicKey,
+        salt: [u8; SALT_LENGTH as usize],
+    ) -> SrpClientChallenge {
+        let client_private_key = PrivateKey::randomized();
+        let generator = Generator::from(generator);
+        let large_safe_prime = LargeSafePrime::from_le_bytes(large_safe_prime);
+
+        // Creating an invalid public key is extremely rare and is more likely bad crypto
+        let client_public_key = srp_internal_client::calculate_client_public_key(
+            &client_private_key,
+            &generator,
+            &large_safe_prime,
+        )
+        .expect("Invalid public key generated for client. This is extremely unlikely.");
+
+        let salt = Salt::from_le_bytes(salt);
+        let x = srp_internal::calculate_x(&username, &password, &salt);
+
+        let u = &calculate_u(&client_public_key, &server_public_key);
+        #[allow(non_snake_case)] // No better descriptor
+        let S = calculate_client_S(
+            &server_public_key,
+            &x,
+            &client_private_key,
+            u,
+            &generator,
+            &large_safe_prime,
+        );
+        let session_key = calculate_interleaved(&S);
+
+        let client_proof = calculate_client_proof_with_custom_value(
+            &username,
+            &session_key,
+            &client_public_key,
+            &server_public_key,
+            &salt,
+            large_safe_prime,
+            generator,
+        );
+
+        SrpClientChallenge {
+            username,
+            client_proof,
+            client_public_key,
+            session_key,
+        }
+    }
+
     /// Called `M` in [RFC2945](https://tools.ietf.org/html/rfc2945), called `M1` in other literature.
     /// `M2` is the argument passed to [`SrpClientChallenge::verify_server_proof`].
     #[doc(alias = "M")]
@@ -169,7 +241,7 @@ impl SrpClientChallenge {
         self.client_public_key.as_le_bytes()
     }
 
-    /// Verifies that the server knows the same password as was initially used in [`SrpClientUser::new`].
+    /// Verifies that the server knows the same password as was initially used in [`SrpClientChallenge::new`].
     ///
     /// # Errors
     ///
@@ -197,114 +269,5 @@ impl SrpClientChallenge {
             username: self.username,
             session_key: self.session_key,
         })
-    }
-}
-
-/// Starting point of the client. Next step is [`SrpClientChallenge`].
-///
-/// Uses [`NormalizedString`]s for the reasons described there.
-///
-/// All arrays are **little endian**.
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct SrpClientUser {
-    username: NormalizedString,
-    password: NormalizedString,
-    client_private_key: PrivateKey,
-}
-
-impl SrpClientUser {
-    /// Creates a new [`SrpClientUser`] from username and password.
-    ///
-    /// [`NormalizedString`] is used for the reasons described there.
-    #[must_use]
-    pub fn new(username: NormalizedString, password: NormalizedString) -> Self {
-        let client_private_key = PrivateKey::randomized();
-
-        Self::with_specific_private_key(username, password, *client_private_key.as_le_bytes())
-    }
-
-    pub(crate) const fn with_specific_private_key(
-        username: NormalizedString,
-        password: NormalizedString,
-        client_private_key: [u8; PRIVATE_KEY_LENGTH as usize],
-    ) -> Self {
-        let client_private_key = PrivateKey::from_le_bytes(client_private_key);
-
-        Self {
-            username,
-            password,
-            client_private_key,
-        }
-    }
-
-    /// Takes the server supplied variables and computes the next step.
-    ///
-    /// The generator and large safe prime are **not** checked for validity.
-    ///
-    /// All arrays are **little endian**.
-    ///
-    /// # Panics
-    ///
-    /// Panics on the extremely unlikely chance that the generated public key is invalid.
-    /// See [`PublicKey`] for details on validity.
-    ///
-    /// There are only two invalid states for the randomly generated server public key:
-    /// * All zeros.
-    /// * Exactly the same as [the large safe prime](`crate::LARGE_SAFE_PRIME_LITTLE_ENDIAN`).
-    ///
-    /// This is 2 out of `2^256` possible states. The chances of this occurring naturally are very slim.
-    /// It is significantly more likely that the RNG of the system has been compromised in which case
-    /// authentication is not possible.
-    ///
-    #[must_use]
-    pub fn into_challenge(
-        self,
-        generator: u8,
-        large_safe_prime: [u8; LARGE_SAFE_PRIME_LENGTH as usize],
-        server_public_key: PublicKey,
-        salt: [u8; SALT_LENGTH as usize],
-    ) -> SrpClientChallenge {
-        let generator = Generator::from(generator);
-        let large_safe_prime = LargeSafePrime::from_le_bytes(large_safe_prime);
-
-        // Creating an invalid public key is extremely rare and is more likely bad crypto
-        let client_public_key = srp_internal_client::calculate_client_public_key(
-            &self.client_private_key,
-            &generator,
-            &large_safe_prime,
-        )
-        .expect("Invalid public key generated for client. This is extremely unlikely.");
-
-        let salt = Salt::from_le_bytes(salt);
-        let x = srp_internal::calculate_x(&self.username, &self.password, &salt);
-
-        let u = &calculate_u(&client_public_key, &server_public_key);
-        #[allow(non_snake_case)] // No better descriptor
-        let S = calculate_client_S(
-            &server_public_key,
-            &x,
-            &self.client_private_key,
-            u,
-            &generator,
-            &large_safe_prime,
-        );
-        let session_key = calculate_interleaved(&S);
-
-        let client_proof = calculate_client_proof_with_custom_value(
-            &self.username,
-            &session_key,
-            &client_public_key,
-            &server_public_key,
-            &salt,
-            large_safe_prime,
-            generator,
-        );
-
-        SrpClientChallenge {
-            username: self.username,
-            client_proof,
-            client_public_key,
-            session_key,
-        }
     }
 }

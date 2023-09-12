@@ -1,4 +1,4 @@
-use crate::client::SrpClientUser;
+use crate::client::SrpClientChallenge;
 use crate::normalized_string::NormalizedString;
 use crate::server::SrpVerifier;
 use crate::{PublicKey, GENERATOR, LARGE_SAFE_PRIME_LITTLE_ENDIAN};
@@ -7,11 +7,7 @@ use crate::{PublicKey, GENERATOR, LARGE_SAFE_PRIME_LITTLE_ENDIAN};
 fn authenticate_with_self() {
     let username: NormalizedString = NormalizedString::new("A").unwrap();
     let password: NormalizedString = NormalizedString::new("A").unwrap();
-    let client = SrpClientUser::new(username, password);
-
-    let username: NormalizedString = NormalizedString::new("A").unwrap();
-    let password: NormalizedString = NormalizedString::new("A").unwrap();
-    let verifier = SrpVerifier::from_username_and_password(username, password);
+    let verifier = SrpVerifier::from_username_and_password(username.clone(), password.clone());
 
     assert_eq!(verifier.username(), "A");
     let password_verifier = *verifier.password_verifier();
@@ -22,7 +18,9 @@ fn authenticate_with_self() {
     let server_salt = *server.salt();
     let server_public_key = *server.server_public_key();
 
-    let client = client.into_challenge(
+    let client = SrpClientChallenge::new(
+        username,
+        password,
         GENERATOR,
         LARGE_SAFE_PRIME_LITTLE_ENDIAN,
         PublicKey::from_le_bytes(*server.server_public_key()).unwrap(),
@@ -88,11 +86,7 @@ fn authenticate_with_self() {
 fn verify_server_proof_incorrect() {
     let username: NormalizedString = NormalizedString::new("A").unwrap();
     let password: NormalizedString = NormalizedString::new("A").unwrap();
-    let client = SrpClientUser::new(username, password);
-
-    let username: NormalizedString = NormalizedString::new("A").unwrap();
-    let password: NormalizedString = NormalizedString::new("A").unwrap();
-    let verifier = SrpVerifier::from_username_and_password(username, password);
+    let verifier = SrpVerifier::from_username_and_password(username.clone(), password.clone());
 
     let password_verifier = *verifier.password_verifier();
     let client_salt = *verifier.salt();
@@ -102,7 +96,9 @@ fn verify_server_proof_incorrect() {
     let server_salt = *server.salt();
     let server_public_key = *server.server_public_key();
 
-    let client = client.into_challenge(
+    let client = SrpClientChallenge::new(
+        username,
+        password,
         GENERATOR,
         LARGE_SAFE_PRIME_LITTLE_ENDIAN,
         PublicKey::from_le_bytes(*server.server_public_key()).unwrap(),
@@ -142,15 +138,13 @@ fn verify_server_proof_incorrect() {
 fn verify_client_proof_incorrect() {
     let username: NormalizedString = NormalizedString::new("A").unwrap();
     let password: NormalizedString = NormalizedString::new("A").unwrap();
-    let client = SrpClientUser::new(username, password);
-
-    let username: NormalizedString = NormalizedString::new("A").unwrap();
-    let password: NormalizedString = NormalizedString::new("A").unwrap();
-    let verifier = SrpVerifier::from_username_and_password(username, password);
+    let verifier = SrpVerifier::from_username_and_password(username.clone(), password.clone());
 
     let server = verifier.into_proof();
 
-    let client = client.into_challenge(
+    let client = SrpClientChallenge::new(
+        username,
+        password,
         GENERATOR,
         LARGE_SAFE_PRIME_LITTLE_ENDIAN,
         PublicKey::from_le_bytes(*server.server_public_key()).unwrap(),

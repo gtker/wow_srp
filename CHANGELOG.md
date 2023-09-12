@@ -31,6 +31,8 @@ plus a Wrath `ServerHeader`.
 * `rc4` dependency. 
 * BREAKING: `ClientDecrypterHalf::decrypt_server_header` and `ClientCrypto::decrypt_server_header`.
 These have been replaced by a better API in `decrypt_internal_server_header` and `get_header_buffer`.
+* BREAKING: `SrpClientUser`. This class did not have any accessors so it might as well be a `new` function on `SrpClientChallenge`.
+`SrpClientChallenge::new` replaces this functionality.
 
 ## [0.6.0] - 2023-05-20
 
