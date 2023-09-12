@@ -25,6 +25,8 @@ This makes it align more with the rest of the library.
 * BREAKING: Deduplicated header struct types. There is now only one `ClientHeader` and one vanilla/TBC `ServerHeader`
 plus a Wrath `ServerHeader`.
 * BREAKING: `SrpClient::session_key` now returns a reference to a 40 byte array in order to make it similar to other functions in the library.
+* BREAKING: `NormalizedString::new` changed to take `AsRef<str>` instead of `Into<String>`.
+* BREAKING: `NormalizedString::from` renamed to `from_str` to more accurately reflect what it does.
 
 ### Removed
 

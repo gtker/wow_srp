@@ -78,7 +78,7 @@ use std::fmt::{Display, Formatter};
 /// **This method can change interface completely without it being a breaking change.**
 /// This is done deliberately in order to alert users of changes that could impact performance.
 ///
-/// Iif you want stability Use the [`NormalizedString::from_string`] or [`NormalizedString::from`].
+/// Iif you want stability Use the [`NormalizedString::from_string`] or [`NormalizedString::from_str`].
 ///
 /// ```
 /// # use std::convert::TryInto;
@@ -99,7 +99,8 @@ use std::fmt::{Display, Formatter};
 ///
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 pub struct NormalizedString {
-    s: String,
+    s: [u8; MAXIMUM_STRING_LENGTH_IN_BYTES as usize],
+    length: u8,
 }
 
 /// The highest amount of letters that the client will allow in both the username
@@ -116,34 +117,31 @@ impl NormalizedString {
     /// # Errors
     ///
     /// See the [module level docs](crate::normalized_string) for explanation of allowed values.
-    ///
-    /// # Stability
-    ///
-    /// **This method can change interface completely without it being a breaking change.**
-    /// This is done deliberately in order to alert users of changes that could impact performance.
-    ///
-    /// Use the [`NormalizedString::from_string`] or [`NormalizedString::from`] conversions if you don't care about this.
-    ///
-    pub fn new(s: impl Into<String>) -> Result<Self, NormalizedStringError> {
-        fn inner(s: String) -> Result<NormalizedString, NormalizedStringError> {
+    pub fn new(s: impl AsRef<str>) -> Result<Self, NormalizedStringError> {
+        fn inner(s: &str) -> Result<NormalizedString, NormalizedStringError> {
             if s.len() > MAXIMUM_STRING_LENGTH_IN_BYTES as usize || s.is_empty() {
                 return Err(NormalizedStringError::StringTooLong);
             }
 
-            for c in s.chars() {
+            let mut array = [0_u8; MAXIMUM_STRING_LENGTH_IN_BYTES as usize];
+
+            for (i, c) in s.chars().enumerate() {
                 if !c.is_ascii() || c.is_ascii_control() {
                     return Err(NormalizedStringError::CharacterNotAllowed(c));
                 }
+
+                array[i] = c.to_ascii_uppercase() as u8;
             }
 
             Ok(NormalizedString {
-                s: s.to_ascii_uppercase(),
+                s: array,
+                length: s.len() as u8,
             })
         }
 
         // Compile time optimization
         // https://matklad.github.io/2021/09/04/fast-rust-builds.html#Keeping-Instantiations-In-Check
-        inner(s.into())
+        inner(s.as_ref())
     }
 
     /// Checks for non-ASCII characters and too large of a string
@@ -154,30 +152,20 @@ impl NormalizedString {
     /// # Errors
     ///
     /// See the [module level docs](crate::normalized_string) for explanation of allowed values.
-    ///
-    /// # Stability
-    ///
-    /// This method will not change interface without a major version bump, but it might have worse performance than [`NormalizedString::new`].
-    ///
-    pub fn from(s: impl AsRef<str>) -> Result<Self, NormalizedStringError> {
-        Self::new(s.as_ref())
-    }
-
-    /// Checks for non-ASCII characters and too large of a string
-    /// and correctly uppercases letters as needed.
-    ///
-    /// Allowed characters are all ASCII characters except for ASCII control characters.
-    ///
-    /// # Errors
-    ///
-    /// See the [module level docs](crate::normalized_string) for explanation of allowed values.
-    ///
-    /// # Stability
-    ///
-    /// This method will not change interface without a major version bump, but it might have worse performance than [`NormalizedString::new`].
-    ///
-    pub fn from_string(s: impl Into<String>) -> Result<Self, NormalizedStringError> {
+    pub fn from_str(s: impl AsRef<str>) -> Result<Self, NormalizedStringError> {
         Self::new(s)
+    }
+
+    /// Checks for non-ASCII characters and too large of a string
+    /// and correctly uppercases letters as needed.
+    ///
+    /// Allowed characters are all ASCII characters except for ASCII control characters.
+    ///
+    /// # Errors
+    ///
+    /// See the [module level docs](crate::normalized_string) for explanation of allowed values.
+    pub fn from_string(s: impl Into<String>) -> Result<Self, NormalizedStringError> {
+        Self::new(s.into())
     }
 }
 
@@ -199,13 +187,15 @@ impl TryFrom<String> for NormalizedString {
 
 impl Display for NormalizedString {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.s)
+        f.write_str(self.as_ref())
     }
 }
 
 impl AsRef<str> for NormalizedString {
     fn as_ref(&self) -> &str {
-        &self.s
+        // This is checked in the constructor
+        // So we can unwrap
+        std::str::from_utf8(&self.s[..self.length as usize]).unwrap()
     }
 }
 
@@ -276,7 +266,7 @@ mod test {
     #[test]
     fn constructors() {
         let str_ref = "Alice";
-        let alice = NormalizedString::from(str_ref).unwrap();
+        let alice = NormalizedString::from_str(str_ref).unwrap();
         assert_eq!(alice.as_ref(), "ALICE");
 
         let string = "Alice".to_string();
