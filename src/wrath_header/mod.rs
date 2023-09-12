@@ -519,7 +519,7 @@ mod test {
     use crate::normalized_string::NormalizedString;
     use crate::wrath_header::decrypt::WrathServerAttempt;
     use crate::wrath_header::{
-        ClientCrypto, ProofSeed, ServerCrypto, SERVER_HEADER_MAXIMUM_LENGTH,
+        ClientCrypto, ProofSeed, ServerCrypto, CLIENT_HEADER_LENGTH, SERVER_HEADER_MAXIMUM_LENGTH,
         SERVER_HEADER_MINIMUM_LENGTH,
     };
     use std::convert::TryInto;
@@ -582,6 +582,138 @@ mod test {
         client_crypto.decrypt(&mut data);
 
         assert_eq!(original_data, data);
+    }
+
+    #[test]
+    fn verify_headers_write() {
+        // Real capture with 3.3.5 client
+        let session_key = [
+            1, 51, 81, 113, 146, 209, 181, 133, 131, 129, 50, 206, 122, 228, 208, 115, 52, 15, 132,
+            54, 189, 17, 178, 157, 178, 3, 35, 186, 202, 151, 226, 58, 162, 188, 65, 174, 60, 18,
+            152, 7,
+        ];
+
+        let client_proof = [
+            145, 164, 79, 1, 159, 98, 226, 16, 5, 12, 237, 65, 135, 95, 214, 190, 65, 92, 15, 77,
+        ];
+        let client_seed = 3567746900;
+
+        let mut encryption = ProofSeed::from_specific_seed(3818341363)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                client_seed,
+            )
+            .unwrap();
+
+        let mut buf = [0_u8; 4];
+        encryption
+            .write_encrypted_server_header(&mut &mut buf[..], 13, 0x1ee)
+            .unwrap();
+        let expected_header = [0x17, 0xaa, 0xd4, 0x4c];
+        assert_eq!(buf, expected_header);
+
+        let header = [0x85_u8, 0x0f, 0x6e, 0x91, 0x55, 0xf9];
+        let header = encryption
+            .read_and_decrypt_client_header(&mut &header[..])
+            .unwrap();
+        assert_eq!(header.size, 4);
+        assert_eq!(header.opcode, 0x4ff);
+
+        encryption
+            .write_encrypted_server_header(&mut &mut buf[..], 277, 0x3b)
+            .unwrap();
+        let expected_header = [0x1a, 0x9c, 0x7c, 0x10];
+        assert_eq!(buf, expected_header);
+
+        let header = [0x56_u8, 0x8e, 0x8c, 0x9a, 0xed, 0x42];
+        let header = encryption
+            .read_and_decrypt_client_header(&mut &header[..])
+            .unwrap();
+        assert_eq!(header.size, 4);
+        assert_eq!(header.opcode, 0x37);
+
+        encryption
+            .write_encrypted_server_header(&mut &mut buf[..], 19, 0x38B)
+            .unwrap();
+        let expected_header = [0x10, 0xfb, 0x6e, 0xa8];
+        assert_eq!(buf, expected_header);
+
+        let header = [0xc2_u8, 0xf3, 0xb7, 0xc5, 0x17, 0xbc];
+        let header = encryption
+            .read_and_decrypt_client_header(&mut &header[..])
+            .unwrap();
+        assert_eq!(header.size, 8);
+        assert_eq!(header.opcode, 0x38c);
+
+        let header = [0x30_u8, 0xf7, 0xa6, 0xee, 0x74, 0xbe];
+        let header = encryption
+            .read_and_decrypt_client_header(&mut &header[..])
+            .unwrap();
+        assert_eq!(header.size, 12);
+        assert_eq!(header.opcode, 0x1DC);
+    }
+    #[test]
+    fn verify_reader_and_writer() {
+        let session_key = [
+            1, 51, 81, 113, 146, 209, 181, 133, 131, 129, 50, 206, 122, 228, 208, 115, 52, 15, 132,
+            54, 189, 17, 178, 157, 178, 3, 35, 186, 202, 151, 226, 58, 162, 188, 65, 174, 60, 18,
+            152, 7,
+        ];
+
+        let client_seed = 3567746900;
+        let server_seed = 3818341363;
+
+        let (client_proof, mut client) = ProofSeed::from_specific_seed(client_seed)
+            .into_client_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                server_seed,
+            );
+
+        let mut server = ProofSeed::from_specific_seed(server_seed)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                client_seed,
+            )
+            .unwrap();
+
+        let mut server_header = [0_u8; SERVER_HEADER_MAXIMUM_LENGTH as _];
+        for (size, opcode) in [(13, 0x1EE), (0x800D, 0x1EE)] {
+            server
+                .write_encrypted_server_header(&mut &mut server_header[..], size, opcode)
+                .unwrap();
+
+            let header = client
+                .read_and_decrypt_server_header(&mut &server_header[..])
+                .unwrap();
+
+            assert_eq!(header.size, size);
+            assert_eq!(header.opcode, opcode);
+        }
+
+        let mut client_header = [0_u8; CLIENT_HEADER_LENGTH as _];
+        for (size, opcode) in [(4, 0x4FF)] {
+            client
+                .write_encrypted_client_header(&mut &mut client_header[..], size, opcode)
+                .unwrap();
+
+            let header = server
+                .read_and_decrypt_client_header(&mut &client_header[..])
+                .unwrap();
+
+            assert_eq!(header.size, size);
+            assert_eq!(header.opcode, opcode);
+
+            let header = client.encrypt_client_header(size, opcode);
+            let header = server.decrypt_client_header(header);
+
+            assert_eq!(header.size, size);
+            assert_eq!(header.opcode, opcode);
+        }
     }
 
     #[test]
@@ -721,6 +853,41 @@ mod test {
     }
 
     #[test]
+    fn verify_inner_access() {
+        // Same as verify_encrypt_and_decrypt but with split
+        let contents = include_str!("../../tests/encryption/calculate_wrath_encrypt_values.txt");
+
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
+
+            let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
+            let mut data = hex_decode(line.next().unwrap());
+            let expected_client = hex_decode(line.next().unwrap());
+            let expected_server = hex_decode(line.next().unwrap());
+
+            let original_data = data.clone();
+
+            let mut client = ClientCrypto::new(*session_key.as_le_bytes());
+            let client_enc = client.encrypter();
+            client_enc.encrypt(&mut data);
+            assert_eq!(data, expected_client);
+
+            let mut server = ServerCrypto::new(*session_key.as_le_bytes());
+            let server_dec = server.decrypter();
+            server_dec.decrypt(&mut data);
+            assert_eq!(data, original_data);
+
+            let server_enc = server.encrypter();
+            server_enc.encrypt(&mut data);
+            assert_eq!(data, expected_server);
+
+            let client_dec = client.decrypter();
+            client_dec.decrypt(&mut data);
+            assert_eq!(data, original_data);
+        }
+    }
+
+    #[test]
     fn verify_server_header() {
         let session_key = [
             1, 51, 81, 113, 146, 209, 181, 133, 131, 129, 50, 206, 122, 228, 208, 115, 52, 15, 132,
@@ -803,5 +970,80 @@ mod test {
         };
         assert_eq!(header.opcode, 0x1ee);
         assert_eq!(header.size, 0x08);
+    }
+
+    #[test]
+    fn verify_errors() {
+        let mut session_key = [
+            0x2E, 0xFE, 0xE7, 0xB0, 0xC1, 0x77, 0xEB, 0xBD, 0xFF, 0x66, 0x76, 0xC5, 0x6E, 0xFC,
+            0x23, 0x39, 0xBE, 0x9C, 0xAD, 0x14, 0xBF, 0x8B, 0x54, 0xBB, 0x5A, 0x86, 0xFB, 0xF8,
+            0x1F, 0x6D, 0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
+        ];
+        let mut client_proof = [
+            171, 16, 181, 52, 139, 193, 19, 213, 173, 100, 0, 37, 65, 184, 70, 148, 36, 169, 17,
+            228,
+        ];
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                1, // Should be 0
+            )
+            .is_err());
+
+        client_proof[0] += 1;
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof, // [0] should be -1
+                0,
+            )
+            .is_err());
+
+        client_proof[0] -= 1;
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                0,
+            )
+            .is_ok());
+
+        session_key[0] += 1;
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key, // [0] should be -1
+                client_proof,
+                0,
+            )
+            .is_err());
+
+        session_key[0] -= 1;
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                0,
+            )
+            .is_ok());
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("B").unwrap(), // should be A
+                session_key,
+                client_proof,
+                0,
+            )
+            .is_err());
     }
 }
