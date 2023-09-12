@@ -29,13 +29,10 @@ mod test {
     use crate::normalized_string::NormalizedString;
     use crate::vanilla_header::internal::calculate_world_server_proof;
     use std::convert::TryInto;
-    use std::fs::read_to_string;
 
     #[test]
     fn verify_world_server_proof() {
-        const FILENAME: &str = "tests/srp6_internal/calculate_world_server_proof.txt";
-
-        let contents = read_to_string(FILENAME).unwrap();
+        let contents = include_str!("../../tests/srp6_internal/calculate_world_server_proof.txt");
         for line in contents.lines() {
             let mut line = line.split_whitespace();
 

@@ -514,8 +514,6 @@ impl Default for ProofSeed {
 
 #[cfg(test)]
 mod test {
-    use std::fs::read_to_string;
-
     use crate::hex::*;
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
@@ -528,9 +526,8 @@ mod test {
 
     #[test]
     fn verify_seed_proof() {
-        const FILE: &str = "tests/encryption/calculate_world_server_proof.txt";
-        let contents = read_to_string(FILE).unwrap();
-        for line in contents.lines() {
+        const FILE: &str = include_str!("../../tests/encryption/calculate_world_server_proof.txt");
+        for line in FILE.lines() {
             let mut line = line.split_whitespace();
 
             let username = line.next().unwrap();
@@ -662,8 +659,7 @@ mod test {
 
     #[test]
     fn verify_encrypt_and_decrypt() {
-        let contents =
-            read_to_string("tests/encryption/calculate_wrath_encrypt_values.txt").unwrap();
+        let contents = include_str!("../../tests/encryption/calculate_wrath_encrypt_values.txt");
 
         for line in contents.lines() {
             let mut line = line.split_whitespace();
@@ -694,8 +690,7 @@ mod test {
     #[test]
     fn verify_splitting() {
         // Same as verify_encrypt_and_decrypt but with split
-        let contents =
-            read_to_string("tests/encryption/calculate_wrath_encrypt_values.txt").unwrap();
+        let contents = include_str!("../../tests/encryption/calculate_wrath_encrypt_values.txt");
 
         for line in contents.lines() {
             let mut line = line.split_whitespace();

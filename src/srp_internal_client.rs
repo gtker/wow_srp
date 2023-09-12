@@ -77,11 +77,10 @@ mod test {
     use crate::srp_internal_client::{
         calculate_client_S, calculate_client_proof_with_custom_value, calculate_client_public_key,
     };
-    use std::fs::read_to_string;
 
     #[test]
     fn verify_client_proof() {
-        let contents = read_to_string("tests/srp6_internal/calculate_M1_values.txt").unwrap();
+        let contents = include_str!("../tests/srp6_internal/calculate_M1_values.txt");
 
         for line in contents.lines() {
             let mut line = line.split_whitespace();
@@ -125,7 +124,7 @@ mod test {
     #[test]
     #[allow(non_snake_case)] // No better descriptor for it than 'S'
     fn verify_client_S() {
-        let contents = read_to_string("tests/srp6_internal/calculate_client_S_values.txt").unwrap();
+        let contents = include_str!("../tests/srp6_internal/calculate_client_S_values.txt");
 
         let g = Generator::default();
         let N = LargeSafePrime::default();
@@ -155,7 +154,7 @@ mod test {
 
     #[test]
     fn verify_client_public_key() {
-        let contents = read_to_string("tests/srp6_internal/calculate_A_values.txt").unwrap();
+        let contents = include_str!("../tests/srp6_internal/calculate_A_values.txt");
 
         let generator = Generator::default();
         let large_safe_prime = LargeSafePrime::default();

@@ -277,12 +277,10 @@ mod test {
         calculate_session_key, calculate_u, calculate_x, calculate_xor_hash,
         PRECALCULATED_XOR_HASH,
     };
-    use std::fs::read_to_string;
 
     #[test]
     fn verify_reconnection_proof() {
-        let contents =
-            read_to_string("tests/srp6_internal/calculate_reconnection_values.txt").unwrap();
+        let contents = include_str!("../tests/srp6_internal/calculate_reconnection_values.txt");
 
         for line in contents.lines() {
             let mut line = line.split_whitespace();
@@ -300,7 +298,7 @@ mod test {
 
     #[test]
     fn verify_x_username_and_password() {
-        let contents = read_to_string("tests/srp6_internal/calculate_x_values.txt").unwrap();
+        let contents = include_str!("../tests/srp6_internal/calculate_x_values.txt");
         let salt = Salt::from_be_hex_str(
             "CAC94AF32D817BA64B13F18FDEDEF92AD4ED7EF7AB0E19E9F2AE13C828AEAF57",
         );
@@ -320,7 +318,7 @@ mod test {
 
     #[test]
     fn verify_x_salt() {
-        let contents = read_to_string("tests/srp6_internal/calculate_x_salt_values.txt").unwrap();
+        let contents = include_str!("../tests/srp6_internal/calculate_x_salt_values.txt");
         let username = NormalizedString::new("USERNAME123").unwrap();
         let password = NormalizedString::new("PASSWORD123").unwrap();
 
@@ -339,7 +337,7 @@ mod test {
 
     #[test]
     fn verify_password_verifier_username_password_salt() {
-        let contents = read_to_string("tests/srp6_internal/calculate_v_values.txt").unwrap();
+        let contents = include_str!("../tests/srp6_internal/calculate_v_values.txt");
 
         for line in contents.lines() {
             let mut line = line.split_whitespace();
@@ -367,7 +365,7 @@ mod test {
 
     #[test]
     fn verify_server_public_key_calculation() {
-        let contents = read_to_string("tests/srp6_internal/calculate_B_values.txt").unwrap();
+        let contents = include_str!("../tests/srp6_internal/calculate_B_values.txt");
         for line in contents.lines() {
             let mut line = line.split_whitespace();
 
@@ -393,7 +391,7 @@ mod test {
 
     #[test]
     fn verify_u() {
-        let contents = read_to_string("tests/srp6_internal/calculate_u_values.txt").unwrap();
+        let contents = include_str!("../tests/srp6_internal/calculate_u_values.txt");
 
         for line in contents.lines() {
             let mut line = line.split_whitespace();
@@ -419,7 +417,7 @@ mod test {
     #[test]
     #[allow(non_snake_case)]
     fn verify_S() {
-        let contents = read_to_string("tests/srp6_internal/calculate_S_values.txt").unwrap();
+        let contents = include_str!("../tests/srp6_internal/calculate_S_values.txt");
 
         for line in contents.lines() {
             let mut line = line.split_whitespace();
@@ -457,8 +455,7 @@ mod test {
     #[test]
     #[allow(non_snake_case)]
     fn verify_interleaved_key() {
-        let contents =
-            read_to_string("tests/srp6_internal/calculate_interleaved_values.txt").unwrap();
+        let contents = include_str!("../tests/srp6_internal/calculate_interleaved_values.txt");
 
         for line in contents.lines() {
             let mut line = line.split_whitespace();
@@ -476,8 +473,7 @@ mod test {
 
     #[test]
     fn verify_session_key() {
-        let contents =
-            read_to_string("tests/srp6_internal/calculate_session_key_values.txt").unwrap();
+        let contents = include_str!("../tests/srp6_internal/calculate_session_key_values.txt");
 
         for line in contents.lines() {
             let mut line = line.split_whitespace();
@@ -512,7 +508,7 @@ mod test {
 
     #[test]
     fn verify_client_proof() {
-        let contents = read_to_string("tests/srp6_internal/calculate_M1_values.txt").unwrap();
+        let contents = include_str!("../tests/srp6_internal/calculate_M1_values.txt");
 
         for line in contents.lines() {
             let mut line = line.split_whitespace();
@@ -553,7 +549,7 @@ mod test {
 
     #[test]
     fn verify_server_proof() {
-        let contents = read_to_string("tests/srp6_internal/calculate_M2_values.txt").unwrap();
+        let contents = include_str!("../tests/srp6_internal/calculate_M2_values.txt");
 
         for line in contents.lines() {
             let mut line = line.split_whitespace();
