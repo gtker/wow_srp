@@ -18,10 +18,6 @@ impl InnerCrypto {
         self.inner.apply_keystream(data);
     }
 
-    pub(crate) const fn peek(&self, v: u8) -> u8 {
-        self.inner.peek_keystream(v)
-    }
-
     pub(crate) fn new(
         session_key: [u8; SESSION_KEY_LENGTH as usize],
         key: &[u8; KEY_LENGTH as usize],

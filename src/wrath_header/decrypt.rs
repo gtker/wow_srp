@@ -1,6 +1,5 @@
 use crate::wrath_header::{
-    ClientHeader, ServerHeader, CLIENT_HEADER_LENGTH, R, S, SERVER_HEADER_MAXIMUM_LENGTH,
-    SERVER_HEADER_MINIMUM_LENGTH,
+    ClientHeader, ServerHeader, CLIENT_HEADER_LENGTH, R, S, SERVER_HEADER_MINIMUM_LENGTH,
 };
 use crate::SESSION_KEY_LENGTH;
 
@@ -67,7 +66,7 @@ impl ServerDecrypterHalf {
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct ClientDecrypterHalf {
     decrypt: InnerCrypto,
-    header: [u8; SERVER_HEADER_MAXIMUM_LENGTH as usize],
+    header: [u8; SERVER_HEADER_MINIMUM_LENGTH as usize],
 }
 
 impl ClientDecrypterHalf {
@@ -79,64 +78,56 @@ impl ClientDecrypterHalf {
         self.decrypt.apply(data);
     }
 
-    /// Provides an internal buffer for reading headers into that is decrypted using [`Self::decrypt_internal_server_header`].
+    /// Attempts to decrypt the provided `buf`, returning either a header or a request for an additional byte
+    /// provided to [`Self::decrypt_large_server_header`].
     ///
-    /// This function does not progress the internal state of the encryption, and it **MUST** be
-    /// followed by a call to [`Self::decrypt_internal_server_header`].
-    ///
-    /// See [`Self::decrypt_internal_server_header`] for more.
-    #[must_use]
-    pub fn get_header_buffer(&mut self, byte: u8) -> &mut [u8] {
-        self.header[0] = byte;
-
-        if large_header(self.decrypt.peek(byte)) {
-            &mut self.header[1..]
-        } else {
-            &mut self.header[1..SERVER_HEADER_MINIMUM_LENGTH as usize]
-        }
-    }
-
-    /// Decrypts the internal buffer provided by [`Self::get_header_buffer`].
-    ///
-    /// This function and [`Self::get_header_buffer`] is for streams that don't support [Read] like various
+    /// This function and [`Self::decrypt_large_server_header`] is for streams that don't support [Read] like various
     /// async frameworks.
     /// If your stream supports [Read] use [`Self::read_and_decrypt_server_header`] instead.
     ///
-    /// [`Self::get_header_buffer`] **MUST** be called before this, otherwise
+    /// This **MUST** be called before [`Self::decrypt_large_server_header`] otherwise
     /// the decrypter will enter an invalid state and the connection will have to be terminated.
     ///
-    /// Unlike other versinos, Wrath messages from the server (`SMSG`) can have a dynamic size field
+    /// Unlike other versions, Wrath messages from the server (`SMSG`) can have a dynamic size field
     /// of either 2 **or** 3 bytes.
     /// This means that reading the first 4 bytes of a message and passing it as an array won't work.
     ///
-    /// To properly use this API, read a single byte from your stream and pass it to [`Self::get_header_buffer`].
-    /// This will return a buffer where you can `read_exact` or similar into.
-    /// The buffer is automatically sized correctly, so do not bother matching on the length, just fill it up.
-    /// Then call this function to decrypt.
-    #[must_use]
-    pub fn decrypt_internal_server_header(&mut self) -> ServerHeader {
-        self.decrypt.apply(&mut self.header[0..1]);
+    /// To properly use this API, read 4 bytes from your stream and pass it to this function.
+    /// This will either return a well formed header, or a [`WrathServerAttempt::AdditionalByteRequired`].
+    /// When you get [`WrathServerAttempt::AdditionalByteRequired`], read an aditional byte and pass it to
+    /// [`Self::decrypt_large_server_header`].
+    pub fn attempt_decrypt_server_header(
+        &mut self,
+        mut buf: [u8; SERVER_HEADER_MINIMUM_LENGTH as usize],
+    ) -> WrathServerAttempt {
+        self.decrypt.apply(&mut buf);
 
-        let large_header = large_header(self.header[0]);
-
-        let header = if large_header {
-            &mut self.header[1..]
+        if large_header(buf[0]) {
+            self.header[0] = buf[0];
+            self.header[1] = buf[1];
+            self.header[2] = buf[2];
+            self.header[3] = buf[3];
+            WrathServerAttempt::AdditionalByteRequired
         } else {
-            &mut self.header[1..SERVER_HEADER_MINIMUM_LENGTH as usize]
-        };
-
-        self.decrypt.apply(header);
-
-        if large_header {
-            ServerHeader::from_large_array(self.header)
-        } else {
-            ServerHeader::from_small_array([
-                self.header[0],
-                self.header[1],
-                self.header[2],
-                self.header[3],
-            ])
+            WrathServerAttempt::Header(ServerHeader::from_small_array(buf))
         }
+    }
+
+    /// Finalizes the header decryption provided in [`Self::attempt_decrypt_server_header`].
+    ///
+    /// See [`Self::attempt_decrypt_server_header`] for more.
+    pub fn decrypt_large_server_header(&mut self, byte: u8) -> ServerHeader {
+        let mut buf = [byte];
+        self.decrypt.apply(&mut buf);
+
+        let buf = [
+            self.header[0],
+            self.header[1],
+            self.header[2],
+            self.header[3],
+            buf[0],
+        ];
+        ServerHeader::from_large_array(buf)
     }
 
     /// Convenience function for [Read]ing header directly.
@@ -149,20 +140,34 @@ impl ClientDecrypterHalf {
         &mut self,
         mut reader: R,
     ) -> std::io::Result<ServerHeader> {
-        let msb = [0_u8; 1];
-        let header = self.get_header_buffer(msb[0]);
+        let mut buf = [0_u8; 4];
+        reader.read_exact(&mut buf)?;
 
-        reader.read_exact(header)?;
+        Ok(match self.attempt_decrypt_server_header(buf) {
+            WrathServerAttempt::Header(h) => h,
+            WrathServerAttempt::AdditionalByteRequired => {
+                let mut buf = [0_u8; 1];
+                reader.read_exact(&mut buf)?;
 
-        Ok(self.decrypt_internal_server_header())
+                self.decrypt_large_server_header(buf[0])
+            }
+        })
     }
 
     pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
         Self {
             decrypt: InnerCrypto::new(session_key, &R),
-            header: [0_u8; SERVER_HEADER_MAXIMUM_LENGTH as usize],
+            header: [0_u8; SERVER_HEADER_MINIMUM_LENGTH as usize],
         }
     }
+}
+/// Used in [`ClientDecrypterHalf::attempt_decrypt_server_header`] to notify when an additional
+/// byte is required.
+pub enum WrathServerAttempt {
+    /// The message header has been fully decrypted and you should do nothing until the next message.
+    Header(ServerHeader),
+    /// Call [`ClientDecrypterHalf::decrypt_internal_server_header`]
+    AdditionalByteRequired,
 }
 
 pub(crate) const fn clear_large_header(v: u8) -> u8 {

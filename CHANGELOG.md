@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * `Ord`, `PartialOrd`, `Eq`, `PartialEq`, and `Hash` for `wrath_header` types.
 * `read_and_decrypt_server_header` to `wrath_header::ClientDecrypterHalf` and `wrath_header::ClientCrypto`.
-* BREAKING: `ClientDecrypterHalf/ClientCrypto::get_header_buffer` and `*::decrypt_internal_server_header`.
+* BREAKING: `ClientDecrypterHalf/ClientCrypto::attempt_decrypt_server_header` and `*::decrypt_large_server_header`.
 This handles the problem of Wrath big headers better than supplying a fixed array.
 
 ### Changed

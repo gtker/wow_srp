@@ -22,10 +22,6 @@ impl Rc4 {
     }
 
     // Decode one without advancing keystream
-    pub(super) const fn peek_keystream(&self, s: u8) -> u8 {
-        s ^ self.peek_pseudo_random_generation()
-    }
-
     pub(super) fn apply_keystream(&mut self, stream: &mut [u8]) {
         for s in stream {
             let v = self.pseudo_random_generation();
@@ -60,24 +56,6 @@ impl Rc4 {
         self.state.swap(self.i.into(), self.j.into());
 
         let index: usize = self.s_i().wrapping_add(self.s_j()).into();
-
-        self.state[index]
-    }
-
-    const fn peek_pseudo_random_generation(&self) -> u8 {
-        let i = self.i.wrapping_add(1);
-        let j = self.j.wrapping_add(self.state[i as usize]);
-
-        let index = self.state[i as usize].wrapping_add(self.state[j as usize]);
-
-        // We don't actually swap the states like we're supposed to
-        let index = if index == i {
-            j
-        } else if index == j {
-            i
-        } else {
-            index
-        } as usize;
 
         self.state[index]
     }
@@ -131,21 +109,5 @@ mod test {
         let mut rc = Rc4::new(&key);
         rc.apply_keystream(&mut data);
         assert_eq!(data, expected);
-    }
-
-    #[test]
-    fn test_peek() {
-        let key = [1_u8, 2, 3, 4, 5];
-        let mut data = [
-            0_u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0,
-        ];
-        let mut rc = Rc4::new(&key);
-
-        for i in 0..data.len() {
-            let s = rc.peek_keystream(data[i]);
-            rc.apply_keystream(&mut data[i..i + 1]);
-            assert_eq!(data[i], s);
-        }
     }
 }

@@ -79,8 +79,11 @@ use crate::error::MatchProofsError;
 use crate::key::{Proof, SessionKey};
 use crate::normalized_string::NormalizedString;
 use crate::vanilla_header::calculate_world_server_proof;
+use crate::wrath_header::decrypt::clear_large_header;
 use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
 use rand::{thread_rng, RngCore};
+
+pub use crate::wrath_header::decrypt::WrathServerAttempt;
 
 pub(crate) mod decrypt;
 pub(crate) mod encrypt;
@@ -172,7 +175,6 @@ impl ServerHeader {
 }
 
 pub use crate::vanilla_header::ClientHeader;
-use crate::wrath_header::decrypt::clear_large_header;
 
 /// Main struct for enccryption and decryption for clients.
 ///
@@ -238,20 +240,21 @@ impl ClientCrypto {
         self.decrypt.decrypt(data);
     }
 
-    /// Convenience wrapper for [`ClientDecrypterHalf::get_header_buffer`].
+    /// Convenience wrapper for [`ClientDecrypterHalf::attempt_decrypt_server_header`].
     ///
     /// Prefer this over directly using [`Self::decrypt`].
-    #[must_use]
-    pub fn get_header_buffer(&mut self, byte: u8) -> &mut [u8] {
-        self.decrypt.get_header_buffer(byte)
+    pub fn attempt_decrypt_server_header(
+        &mut self,
+        buf: [u8; SERVER_HEADER_MINIMUM_LENGTH as usize],
+    ) -> WrathServerAttempt {
+        self.decrypt.attempt_decrypt_server_header(buf)
     }
 
-    /// Convenience wrapper for [`ClientDecrypterHalf::decrypt_internal_server_header`].
+    /// Convenience wrapper for [`ClientDecrypterHalf::decrypt_large_server_header`].
     ///
     /// Prefer this over directly using [`Self::decrypt`].
-    #[must_use]
-    pub fn decrypt_internal_server_header(&mut self) -> ServerHeader {
-        self.decrypt.decrypt_internal_server_header()
+    pub fn decrypt_large_server_header(&mut self, byte: u8) -> ServerHeader {
+        self.decrypt.decrypt_large_server_header(byte)
     }
 
     /// Convenience wrapper for [`ClientDecrypterHalf::read_and_decrypt_server_header`].
@@ -516,6 +519,7 @@ mod test {
     use crate::hex::*;
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
+    use crate::wrath_header::decrypt::WrathServerAttempt;
     use crate::wrath_header::{
         ClientCrypto, ProofSeed, ServerCrypto, SERVER_HEADER_MAXIMUM_LENGTH,
         SERVER_HEADER_MINIMUM_LENGTH,
@@ -736,12 +740,15 @@ mod test {
         let expected_header = [0x97, 0x27, 0x32, 0xa3, 0x1a];
         assert_eq!(header, expected_header);
 
-        let buf = client.get_header_buffer(header[0]);
-        for (i, b) in buf.iter_mut().enumerate() {
-            *b = header[i + 1];
-        }
+        let header = match client
+            .attempt_decrypt_server_header([header[0], header[1], header[2], header[3]])
+        {
+            WrathServerAttempt::Header(_) => panic!(),
+            WrathServerAttempt::AdditionalByteRequired => {
+                client.decrypt_large_server_header(header[4])
+            }
+        };
 
-        let header = client.decrypt_internal_server_header();
         assert_eq!(header.opcode, 0x1ee);
         assert_eq!(header.size, 0x8008);
 
@@ -749,15 +756,12 @@ mod test {
         let expected_header = [0x89, 0x4F, 0xFE, 0x11];
         assert_eq!(header, expected_header);
 
-        let mut arr = [0_u8; SERVER_HEADER_MINIMUM_LENGTH as usize];
-        for (i, b) in header.iter().enumerate() {
-            arr[i] = *b;
-        }
-        let buf = client.get_header_buffer(arr[0]);
-        for (i, b) in buf.iter_mut().enumerate() {
-            *b = arr[i + 1];
-        }
-        let header = client.decrypt_internal_server_header();
+        let header = match client
+            .attempt_decrypt_server_header([header[0], header[1], header[2], header[3]])
+        {
+            WrathServerAttempt::Header(h) => h,
+            WrathServerAttempt::AdditionalByteRequired => panic!(),
+        };
         assert_eq!(header.opcode, 0x1ee);
         assert_eq!(header.size, 0x08);
     }
@@ -780,11 +784,14 @@ mod test {
         let expected_header = [0x97, 0x27, 0x32, 0xa3, 0x1a];
         assert_eq!(header, expected_header);
 
-        let buf = client.get_header_buffer(header[0]);
-        for (i, b) in buf.iter_mut().enumerate() {
-            *b = header[i + 1];
-        }
-        let server_header = client.decrypt_internal_server_header();
+        let server_header = match client
+            .attempt_decrypt_server_header([header[0], header[1], header[2], header[3]])
+        {
+            WrathServerAttempt::Header(_) => panic!(),
+            WrathServerAttempt::AdditionalByteRequired => {
+                client.decrypt_large_server_header(header[4])
+            }
+        };
         assert_eq!(server_header.opcode, 0x1ee);
         assert_eq!(server_header.size, 0x8008);
 
@@ -795,15 +802,10 @@ mod test {
         let expected_header = [0x89_u8, 0x4F, 0xFE, 0x11];
         assert_eq!(header, expected_header);
 
-        let mut arr = [0_u8; SERVER_HEADER_MINIMUM_LENGTH as usize];
-        for (i, b) in header.iter().enumerate() {
-            arr[i] = *b;
-        }
-        let buf = client.get_header_buffer(arr[0]);
-        for (i, b) in buf.iter_mut().enumerate() {
-            *b = arr[i + 1];
-        }
-        let header = client.decrypt_internal_server_header();
+        let header = match client.attempt_decrypt_server_header(header) {
+            WrathServerAttempt::Header(h) => h,
+            WrathServerAttempt::AdditionalByteRequired => panic!(),
+        };
         assert_eq!(header.opcode, 0x1ee);
         assert_eq!(header.size, 0x08);
     }
