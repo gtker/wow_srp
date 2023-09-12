@@ -124,11 +124,7 @@ macro_rules! key_wrapper {
                 let mut key = self.key;
                 key.reverse();
 
-                let mut s = hex_encode_upper(&key);
-                while s.len() < $size * 2 {
-                    s = "0".to_owned() + &s;
-                }
-                s
+                hex_encode_upper(&key)
             }
 
             #[allow(dead_code)]
@@ -393,5 +389,13 @@ mod test {
         const DEADBEEF: &str = "DEADBEEF";
         let k = PrivateKey::from_be_hex_str(DEADBEEF);
         assert_eq!(&k.as_be_hex_string(), PADDED_DEADBEEF);
+    }
+
+    #[test]
+    #[should_panic]
+    fn public_key_from_hex_string_panic() {
+        const TOO_LONG_DEADBEEF: &str =
+            "0000000000000000000000000000000000000000000000000000000000DEADBEEF";
+        let _ = PublicKey::from_be_hex_str(TOO_LONG_DEADBEEF);
     }
 }
