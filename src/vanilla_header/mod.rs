@@ -467,7 +467,6 @@ mod test {
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
     use crate::vanilla_header::{HeaderCrypto, ProofSeed};
-    use crate::SESSION_KEY_LENGTH;
     use std::convert::TryInto;
 
     #[test]
@@ -729,11 +728,11 @@ mod test {
     #[test]
     fn verify_mixed_used() {
         // Verify that mixed use does not interfere with each other
-
-        let session_key = hex_decode(
-            "2EFEE7B0C177EBBDFF6676C56EFC2339BE9CAD14BF8B54BB5A86FBF81F6D424AA23CC9A3149FB175",
-        );
-        let session_key: [u8; SESSION_KEY_LENGTH as usize] = session_key.try_into().unwrap();
+        let session_key = [
+            0x2E, 0xFE, 0xE7, 0xB0, 0xC1, 0x77, 0xEB, 0xBD, 0xFF, 0x66, 0x76, 0xC5, 0x6E, 0xFC,
+            0x23, 0x39, 0xBE, 0x9C, 0xAD, 0x14, 0xBF, 0x8B, 0x54, 0xBB, 0x5A, 0x86, 0xFB, 0xF8,
+            0x1F, 0x6D, 0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
+        ];
 
         let original_data = hex_decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca");
         let mut encrypt_data = original_data.clone();
@@ -776,10 +775,11 @@ mod test {
     #[test]
     fn verify_splitting() {
         // Verify that splitting and combining again works
-        let session_key = hex_decode(
-            "2EFEE7B0C177EBBDFF6676C56EFC2339BE9CAD14BF8B54BB5A86FBF81F6D424AA23CC9A3149FB175",
-        );
-        let session_key: [u8; SESSION_KEY_LENGTH as usize] = session_key.try_into().unwrap();
+        let session_key = [
+            0x2E, 0xFE, 0xE7, 0xB0, 0xC1, 0x77, 0xEB, 0xBD, 0xFF, 0x66, 0x76, 0xC5, 0x6E, 0xFC,
+            0x23, 0x39, 0xBE, 0x9C, 0xAD, 0x14, 0xBF, 0x8B, 0x54, 0xBB, 0x5A, 0x86, 0xFB, 0xF8,
+            0x1F, 0x6D, 0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
+        ];
 
         let original_data = hex_decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca");
         let mut encrypt_data = original_data.clone();
@@ -829,10 +829,11 @@ mod test {
     #[test]
     fn verify_trait_helpers() {
         // Verify that the trait helpers do the same thing as manually encrypting/decrypting
-        let session_key = hex_decode(
-            "2EFEE7B0C177EBBDFF6676C56EFC2339BE9CAD14BF8B54BB5A86FBF81F6D424AA23CC9A3149FB175",
-        );
-        let session_key: [u8; SESSION_KEY_LENGTH as usize] = session_key.try_into().unwrap();
+        let session_key = [
+            0x2E, 0xFE, 0xE7, 0xB0, 0xC1, 0x77, 0xEB, 0xBD, 0xFF, 0x66, 0x76, 0xC5, 0x6E, 0xFC,
+            0x23, 0x39, 0xBE, 0x9C, 0xAD, 0x14, 0xBF, 0x8B, 0x54, 0xBB, 0x5A, 0x86, 0xFB, 0xF8,
+            0x1F, 0x6D, 0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
+        ];
 
         let original_data = [
             0x3d, 0x9a, 0xe1, 0x96, 0xef, 0x4f, 0x3d, 0x9a, 0xe1, 0x96, 0x3d, 0x9a, 0xe1, 0x96,
