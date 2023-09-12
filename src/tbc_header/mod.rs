@@ -622,6 +622,40 @@ mod test {
     }
 
     #[test]
+    fn verify_inner_access() {
+        let contents = include_str!("../../tests/encryption/calculate_tbc_encrypt_values.txt");
+
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
+
+            let session_key = SessionKey::from_be_hex_str(line.next().unwrap());
+            let mut data = hex_decode(line.next().unwrap());
+            let expected_client = hex_decode(line.next().unwrap());
+            let expected_server = hex_decode(line.next().unwrap());
+
+            let original_data = data.clone();
+
+            let mut client = HeaderCrypto::new(*session_key.as_le_bytes());
+            let c = client.encrypter();
+            c.encrypt(&mut data);
+            assert_eq!(data, expected_client);
+
+            let mut server = HeaderCrypto::new(*session_key.as_le_bytes());
+            let s = server.decrypter();
+            s.decrypt(&mut data);
+            assert_eq!(data, original_data);
+
+            let s = server.encrypter();
+            s.encrypt(&mut data);
+            assert_eq!(data, expected_server);
+
+            let c = client.decrypter();
+            c.decrypt(&mut data);
+            assert_eq!(data, original_data);
+        }
+    }
+
+    #[test]
     fn verify_splitting() {
         let contents = include_str!("../../tests/encryption/calculate_tbc_encrypt_values.txt");
 
@@ -651,6 +685,81 @@ mod test {
             client_dec.decrypt(&mut data);
             assert_eq!(data, original_data);
         }
+    }
+
+    #[test]
+    fn verify_errors() {
+        let mut session_key = [
+            0x2E, 0xFE, 0xE7, 0xB0, 0xC1, 0x77, 0xEB, 0xBD, 0xFF, 0x66, 0x76, 0xC5, 0x6E, 0xFC,
+            0x23, 0x39, 0xBE, 0x9C, 0xAD, 0x14, 0xBF, 0x8B, 0x54, 0xBB, 0x5A, 0x86, 0xFB, 0xF8,
+            0x1F, 0x6D, 0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
+        ];
+        let mut client_proof = [
+            171, 16, 181, 52, 139, 193, 19, 213, 173, 100, 0, 37, 65, 184, 70, 148, 36, 169, 17,
+            228,
+        ];
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                1, // Should be 0
+            )
+            .is_err());
+
+        client_proof[0] += 1;
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof, // [0] should be -1
+                0,
+            )
+            .is_err());
+
+        client_proof[0] -= 1;
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                0,
+            )
+            .is_ok());
+
+        session_key[0] += 1;
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key, // [0] should be -1
+                client_proof,
+                0,
+            )
+            .is_err());
+
+        session_key[0] -= 1;
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("A").unwrap(),
+                session_key,
+                client_proof,
+                0,
+            )
+            .is_ok());
+
+        assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
+            .into_server_header_crypto(
+                &NormalizedString::new("B").unwrap(), // should be A
+                session_key,
+                client_proof,
+                0,
+            )
+            .is_err());
     }
 
     #[test]
