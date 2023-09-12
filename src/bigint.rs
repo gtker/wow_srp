@@ -40,14 +40,10 @@ impl Integer {
         }
     }
 
-    pub fn modpow(&self, exponent: &Self, modulus: &Self) -> Self {
+    pub fn modpow(self, exponent: &Self, modulus: &Self) -> Self {
         #[cfg(feature = "srp-fast-math")]
         {
-            Self::from_bigint(
-                self.value
-                    .clone()
-                    .secure_pow_mod(&exponent.value, &modulus.value),
-            )
+            Self::from_bigint(self.value.secure_pow_mod(&exponent.value, &modulus.value))
         }
         #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
         {
