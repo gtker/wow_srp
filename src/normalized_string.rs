@@ -213,6 +213,7 @@ impl AsRef<str> for NormalizedString {
 mod test {
     use crate::error::NormalizedStringError;
     use crate::normalized_string::{NormalizedString, MAXIMUM_STRING_LENGTH_IN_BYTES};
+    use std::convert::TryInto;
 
     #[test]
     fn allows_all_ascii_chars() {
@@ -270,5 +271,19 @@ mod test {
         let empty_string = String::new();
         let empty = NormalizedString::new(empty_string);
         assert!(empty.is_err());
+    }
+
+    #[test]
+    fn constructors() {
+        let str_ref = "Alice";
+        let alice = NormalizedString::from(str_ref).unwrap();
+        assert_eq!(alice.as_ref(), "ALICE");
+
+        let string = "Alice".to_string();
+        let alice = NormalizedString::from_string(str_ref).unwrap();
+        assert_eq!(alice.as_ref(), "ALICE");
+
+        let alice: NormalizedString = string.try_into().unwrap();
+        assert_eq!(alice.as_ref(), "ALICE");
     }
 }
