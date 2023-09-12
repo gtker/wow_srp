@@ -12,8 +12,8 @@
 
 use crate::error::NormalizedStringError::StringTooLong;
 use crate::key::PROOF_LENGTH;
+use core::fmt::{Display, Formatter, Result};
 use std::error::Error;
-use std::fmt::{Display, Formatter, Result};
 
 /// Enum that covers all SRP error types, except for the crypto error [`UnsplitCryptoError`].
 #[derive(Debug)]
@@ -69,7 +69,7 @@ impl From<NormalizedStringError> for SrpError {
 ///
 /// This is a logic bug and should always lead to either a panic or some other highly
 /// visible event.
-/// If in doubt just call [`unwrap`](std::option::Option::unwrap) on it.
+/// If in doubt just call [`unwrap`](Option::unwrap) on it.
 #[derive(Debug)]
 pub struct UnsplitCryptoError {}
 

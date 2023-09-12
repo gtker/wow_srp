@@ -1,5 +1,5 @@
 #[cfg(test)]
-use std::convert::TryFrom;
+use core::convert::TryFrom;
 
 #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 use crate::bigint;

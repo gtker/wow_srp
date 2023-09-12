@@ -95,7 +95,7 @@ mod inner_crypto;
 ///
 /// [world packet]: https://wowdev.wiki/World_Packet
 pub const CLIENT_HEADER_LENGTH: u8 =
-    (std::mem::size_of::<u16>() + std::mem::size_of::<u32>()) as u8;
+    (core::mem::size_of::<u16>() + core::mem::size_of::<u32>()) as u8;
 
 /// Minimum size in bytes of the server [world packet] header.
 ///
@@ -106,7 +106,7 @@ pub const CLIENT_HEADER_LENGTH: u8 =
 ///
 /// [world packet]: https://wowdev.wiki/World_Packet
 pub const SERVER_HEADER_MINIMUM_LENGTH: u8 =
-    (std::mem::size_of::<u16>() + std::mem::size_of::<u16>()) as u8;
+    (core::mem::size_of::<u16>() + core::mem::size_of::<u16>()) as u8;
 
 /// Maximum size in bytes of the server [world packet] header.
 ///
@@ -119,7 +119,7 @@ pub const SERVER_HEADER_MINIMUM_LENGTH: u8 =
 ///
 /// [world packet]: https://wowdev.wiki/World_Packet
 pub const SERVER_HEADER_MAXIMUM_LENGTH: u8 =
-    (std::mem::size_of::<u16>() + std::mem::size_of::<u16>() + std::mem::size_of::<u8>()) as u8;
+    (core::mem::size_of::<u16>() + core::mem::size_of::<u16>() + core::mem::size_of::<u8>()) as u8;
 
 // Used for Client (Encryption) to Server (Decryption)
 const S: [u8; 16] = [
@@ -522,7 +522,7 @@ mod test {
         ClientCrypto, ProofSeed, ServerCrypto, CLIENT_HEADER_LENGTH, SERVER_HEADER_MAXIMUM_LENGTH,
         SERVER_HEADER_MINIMUM_LENGTH,
     };
-    use std::convert::TryInto;
+    use core::convert::TryInto;
 
     #[test]
     fn verify_seed_proof() {

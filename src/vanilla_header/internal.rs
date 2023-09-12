@@ -28,7 +28,7 @@ mod test {
     use crate::key::{Proof, SessionKey};
     use crate::normalized_string::NormalizedString;
     use crate::vanilla_header::internal::calculate_world_server_proof;
-    use std::convert::TryInto;
+    use core::convert::TryInto;
 
     #[test]
     fn verify_world_server_proof() {

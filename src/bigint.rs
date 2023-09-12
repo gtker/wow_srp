@@ -1,11 +1,11 @@
 use crate::primes::LargeSafePrime;
+use core::ops;
 #[cfg(all(feature = "srp-default-math", not(feature = "srp-fast-math")))]
 use num_bigint::BigInt;
 #[cfg(feature = "srp-fast-math")]
 use rug::integer::Order;
 #[cfg(feature = "srp-fast-math")]
 use rug::Integer as BigInt;
-use std::ops;
 
 pub(crate) struct Integer {
     value: BigInt,

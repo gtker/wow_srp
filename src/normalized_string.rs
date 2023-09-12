@@ -65,9 +65,9 @@
 //!
 
 use crate::error::NormalizedStringError;
-use std::convert::TryFrom;
-use std::fmt;
-use std::fmt::{Display, Formatter};
+use core::convert::TryFrom;
+use core::fmt;
+use core::fmt::{Display, Formatter};
 
 /// Represents usernames and passwords containing only allowed characters.
 ///
@@ -81,7 +81,7 @@ use std::fmt::{Display, Formatter};
 /// Iif you want stability Use the [`NormalizedString::from_string`] or [`NormalizedString::from_str`].
 ///
 /// ```
-/// # use std::convert::TryInto;
+/// # use core::convert::TryInto;
 /// use wow_srp::error::NormalizedStringError;
 /// use wow_srp::normalized_string::NormalizedString;
 ///
@@ -195,7 +195,7 @@ impl AsRef<str> for NormalizedString {
     fn as_ref(&self) -> &str {
         // This is checked in the constructor
         // So we can unwrap
-        std::str::from_utf8(&self.s[..self.length as usize]).unwrap()
+        core::str::from_utf8(&self.s[..self.length as usize]).unwrap()
     }
 }
 
@@ -203,7 +203,7 @@ impl AsRef<str> for NormalizedString {
 mod test {
     use crate::error::NormalizedStringError;
     use crate::normalized_string::{NormalizedString, MAXIMUM_STRING_LENGTH_IN_BYTES};
-    use std::convert::TryInto;
+    use core::convert::TryInto;
 
     #[test]
     fn allows_all_ascii_chars() {

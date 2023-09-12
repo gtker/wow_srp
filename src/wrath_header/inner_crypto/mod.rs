@@ -2,9 +2,9 @@ mod rc4;
 
 use crate::wrath_header::inner_crypto::rc4::Rc4;
 use crate::SESSION_KEY_LENGTH;
+use core::fmt::Debug;
 use hmac::{Hmac, Mac};
 use sha1::Sha1;
-use std::fmt::Debug;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub(crate) struct InnerCrypto {

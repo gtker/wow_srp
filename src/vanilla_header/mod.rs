@@ -49,7 +49,7 @@
 //! ```
 //! use std::io::{Read, Error, Write};
 //! use wow_srp::vanilla_header::{HeaderCrypto, ServerHeader, ProofSeed};
-//! use std::convert::TryInto;
+//! use core::convert::TryInto;
 //! use wow_srp::{SESSION_KEY_LENGTH, PROOF_LENGTH};
 //! use wow_srp::normalized_string::NormalizedString;
 //!
@@ -134,14 +134,14 @@ pub(crate) use internal::calculate_world_server_proof;
 ///
 /// [world packet]: https://wowdev.wiki/World_Packet
 pub const CLIENT_HEADER_LENGTH: u8 =
-    (std::mem::size_of::<u16>() + std::mem::size_of::<u32>()) as u8;
+    (core::mem::size_of::<u16>() + core::mem::size_of::<u32>()) as u8;
 /// Size in bytes of the server [world packet] header.
 ///
 /// Always 4 bytes because the size is 2 bytes and the opcode is 2 bytes.
 ///
 /// [world packet]: https://wowdev.wiki/World_Packet
 pub const SERVER_HEADER_LENGTH: u8 =
-    (std::mem::size_of::<u16>() + std::mem::size_of::<u16>()) as u8;
+    (core::mem::size_of::<u16>() + core::mem::size_of::<u16>()) as u8;
 
 /// Decrypted values from a server.
 ///
@@ -467,7 +467,7 @@ mod test {
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
     use crate::vanilla_header::{HeaderCrypto, ProofSeed};
-    use std::convert::TryInto;
+    use core::convert::TryInto;
 
     #[test]
     fn verify_seed_proof() {

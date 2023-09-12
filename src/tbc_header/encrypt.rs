@@ -1,8 +1,8 @@
 use crate::tbc_header::{CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH};
 use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
+use core::convert::TryInto;
 use hmac::{Hmac, Mac};
 use sha1::Sha1;
-use std::convert::TryInto;
 use std::io::Write;
 
 /// Encryption part of a [`HeaderCrypto`](crate::tbc_header::HeaderCrypto).
