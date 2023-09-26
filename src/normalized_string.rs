@@ -152,6 +152,7 @@ impl NormalizedString {
     /// # Errors
     ///
     /// See the [module level docs](crate::normalized_string) for explanation of allowed values.
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: impl AsRef<str>) -> Result<Self, NormalizedStringError> {
         Self::new(s)
     }
