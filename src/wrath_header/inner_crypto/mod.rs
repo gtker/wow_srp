@@ -6,7 +6,7 @@ use core::fmt::Debug;
 use hmac::{Hmac, Mac};
 use sha1::Sha1;
 
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub(crate) struct InnerCrypto {
     inner: Rc4,
 }

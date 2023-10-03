@@ -186,7 +186,7 @@ pub use crate::vanilla_header::ClientHeader;
 /// Can be split into a [`ClientEncrypterHalf`] and [`ClientDecrypterHalf`] through
 /// the [`ClientCrypto::split`] method. This is useful if you have this struct behind a
 /// mutex and don't want to lock both reading and writing at the same time.
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct ClientCrypto {
     decrypt: ClientDecrypterHalf,
     encrypt: ClientEncrypterHalf,
@@ -304,7 +304,7 @@ impl ClientCrypto {
 /// Can be split into a [`ServerEncrypterHalf`] and [`ServerDecrypterHalf`] through
 /// the [`ServerCrypto::split`] method. This is useful if you have this struct behind a
 /// mutex and don't want to lock both reading and writing at the same time.
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct ServerCrypto {
     decrypt: ServerDecrypterHalf,
     encrypt: ServerEncrypterHalf,

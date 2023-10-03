@@ -1,7 +1,7 @@
 // Bespoke Rc4 implementation since it's not very complex and the available library places limitations
 // in the form of pointer indirection and available derives.
 
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub(super) struct Rc4 {
     state: [u8; 256],
     i: u8,

@@ -35,6 +35,7 @@ plus a Wrath `ServerHeader`.
 These have been replaced by a better API in `decrypt_internal_server_header` and `get_header_buffer`.
 * BREAKING: `SrpClientUser`. This class did not have any accessors so it might as well be a `new` function on `SrpClientChallenge`.
 `SrpClientChallenge::new` replaces this functionality.
+* BREAKING: `Copy` from `wrath_header` types that needed to uphold internal invariants that were easily broken by `Copy`.
 
 ## [0.6.0] - 2023-05-20
 
