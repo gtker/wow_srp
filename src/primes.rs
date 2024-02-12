@@ -16,7 +16,7 @@ use crate::bigint;
 pub const LARGE_SAFE_PRIME_LENGTH: u8 = 32;
 
 /// Static large safe prime (`N`) value.
-/// The big endian version of [LARGE_SAFE_PRIME_LITTLE_ENDIAN].
+/// The big endian version of [`LARGE_SAFE_PRIME_LITTLE_ENDIAN`].
 /// This version should not be sent over the network and should generally not be used.
 ///
 /// Only here for completeness sake.
@@ -30,7 +30,7 @@ pub const LARGE_SAFE_PRIME_BIG_ENDIAN: [u8; LARGE_SAFE_PRIME_LENGTH as usize] = 
 ];
 
 /// Static large safe prime (`N`) value.
-/// The little endian version of [LARGE_SAFE_PRIME_BIG_ENDIAN].
+/// The little endian version of [`LARGE_SAFE_PRIME_BIG_ENDIAN`].
 /// This is the version that should be sent over the network in the
 /// [CMD_AUTH_LOGON_CHALLENGE_Server](https://wowdev.wiki/CMD_AUTH_LOGON_CHALLENGE_Server)
 /// packet.
@@ -43,10 +43,12 @@ pub const LARGE_SAFE_PRIME_LITTLE_ENDIAN: [u8; LARGE_SAFE_PRIME_LENGTH as usize]
     0x53, 0x50, 0x6, 0x29, 0x8b, 0x5b, 0xad, 0xbd, 0x5b, 0x53, 0xe1, 0x89, 0x5e, 0x64, 0x4b, 0x89,
 ];
 
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 pub(crate) struct LargeSafePrime {
     prime: [u8; LARGE_SAFE_PRIME_LENGTH as usize],
 }
 
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 impl Default for LargeSafePrime {
     fn default() -> Self {
         Self {
@@ -55,6 +57,7 @@ impl Default for LargeSafePrime {
     }
 }
 
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 impl LargeSafePrime {
     pub const fn from_le_bytes(prime: [u8; LARGE_SAFE_PRIME_LENGTH as usize]) -> Self {
         Self { prime }
@@ -85,10 +88,12 @@ pub const GENERATOR: u8 = 7;
 #[doc(alias = "g")]
 pub const GENERATOR_LENGTH: u8 = 1;
 
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 pub(crate) struct Generator {
     generator: u8,
 }
 
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 impl Default for Generator {
     fn default() -> Self {
         Self {
@@ -96,6 +101,8 @@ impl Default for Generator {
         }
     }
 }
+
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 impl Generator {
     #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
     pub fn to_bigint(&self) -> bigint::Integer {
@@ -107,14 +114,18 @@ impl Generator {
     }
 }
 
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 impl From<u8> for Generator {
     fn from(g: u8) -> Self {
         Self { generator: g }
     }
 }
 
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 pub const K_VALUE: u8 = 3;
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 pub(crate) struct KValue {}
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 impl KValue {
     #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
     pub fn bigint() -> bigint::Integer {

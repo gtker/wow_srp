@@ -272,7 +272,7 @@ impl SrpVerifier {
 
     /// Converts to an [`SrpProof`], consuming the [`SrpVerifier`].
     ///
-    /// # Panics:
+    /// # Panics
     ///
     /// * Panics if the RNG returns an error. If RNG does not work the authentication server
     /// should not continue functioning and therefore panics.

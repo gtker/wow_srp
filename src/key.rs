@@ -9,7 +9,7 @@ use rand::{thread_rng, RngCore};
 use crate::error::InvalidPublicKeyError;
 #[cfg(test)]
 use crate::hex::*;
-use crate::primes::{LargeSafePrime, LARGE_SAFE_PRIME_LENGTH};
+use crate::primes::LARGE_SAFE_PRIME_LENGTH;
 use crate::LARGE_SAFE_PRIME_LITTLE_ENDIAN;
 
 macro_rules! key_bigint {
@@ -33,6 +33,7 @@ macro_rules! key_new {
             }
         }
 
+        #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
         impl $name {
             pub(crate) fn randomized() -> Self {
                 Self::default()
@@ -147,6 +148,7 @@ macro_rules! key_wrapper {
 #[doc(alias = "salt")]
 pub const SALT_LENGTH: u8 = 32;
 key_wrapper!(Salt; SALT_LENGTH as usize);
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 key_new!(Salt; SALT_LENGTH as usize);
 key_no_checks_initialization!(Salt; SALT_LENGTH as usize);
 
@@ -191,6 +193,7 @@ impl PublicKey {
     }
 
     #[cfg(test)]
+    #[allow(dead_code)]
     pub(crate) fn from_be_hex_str(s: &str) -> Result<Self, InvalidPublicKeyError> {
         let mut key = hex_decode(s);
         key.reverse();
@@ -217,7 +220,7 @@ impl PublicKey {
     #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
     pub(crate) fn client_try_from_bigint(
         b: bigint::Integer,
-        large_safe_prime: &LargeSafePrime,
+        large_safe_prime: &crate::primes::LargeSafePrime,
     ) -> Result<Self, InvalidPublicKeyError> {
         if b.is_zero() {
             return Err(InvalidPublicKeyError::PublicKeyIsZero);
@@ -279,6 +282,8 @@ key_no_checks_initialization!(Proof; PROOF_LENGTH as usize);
 pub const S_LENGTH: u8 = LARGE_SAFE_PRIME_LENGTH;
 key_wrapper!(SKey; S_LENGTH as usize);
 key_no_checks_initialization!(SKey; S_LENGTH as usize);
+
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 impl SKey {
     pub fn as_equal_slice(&self) -> &[u8] {
         let mut s = &self.key[..];
@@ -306,6 +311,8 @@ pub const RECONNECT_CHALLENGE_DATA_LENGTH: u8 = 16;
 key_wrapper!(ReconnectData; RECONNECT_CHALLENGE_DATA_LENGTH as usize);
 key_new!(ReconnectData; RECONNECT_CHALLENGE_DATA_LENGTH as usize);
 key_no_checks_initialization!(ReconnectData; RECONNECT_CHALLENGE_DATA_LENGTH as usize);
+
+#[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 impl ReconnectData {
     pub fn randomize_data(&mut self) {
         thread_rng().fill_bytes(&mut self.key);
