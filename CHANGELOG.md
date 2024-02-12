@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+## [0.7.0] - 2024-02-12
+
 ### Added
 
 * `Ord`, `PartialOrd`, `Eq`, `PartialEq`, and `Hash` for `wrath_header` types.
@@ -176,7 +178,8 @@ The smaller integer size indicates that the value fits into a u8 without truncat
 - Initial release
 
 <!-- next-url -->
-[Unreleased]: https://github.com/gtker/wow_srp/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/gtker/wow_srp/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/gtker/wow_srp/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/gtker/wow_srp/compare/v0.5.3...v0.6.0
 [0.5.3]: https://github.com/gtker/wow_srp/releases/tag/v0.5.3
 [0.5.2]: https://github.com/gtker/wow_srp/releases/tag/v0.5.2

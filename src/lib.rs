@@ -43,7 +43,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! wow_srp = { version = "0.6.0", features = ["srp-default-math", "tbc-header", "wrath-header"] }
+//! wow_srp = { version = "0.7.0", features = ["srp-default-math", "tbc-header", "wrath-header"] }
 //! ```
 //!
 //! Then go to either the [`client`] module or [`server`] module for specific instructions.
@@ -63,7 +63,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! wow_srp = { version = "0.6.0", default-features = false, features = ["srp-fast-math", "tbc-header", "wrath-header"] }
+//! wow_srp = { version = "0.7.0", default-features = false, features = ["srp-fast-math", "tbc-header", "wrath-header"] }
 //! ```
 //!
 //! The `srp-fast-math` feature leads to a 50% decrease in total time. It is highly recommended to enable
