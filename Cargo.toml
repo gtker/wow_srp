@@ -47,7 +47,7 @@ optional = true
 # rug is ~100% faster than num-bigint (50% reduced time used) but is not
 # pure Rust so it has external dependencies.
 version = "1.13"
-features = ["integer"]
+features = ["integer", "std"]
 default-features = false
 optional = true
 
