@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * `integrity` module for calculating the client file integrity. Used during authentication but ignored by most
   emulators.
+* `pin` module for calculating the PIN hashes used during authentication.
 
 ## [0.7.0] - 2024-02-12
 

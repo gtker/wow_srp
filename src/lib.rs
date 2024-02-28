@@ -147,6 +147,8 @@ pub mod wrath_header;
 #[cfg(feature = "integrity")]
 pub mod integrity;
 
+pub mod pin;
+
 #[cfg(test)]
 pub(crate) mod hex;
 #[cfg(all(test, any(feature = "srp-default-math", feature = "srp-fast-math")))]
