@@ -105,6 +105,12 @@
     missing_docs
 )]
 
+/// Integrity salt size in bytes.
+///
+/// Is always 16 bytes because the field in [`CMD_AUTH_LOGON_CHALLENGE_Server`](https://wowdev.wiki/CMD_AUTH_LOGON_CHALLENGE)
+/// is statically 16 bytes across all versions.
+pub const INTEGRITY_SALT_LENGTH: u8 = 16;
+
 pub use key::PublicKey;
 pub use key::PASSWORD_VERIFIER_LENGTH;
 pub use key::PROOF_LENGTH;
@@ -137,6 +143,9 @@ pub mod tbc_header;
 pub mod vanilla_header;
 #[cfg(feature = "wrath-header")]
 pub mod wrath_header;
+
+#[cfg(feature = "integrity")]
+pub mod integrity;
 
 #[cfg(test)]
 pub(crate) mod hex;

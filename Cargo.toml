@@ -17,6 +17,7 @@ exclude = [".github", "release.toml"]
 default = ["srp-default-math", "tbc-header", "wrath-header"]
 srp-default-math = ["num-bigint"]
 srp-fast-math = ["rug"]
+integrity = ["hmac"]
 tbc-header = ["hmac"]
 wrath-header = ["hmac"]
 
