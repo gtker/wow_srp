@@ -28,6 +28,8 @@
 //! `wrath-header` must be enabled for this to be enabled.
 //! * An [`error`] module for errors that are shared by all modules.
 //! * A [`normalized_string`] module used for all modules to correctly handle strings.
+//! * An [`integrity`] module used checking the integrity of local game files.
+//! * A [`pin`] module used for PIN related functionality.
 //!
 //! ## Examples and Tests
 //!
