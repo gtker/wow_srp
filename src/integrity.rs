@@ -5,8 +5,8 @@
 //!
 //! This, along with the full data of the platform specific files should be fed into
 //!
-//! * [`login_integrity_check_windows`] for Windows x86.
-//! * [`login_integrity_check_mac`] for Mac x86 and PowerPC.
+//! * [`login_integrity_check_windows`] for Windows `x86`.
+//! * [`login_integrity_check_mac`] for Mac `x86` and `PowerPC`.
 //! Note that different files are required for the different platforms.
 //!
 //! You can also concatenate all the files into one big buffer and use
@@ -34,6 +34,7 @@ pub fn get_salt_value() -> [u8; crate::INTEGRITY_SALT_LENGTH as usize] {
 }
 
 /// Calculator for when you have appended all files into a single buffer.
+#[allow(clippy::missing_panics_doc)] // Can't actually panic
 pub fn login_integrity_check_generic(
     all_files: &[u8],
     checksum_salt: &[u8; crate::INTEGRITY_SALT_LENGTH as usize],
@@ -57,6 +58,7 @@ pub fn login_integrity_check_generic(
 /// * `dbghelp.dll`
 /// * `unicows.dll`
 ///
+#[allow(clippy::missing_panics_doc)] // Can't actually panic
 pub fn login_integrity_check_windows(
     wow_exe: &[u8],
     fmod_dll: &[u8],
@@ -88,6 +90,7 @@ pub fn login_integrity_check_windows(
 /// * `Resources/wow.icns`
 /// * `PkgInfo`
 ///
+#[allow(clippy::missing_panics_doc)] // Can't actually panic
 pub fn login_integrity_check_mac(
     world_of_warcraft: &[u8],
     info_plist: &[u8],

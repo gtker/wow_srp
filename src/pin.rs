@@ -36,6 +36,7 @@ pub fn get_pin_salt() -> [u8; PIN_SALT_SIZE as usize] {
 /// So `1234` would be the button presses `1, 2, 3, 4` in the client.
 ///
 /// Will return [`None`](Option::None) if `pin` is less than `1000`.
+#[allow(clippy::missing_panics_doc)] // Can't actually panic
 pub fn calculate_hash(
     pin: u32,
     pin_grid_seed: u32,
@@ -60,7 +61,7 @@ pub fn calculate_hash(
 
     // Convert to ASCII
     for b in &mut *bytes {
-        *b = *b + 0x30;
+        *b += 0x30;
     }
 
     let sha1: [u8; 20] = Sha1::new()
@@ -96,9 +97,7 @@ fn remap_pin_grid(mut pin_grid_seed: u32) -> [u8; MAX_PIN_LENGTH as usize] {
     let mut grid = [0_u8, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     let mut remapped_grid = grid;
 
-    let mut remapped_index = 0;
-
-    for i in (1..=MAX_PIN_LENGTH as u32).rev() {
+    for (remapped_index, i) in (1..=MAX_PIN_LENGTH as u32).rev().enumerate() {
         let remainder = pin_grid_seed % i;
         pin_grid_seed /= i;
         remapped_grid[remapped_index] = grid[remainder as usize];
@@ -108,8 +107,6 @@ fn remap_pin_grid(mut pin_grid_seed: u32) -> [u8; MAX_PIN_LENGTH as usize] {
         for i in 0..copy_size as usize {
             grid[remainder as usize + i] = grid[remainder as usize + i + 1];
         }
-
-        remapped_index += 1;
     }
 
     remapped_grid
