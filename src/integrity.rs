@@ -194,7 +194,6 @@ mod test {
 
     #[test]
     fn reconnect_regression() {
-        /*
         let contents = include_str!("../tests/integrity/reconnect_regression.txt");
 
         for line in contents.lines() {
@@ -206,7 +205,6 @@ mod test {
 
             assert_eq!(expected, actual);
         }
-         */
     }
 
     #[test]
