@@ -14,17 +14,24 @@ rust-version = "1.65.0"
 exclude = [".github", "release.toml"]
 
 [features]
-default = ["srp-default-math", "tbc-header", "wrath-header"]
+default = ["srp-default-math", "tbc-header", "wrath-header", "integrity"]
 srp-default-math = ["num-bigint"]
 srp-fast-math = ["rug"]
 integrity = ["hmac"]
 tbc-header = ["hmac"]
 wrath-header = ["hmac"]
+matrix-card = ["md5", "hmac"]
 
 [dependencies.sha-1]
 # Required for SRP6 algorithm
 version = "0.10.0"
 default-features = false
+
+[dependencies.md5]
+# Required for matrix cards
+version = "0.7.0"
+default-features = false
+optional = true
 
 [dependencies.hmac]
 # Required for Wrath header crypto

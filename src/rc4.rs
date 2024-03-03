@@ -2,14 +2,14 @@
 // in the form of pointer indirection and available derives.
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub(super) struct Rc4 {
+pub(crate) struct Rc4 {
     state: [u8; 256],
     i: u8,
     j: u8,
 }
 
 impl Rc4 {
-    pub(super) fn new(key: &[u8]) -> Self {
+    pub(crate) fn new(key: &[u8]) -> Self {
         let mut state = Self {
             state: [0; 256],
             i: 0,
@@ -22,7 +22,7 @@ impl Rc4 {
     }
 
     // Decode one without advancing keystream
-    pub(super) fn apply_keystream(&mut self, stream: &mut [u8]) {
+    pub(crate) fn apply_keystream(&mut self, stream: &mut [u8]) {
         for s in stream {
             let v = self.pseudo_random_generation();
             let old_s = *s;
@@ -71,7 +71,7 @@ impl Rc4 {
 
 #[cfg(test)]
 mod test {
-    use crate::wrath_header::inner_crypto::rc4::Rc4;
+    use crate::rc4::Rc4;
 
     #[test]
     fn test_rc4() {

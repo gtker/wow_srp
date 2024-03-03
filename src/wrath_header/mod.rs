@@ -87,7 +87,7 @@ pub use crate::wrath_header::decrypt::WrathServerAttempt;
 
 pub(crate) mod decrypt;
 pub(crate) mod encrypt;
-mod inner_crypto;
+pub(crate) mod inner_crypto;
 
 /// Size in bytes of the client [world packet] header.
 ///

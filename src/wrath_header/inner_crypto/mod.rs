@@ -1,6 +1,4 @@
-mod rc4;
-
-use crate::wrath_header::inner_crypto::rc4::Rc4;
+use crate::rc4::Rc4;
 use crate::SESSION_KEY_LENGTH;
 use core::fmt::Debug;
 use hmac::{Hmac, Mac};

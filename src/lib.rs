@@ -146,10 +146,15 @@ pub mod vanilla_header;
 #[cfg(feature = "wrath-header")]
 pub mod wrath_header;
 
+pub(crate) mod rc4;
+
 #[cfg(feature = "integrity")]
 pub mod integrity;
 
 pub mod pin;
+
+#[cfg(feature = "matrix-card")]
+pub mod matrix_card;
 
 #[cfg(test)]
 pub(crate) mod hex;
