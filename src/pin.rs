@@ -135,8 +135,29 @@ fn remap_pin_grid(mut pin_grid_seed: u32) -> [u8; MAX_PIN_LENGTH as usize] {
 #[cfg(test)]
 mod test {
     use crate::hex::hex_decode;
-    use crate::pin::{calculate_hash, remap_pin_grid, MAX_PIN_LENGTH};
+    use crate::pin::{calculate_hash, pin_to_bytes, remap_pin_grid, MAX_PIN_LENGTH};
     use std::convert::TryInto;
+
+    #[test]
+    fn test_pin_to_bytes() {
+        const MINIMUM_PIN: u32 = 1000;
+        // No switching
+        const PIN_GRID_SEED: u32 = 0;
+
+        const CLIENT_SALT: [u8; 16] = [
+            121, 62, 76, 125, 207, 0, 130, 51, 128, 244, 161, 24, 110, 245, 114, 57,
+        ];
+        const SERVER_SALT: [u8; 16] = [0_u8; 16];
+
+        assert!(calculate_hash(MINIMUM_PIN, PIN_GRID_SEED, &SERVER_SALT, &CLIENT_SALT).is_some());
+        assert!(
+            calculate_hash(MINIMUM_PIN - 1, PIN_GRID_SEED, &SERVER_SALT, &CLIENT_SALT).is_none()
+        );
+        assert!(calculate_hash(u32::MAX, PIN_GRID_SEED, &SERVER_SALT, &CLIENT_SALT).is_some());
+
+        let mut buf = [0_u8; 10];
+        assert_eq!(pin_to_bytes(u32::MAX, &mut buf).len(), 10);
+    }
 
     #[test]
     fn no_remapping() {
