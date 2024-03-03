@@ -29,6 +29,25 @@ pub fn get_pin_salt() -> [u8; PIN_SALT_SIZE as usize] {
     buf
 }
 
+/// Verify client hash PIN.
+///
+/// This is just a convenience wrapper around [`calculate_hash`].
+///
+/// This will also return [`false`] if the `pin` is invalid.
+pub fn verify_client_pin_hash(
+    pin: u32,
+    pin_grid_seed: u32,
+    server_salt: &[u8; 16],
+    client_salt: &[u8; 16],
+    client_pin_hash: &[u8; 20],
+) -> bool {
+    if let Some(server_pin_hash) = calculate_hash(pin, pin_grid_seed, server_salt, client_salt) {
+        server_pin_hash == *client_pin_hash
+    } else {
+        false
+    }
+}
+
 /// Calculate the hash of a pin.
 ///
 /// The pin is stored as a `u32` where every base 10 digit is a
