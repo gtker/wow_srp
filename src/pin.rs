@@ -63,11 +63,12 @@ pub fn calculate_hash(
     client_salt: &[u8; 16],
 ) -> Option<[u8; PIN_HASH_SIZE as usize]> {
     let mut pin_array = [0_u8; MAX_PIN_LENGTH as usize];
-    let remapped_pin_grid = remap_pin_grid(pin_grid_seed);
     let bytes = pin_to_bytes(pin, &mut pin_array);
     if bytes.len() < MIN_PIN_LENGTH as usize || bytes.len() > MAX_PIN_LENGTH as usize {
         return None;
     }
+
+    let remapped_pin_grid = remap_pin_grid(pin_grid_seed);
 
     for b in &mut *bytes {
         let (i, _) = remapped_pin_grid
