@@ -29,7 +29,7 @@ pub fn get_pin_salt() -> [u8; PIN_SALT_SIZE as usize] {
     buf
 }
 
-/// Calculate the hash of of a pin.
+/// Calculate the hash of a pin.
 ///
 /// The pin is stored as a `u32` where every base 10 digit is a
 /// separate button press.
