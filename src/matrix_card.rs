@@ -143,6 +143,7 @@ pub fn verify_matrix_card_hash(
 /// Represents the physical card that would be given to clients.
 ///
 /// Use [`Self::to_printer`] in order to have human-readable output.
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct MatrixCard {
     digit_count: u8,
     width: u8,
@@ -231,6 +232,7 @@ impl MatrixCard {
 }
 
 /// Iterator over the cells as strings.
+#[derive(Debug, Clone)]
 pub struct MatrixCardPrinter<'a> {
     chunks: Chunks<'a, u8>,
 }
@@ -265,6 +267,7 @@ fn fill_matrix_card_values(buf: &mut [u8]) {
 /// Struct to enter digits and create a final proof.
 ///
 /// Use this for clients and [`verify_matrix_card_hash`] for servers.
+#[derive(Debug, Clone)]
 pub struct MatrixCardVerifier {
     challenge_count: u8,
     height: u8,
@@ -314,7 +317,7 @@ impl MatrixCardVerifier {
 
         let coord = self.coordinates[round as usize];
         let x = coord % self.width;
-        let y = coord % self.width;
+        let y = coord / self.width;
 
         if y >= self.height {
             return None;
@@ -414,9 +417,9 @@ fn real_3_3_5_client_multiple_challenges() {
     card.enter_value(0);
     card.enter_value(0);
 
-    assert_eq!(card.get_matrix_coordinates(0), Some((7, 7)));
+    assert_eq!(card.get_matrix_coordinates(0), Some((7, 2)));
     assert_eq!(card.get_matrix_coordinates(1), Some((0, 0)));
-    assert_eq!(card.get_matrix_coordinates(2), Some((4, 4)));
+    assert_eq!(card.get_matrix_coordinates(2), Some((4, 1)));
 
     let actual = card.into_proof();
 
