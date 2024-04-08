@@ -13,6 +13,64 @@ const PIN_HASH_SIZE: u8 = 20;
 const MIN_PIN_LENGTH: u8 = 4;
 const MAX_PIN_LENGTH: u8 = 10;
 
+/// Represents a PIN code.
+///
+/// This type upholds the invariants that the PIN must have at least 4 digits, but no more than 10.
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct PinCode {
+    inner: [u8; MAX_PIN_LENGTH as usize],
+    length: u8,
+}
+
+impl PinCode {
+    /// Create [`PinCode`] from a compressed format of the keypresses.
+    ///
+    /// Every decimal digit in the number represents a single keypress.
+    ///
+    /// So `1234` represents the keypresses `1`, `2`, `3`, and `4`.
+    ///
+    /// The `pin` must be at least `1000`.
+    pub fn from_u32(pin: u32) -> Option<Self> {
+        let mut pin_array = [0_u8; MAX_PIN_LENGTH as usize];
+        let length = {
+            let bytes = pin_to_bytes(pin, &mut pin_array);
+            if bytes.len() < MIN_PIN_LENGTH as usize || bytes.len() > MAX_PIN_LENGTH as usize {
+                return None;
+            }
+            bytes.len() as u8
+        };
+
+        Some(Self {
+            inner: pin_array,
+            length,
+        })
+    }
+
+    /// Create [`PinCode`] from a slice of separate keypresses between 0 and 9.
+    ///
+    /// The slice must be at least 4 bytes long, and at most 10.
+    pub fn from_slice(pin: &[u8]) -> Option<Self> {
+        let valid_length =
+            pin.len() >= (MIN_PIN_LENGTH as usize) && pin.len() <= (MAX_PIN_LENGTH as usize);
+        let valid_digits = pin.iter().all(|&a| a < 10);
+
+        if valid_length && valid_digits {
+            let mut pin_array = [0_u8; MAX_PIN_LENGTH as usize];
+            pin_array[..pin.len()].copy_from_slice(pin);
+            Some(Self {
+                inner: pin_array,
+                length: pin.len() as u8,
+            })
+        } else {
+            None
+        }
+    }
+
+    fn bytes(&mut self) -> &mut [u8] {
+        &mut self.inner[..self.length as usize]
+    }
+}
+
 /// Randomized value to be sent in [`CMD_AUTH_LOGON_CHALLENGE_Server`](https://wowdev.wiki/CMD_AUTH_LOGON_CHALLENGE).
 ///
 /// Just a convenience function for generating a random `u32`.
@@ -35,17 +93,13 @@ pub fn get_pin_salt() -> [u8; PIN_SALT_SIZE as usize] {
 ///
 /// This will also return [`false`] if the `pin` is invalid.
 pub fn verify_client_pin_hash(
-    pin: u32,
+    pin: PinCode,
     pin_grid_seed: u32,
     server_salt: &[u8; 16],
     client_salt: &[u8; 16],
     client_pin_hash: &[u8; 20],
 ) -> bool {
-    if let Some(server_pin_hash) = calculate_hash(pin, pin_grid_seed, server_salt, client_salt) {
-        server_pin_hash == *client_pin_hash
-    } else {
-        false
-    }
+    *client_pin_hash == calculate_hash(pin, pin_grid_seed, server_salt, client_salt)
 }
 
 /// Calculate the hash of a pin.
@@ -57,16 +111,12 @@ pub fn verify_client_pin_hash(
 /// Will return [`None`](Option::None) if `pin` is less than `1000`.
 #[allow(clippy::missing_panics_doc)] // Can't actually panic
 pub fn calculate_hash(
-    pin: u32,
+    mut pin: PinCode,
     pin_grid_seed: u32,
     server_salt: &[u8; 16],
     client_salt: &[u8; 16],
-) -> Option<[u8; PIN_HASH_SIZE as usize]> {
-    let mut pin_array = [0_u8; MAX_PIN_LENGTH as usize];
-    let bytes = pin_to_bytes(pin, &mut pin_array);
-    if bytes.len() < MIN_PIN_LENGTH as usize || bytes.len() > MAX_PIN_LENGTH as usize {
-        return None;
-    }
+) -> [u8; PIN_HASH_SIZE as usize] {
+    let bytes = pin.bytes();
 
     let remapped_pin_grid = remap_pin_grid(pin_grid_seed);
 
@@ -90,13 +140,11 @@ pub fn calculate_hash(
         .finalize_fixed()
         .into();
 
-    Some(
-        Sha1::new()
-            .chain_update(client_salt)
-            .chain_update(sha1)
-            .finalize_fixed()
-            .into(),
-    )
+    Sha1::new()
+        .chain_update(client_salt)
+        .chain_update(sha1)
+        .finalize_fixed()
+        .into()
 }
 
 fn pin_to_bytes(mut pin: u32, out_pin_array: &mut [u8; MAX_PIN_LENGTH as usize]) -> &mut [u8] {
@@ -135,25 +183,16 @@ fn remap_pin_grid(mut pin_grid_seed: u32) -> [u8; MAX_PIN_LENGTH as usize] {
 #[cfg(test)]
 mod test {
     use crate::hex::hex_decode;
-    use crate::pin::{calculate_hash, pin_to_bytes, remap_pin_grid, MAX_PIN_LENGTH};
+    use crate::pin::{calculate_hash, pin_to_bytes, remap_pin_grid, PinCode, MAX_PIN_LENGTH};
     use std::convert::TryInto;
 
     #[test]
     fn test_pin_to_bytes() {
         const MINIMUM_PIN: u32 = 1000;
-        // No switching
-        const PIN_GRID_SEED: u32 = 0;
 
-        const CLIENT_SALT: [u8; 16] = [
-            121, 62, 76, 125, 207, 0, 130, 51, 128, 244, 161, 24, 110, 245, 114, 57,
-        ];
-        const SERVER_SALT: [u8; 16] = [0_u8; 16];
-
-        assert!(calculate_hash(MINIMUM_PIN, PIN_GRID_SEED, &SERVER_SALT, &CLIENT_SALT).is_some());
-        assert!(
-            calculate_hash(MINIMUM_PIN - 1, PIN_GRID_SEED, &SERVER_SALT, &CLIENT_SALT).is_none()
-        );
-        assert!(calculate_hash(u32::MAX, PIN_GRID_SEED, &SERVER_SALT, &CLIENT_SALT).is_some());
+        let _ = PinCode::from_u32(MINIMUM_PIN).unwrap();
+        assert!(PinCode::from_u32(MINIMUM_PIN - 1).is_none());
+        let _ = PinCode::from_u32(u32::MAX).unwrap();
 
         let mut buf = [0_u8; 10];
         assert_eq!(pin_to_bytes(u32::MAX, &mut buf).len(), 10);
@@ -162,7 +201,7 @@ mod test {
     #[test]
     fn no_remapping() {
         // Numbers 1, 2, 3, 4
-        const PIN: u32 = 1234;
+        let pin = PinCode::from_u32(1234).unwrap();
         // No switching
         const PIN_GRID_SEED: u32 = 0;
 
@@ -175,14 +214,20 @@ mod test {
             204,
         ];
 
-        let actual = calculate_hash(PIN, PIN_GRID_SEED, &SERVER_SALT, &CLIENT_SALT);
-        assert_eq!(actual, Some(EXPECTED));
+        let actual = calculate_hash(pin, PIN_GRID_SEED, &SERVER_SALT, &CLIENT_SALT);
+        assert_eq!(actual, EXPECTED);
+
+        // Numbers 1, 2, 3, 4
+        let pin = PinCode::from_slice(&[1, 2, 3, 4]).unwrap();
+        let actual = calculate_hash(pin, PIN_GRID_SEED, &SERVER_SALT, &CLIENT_SALT);
+        assert_eq!(actual, EXPECTED);
     }
 
     #[test]
     fn remap_1() {
         // Numbers 1, 2, 3, 4
-        const PIN: u32 = 1234;
+        let pin = PinCode::from_u32(1234).unwrap();
+
         // No switching
         const PIN_GRID_SEED: u32 = 1;
 
@@ -197,8 +242,8 @@ mod test {
             188,
         ];
 
-        let actual = calculate_hash(PIN, PIN_GRID_SEED, &SERVER_SALT, &CLIENT_SALT);
-        assert_eq!(actual, Some(EXPECTED));
+        let actual = calculate_hash(pin, PIN_GRID_SEED, &SERVER_SALT, &CLIENT_SALT);
+        assert_eq!(actual, EXPECTED);
     }
 
     #[test]
@@ -206,14 +251,14 @@ mod test {
         let content = include_str!("../tests/pin/regression.txt");
         for line in content.lines() {
             let mut line = line.split_whitespace();
-            let pin: u32 = line.next().unwrap().parse().unwrap();
+            let pin = PinCode::from_u32(line.next().unwrap().parse().unwrap()).unwrap();
             let pin_grid_seed: u32 = line.next().unwrap().parse().unwrap();
             let server_salt: [u8; 16] = hex_decode(line.next().unwrap()).try_into().unwrap();
             let client_salt: [u8; 16] = hex_decode(line.next().unwrap()).try_into().unwrap();
             let expected: [u8; 20] = hex_decode(line.next().unwrap()).try_into().unwrap();
 
             let actual = calculate_hash(pin, pin_grid_seed, &server_salt, &client_salt);
-            assert_eq!(actual, Some(expected));
+            assert_eq!(actual, expected);
         }
     }
 
