@@ -129,7 +129,9 @@ pub fn verify_matrix_card_hash(
     );
 
     for round in 0..challenge_count {
-        let (x, y) = v.get_matrix_coordinates(round).unwrap();
+        let Some((x, y)) = v.get_matrix_coordinates(round) else {
+            return false;
+        };
 
         for digit in matrix_card.get_number_at_coordinates(x, y) {
             v.enter_value(*digit);
@@ -216,17 +218,17 @@ impl MatrixCard {
     }
 
     /// The width of the card (x).
-    pub fn width(&self) -> u8 {
+    pub const fn width(&self) -> u8 {
         self.width
     }
 
     /// The height of the card (y).
-    pub fn height(&self) -> u8 {
+    pub const fn height(&self) -> u8 {
         self.height
     }
 
     /// Amount of digits per cell.
-    pub fn digit_count(&self) -> u8 {
+    pub const fn digit_count(&self) -> u8 {
         self.digit_count
     }
 }
@@ -289,8 +291,8 @@ impl MatrixCardVerifier {
         let coordinates = generate_coordinates(width, height, challenge_count, seed);
 
         let mut md5 = Context::new();
-        md5.consume(&seed.to_le_bytes());
-        md5.consume(&session_key);
+        md5.consume(seed.to_le_bytes());
+        md5.consume(session_key);
         let md5 = md5.compute().0;
 
         let rc4 = Rc4::new(&md5);
@@ -320,10 +322,10 @@ impl MatrixCardVerifier {
         let y = coord / self.width;
 
         if y >= self.height {
-            return None;
+            None
+        } else {
+            Some((x, y))
         }
-
-        return Some((x, y));
     }
 
     /// Enter a single digit of a code.

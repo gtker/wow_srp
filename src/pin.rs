@@ -103,12 +103,6 @@ pub fn verify_client_pin_hash(
 }
 
 /// Calculate the hash of a pin.
-///
-/// The pin is stored as a `u32` where every base 10 digit is a
-/// separate button press.
-/// So `1234` would be the button presses `1, 2, 3, 4` in the client.
-///
-/// Will return [`None`](Option::None) if `pin` is less than `1000`.
 #[allow(clippy::missing_panics_doc)] // Can't actually panic
 pub fn calculate_hash(
     mut pin: PinCode,
