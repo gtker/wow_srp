@@ -3,7 +3,7 @@
 //!
 //! Use [`get_pin_grid_seed`] and [`get_pin_salt`] on the server to generate values, and then
 //! [`calculate_hash`] on the server/client to get the PIN hash.
-use rand::{random, thread_rng, RngCore};
+use rand::{random, thread_rng, Rng, RngCore};
 use sha1::digest::FixedOutput;
 use sha1::{Digest, Sha1};
 
@@ -23,6 +23,32 @@ pub struct PinCode {
 }
 
 impl PinCode {
+    /// Creates a new [`PinCode`] with random digits and a length of between 4 and 10 digits.
+    pub fn new() -> Self {
+        let length: u8 = thread_rng().gen_range(4..10);
+
+        let mut inner = [0_u8; MAX_PIN_LENGTH as usize];
+        for i in 0..(length as usize) {
+            inner[i] = thread_rng().gen_range(0..10);
+        }
+
+        Self { inner, length }
+    }
+
+    /// Creates a new [`PinCode`] with random digits and a specific length.
+    pub fn random_of_length(length: u8) -> Option<Self> {
+        if length < MIN_PIN_LENGTH || length > MAX_PIN_LENGTH {
+            return None;
+        }
+
+        let mut inner = [0_u8; MAX_PIN_LENGTH as usize];
+        for i in 0..(length as usize) {
+            inner[i] = thread_rng().gen_range(0..10);
+        }
+
+        Some(Self { inner, length })
+    }
+
     /// Create [`PinCode`] from a compressed format of the keypresses.
     ///
     /// Every decimal digit in the number represents a single keypress.
@@ -66,7 +92,10 @@ impl PinCode {
         }
     }
 
-    fn bytes(&mut self) -> &mut [u8] {
+    /// Gets the digits of the PIN as a slice.
+    ///
+    /// Every byte is in the range [0;9]` and the length is always between 4 and 10.
+    pub fn digits(&mut self) -> &mut [u8] {
         &mut self.inner[..self.length as usize]
     }
 }
@@ -110,18 +139,11 @@ pub fn calculate_hash(
     server_salt: &[u8; 16],
     client_salt: &[u8; 16],
 ) -> [u8; PIN_HASH_SIZE as usize] {
-    let bytes = pin.bytes();
+    let bytes = pin.digits();
 
     let remapped_pin_grid = remap_pin_grid(pin_grid_seed);
 
-    for b in &mut *bytes {
-        let (i, _) = remapped_pin_grid
-            .iter()
-            .enumerate()
-            .find(|(_, a)| **a == *b)
-            .unwrap();
-        *b = i as u8;
-    }
+    convert_pin_grid(bytes, remapped_pin_grid);
 
     // Convert to ASCII
     for b in &mut *bytes {
@@ -174,11 +196,38 @@ fn remap_pin_grid(mut pin_grid_seed: u32) -> [u8; MAX_PIN_LENGTH as usize] {
     remapped_grid
 }
 
+fn convert_pin_grid(bytes: &mut [u8], remapped_pin_grid: [u8; MAX_PIN_LENGTH as usize]) {
+    for b in &mut *bytes {
+        let (i, _) = remapped_pin_grid
+            .iter()
+            .enumerate()
+            .find(|(_, a)| **a == *b)
+            .unwrap();
+        *b = i as u8;
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::hex::hex_decode;
-    use crate::pin::{calculate_hash, pin_to_bytes, remap_pin_grid, PinCode, MAX_PIN_LENGTH};
+    use crate::pin::{
+        calculate_hash, convert_pin_grid, pin_to_bytes, remap_pin_grid, PinCode, MAX_PIN_LENGTH,
+    };
     use std::convert::TryInto;
+
+    #[test]
+    fn test_convert() {
+        let content = include_str!("../tests/pin/convert_regression.txt");
+        for line in content.lines() {
+            let mut line = line.split_whitespace();
+            let mut bytes: Vec<u8> = hex_decode(line.next().unwrap()).try_into().unwrap();
+            let remapped_pin_grid: [u8; 10] = hex_decode(line.next().unwrap()).try_into().unwrap();
+            let expected: Vec<u8> = hex_decode(line.next().unwrap()).try_into().unwrap();
+
+            convert_pin_grid(&mut bytes, remapped_pin_grid);
+            assert_eq!(bytes, expected);
+        }
+    }
 
     #[test]
     fn test_pin_to_bytes() {
@@ -215,6 +264,19 @@ mod test {
         let pin = PinCode::from_slice(&[1, 2, 3, 4]).unwrap();
         let actual = calculate_hash(pin, PIN_GRID_SEED, &SERVER_SALT, &CLIENT_SALT);
         assert_eq!(actual, EXPECTED);
+    }
+
+    #[test]
+    fn remap_regression() {
+        let content = include_str!("../tests/pin/remap_regression.txt");
+        for line in content.lines() {
+            let mut line = line.split_whitespace();
+            let pin_grid_seed: u32 = line.next().unwrap().parse().unwrap();
+            let expected: [u8; 10] = hex_decode(line.next().unwrap()).try_into().unwrap();
+
+            let actual = remap_pin_grid(pin_grid_seed);
+            assert_eq!(actual, expected);
+        }
     }
 
     #[test]
