@@ -28,8 +28,8 @@ impl PinCode {
         let length: u8 = thread_rng().gen_range(4..10);
 
         let mut inner = [0_u8; MAX_PIN_LENGTH as usize];
-        for i in 0..(length as usize) {
-            inner[i] = thread_rng().gen_range(0..10);
+        for i in inner.iter_mut().take(length as usize) {
+            *i = thread_rng().gen_range(0..10);
         }
 
         Self { inner, length }
@@ -37,13 +37,13 @@ impl PinCode {
 
     /// Creates a new [`PinCode`] with random digits and a specific length.
     pub fn random_of_length(length: u8) -> Option<Self> {
-        if length < MIN_PIN_LENGTH || length > MAX_PIN_LENGTH {
+        if !(MIN_PIN_LENGTH..MAX_PIN_LENGTH).contains(&length) {
             return None;
         }
 
         let mut inner = [0_u8; MAX_PIN_LENGTH as usize];
-        for i in 0..(length as usize) {
-            inner[i] = thread_rng().gen_range(0..10);
+        for i in inner.iter_mut().take(length as usize) {
+            *i = thread_rng().gen_range(0..10);
         }
 
         Some(Self { inner, length })
@@ -94,9 +94,15 @@ impl PinCode {
 
     /// Gets the digits of the PIN as a slice.
     ///
-    /// Every byte is in the range [0;9]` and the length is always between 4 and 10.
+    /// Every byte is in the range `[0;9]` and the length is always between 4 and 10.
     pub fn digits(&mut self) -> &mut [u8] {
         &mut self.inner[..self.length as usize]
+    }
+}
+
+impl Default for PinCode {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

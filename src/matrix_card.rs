@@ -281,6 +281,7 @@ pub struct MatrixCardVerifier {
 
 impl MatrixCardVerifier {
     /// Create a new verifier.
+    #[allow(clippy::missing_panics_doc)] // Can't actually panic
     pub fn new(
         challenge_count: u8,
         height: u8,
