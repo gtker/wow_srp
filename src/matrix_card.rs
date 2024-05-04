@@ -73,7 +73,7 @@
 //!
 //! let matrix_card = MatrixCard::new(DIGIT_COUNT, HEIGHT, WIDTH);
 //!
-//! let mut verifier = MatrixCardVerifier::new(CHALLENGE_COUNT, HEIGHT, seed, WIDTH, SESSION_KEY);
+//! let mut verifier = MatrixCardVerifier::new(CHALLENGE_COUNT, HEIGHT, seed, WIDTH, SESSION_KEY)?;
 //!
 //! let (x, y) = verifier.get_matrix_coordinates(0)?;
 //! let digits = matrix_card.get_number_at_coordinates(x, y);
@@ -120,13 +120,15 @@ pub fn verify_matrix_card_hash(
     session_key: &[u8; SESSION_KEY_LENGTH as usize],
     client_proof: &[u8; SHA1_HASH_LENGTH as usize],
 ) -> bool {
-    let mut v = MatrixCardVerifier::new(
+    let Some(mut v) = MatrixCardVerifier::new(
         challenge_count,
         matrix_card.height(),
         seed,
         matrix_card.width(),
         session_key,
-    );
+    ) else {
+        return false;
+    };
 
     for round in 0..challenge_count {
         let Some((x, y)) = v.get_matrix_coordinates(round) else {
@@ -274,7 +276,7 @@ pub struct MatrixCardVerifier {
     challenge_count: u8,
     height: u8,
     width: u8,
-    coordinates: Vec<u8>,
+    coordinates: Vec<u32>,
     hmac: Hmac<Sha1>,
     rc4: Rc4,
 }
@@ -288,8 +290,8 @@ impl MatrixCardVerifier {
         seed: u64,
         width: u8,
         session_key: &[u8; SESSION_KEY_LENGTH as usize],
-    ) -> Self {
-        let coordinates = generate_coordinates(width, height, challenge_count, seed);
+    ) -> Option<Self> {
+        let coordinates = generate_coordinates(width, height, challenge_count, seed)?;
 
         let mut md5 = Context::new();
         md5.consume(seed.to_le_bytes());
@@ -300,14 +302,14 @@ impl MatrixCardVerifier {
 
         let hmac = Hmac::<Sha1>::new_from_slice(&md5).unwrap();
 
-        Self {
+        Some(Self {
             challenge_count,
             height,
             width,
             coordinates,
             hmac,
             rc4,
-        }
+        })
     }
 
     /// Returns the coordinates required for a specific round.
@@ -319,8 +321,9 @@ impl MatrixCardVerifier {
         }
 
         let coord = self.coordinates[round as usize];
-        let x = coord % self.width;
-        let y = coord / self.width;
+        // We use modulus with u8
+        let x = (coord % (self.width as u32)) as u8;
+        let y = (coord / (self.width as u32)) as u8;
 
         if y >= self.height {
             None
@@ -346,21 +349,33 @@ impl MatrixCardVerifier {
     }
 }
 
-fn generate_coordinates(width: u8, height: u8, challenge_count: u8, mut seed: u64) -> Vec<u8> {
-    let mut coordinates = vec![0_u8; challenge_count.into()];
-
-    let matrix_size = width * height;
-    let mut matrix_indices = vec![0_u8; matrix_size.into()];
-
-    for i in 1..matrix_size {
-        matrix_indices[i as usize] = i;
+fn generate_coordinates(
+    width: u8,
+    height: u8,
+    challenge_count: u8,
+    mut seed: u64,
+) -> Option<Vec<u32>> {
+    if width == 0 || height == 0 || challenge_count == 0 {
+        return None;
     }
 
+    let width: usize = width.into();
+    let height: usize = height.into();
+    let challenge_count: usize = challenge_count.into();
+
+    let matrix_size = width * height;
+    if challenge_count > matrix_size {
+        return None;
+    }
+
+    let mut matrix_indices = create_matrix_indices(matrix_size);
+
+    let mut coordinates = vec![0_u32; challenge_count];
     for i in 0..challenge_count {
         let count = matrix_size - i;
         let index = seed % count as u64;
 
-        coordinates[i as usize] = matrix_indices[index as usize];
+        coordinates[i] = matrix_indices[index as usize];
 
         for j in index..(count as u64 - 1) {
             matrix_indices[j as usize] = matrix_indices[j as usize + 1];
@@ -369,66 +384,110 @@ fn generate_coordinates(width: u8, height: u8, challenge_count: u8, mut seed: u6
         seed /= count as u64;
     }
 
-    coordinates
+    Some(coordinates)
 }
 
-#[test]
-fn real_3_3_5_client() {
-    const SESSION_KEY: [u8; 40] = [
-        46, 167, 52, 11, 179, 156, 220, 26, 87, 175, 253, 222, 115, 66, 233, 19, 167, 238, 19, 84,
-        138, 175, 136, 247, 241, 239, 119, 140, 15, 202, 125, 85, 137, 178, 159, 127, 134, 58, 46,
-        126,
-    ];
+fn create_matrix_indices(matrix_size: usize) -> Vec<u32> {
+    let mut matrix_indices = vec![0_u32; matrix_size];
 
-    const CHALLENGE_COUNT: u8 = 1;
-    const HEIGHT: u8 = 10;
-    const SEED: u64 = 0;
-    const WIDTH: u8 = 8;
-    let mut card = MatrixCardVerifier::new(CHALLENGE_COUNT, HEIGHT, SEED, WIDTH, &SESSION_KEY);
-    card.enter_value(0);
-    card.enter_value(0);
+    for i in 1..(matrix_size as u32) {
+        matrix_indices[i as usize] = i;
+    }
 
-    assert_eq!(card.get_matrix_coordinates(0), Some((0, 0)));
-
-    let actual = card.into_proof();
-
-    const EXPECTED: [u8; 20] = [
-        241, 196, 101, 128, 135, 11, 160, 192, 252, 108, 209, 242, 49, 157, 119, 131, 135, 191,
-        181, 153,
-    ];
-    assert_eq!(actual, EXPECTED);
+    matrix_indices
 }
 
-#[test]
-fn real_3_3_5_client_multiple_challenges() {
-    const SESSION_KEY: [u8; 40] = [
-        102, 94, 221, 27, 188, 90, 39, 16, 200, 68, 41, 48, 224, 105, 1, 102, 18, 212, 59, 119,
-        207, 76, 237, 37, 240, 225, 148, 192, 63, 31, 65, 98, 142, 197, 217, 88, 34, 85, 72, 158,
-    ];
+#[cfg(test)]
+mod test {
+    use crate::matrix_card::{generate_coordinates, MatrixCardVerifier};
 
-    const CHALLENGE_COUNT: u8 = 3;
-    const HEIGHT: u8 = 10;
-    const SEED: u64 = 14574472801782155463;
-    const WIDTH: u8 = 8;
-    let mut card = MatrixCardVerifier::new(CHALLENGE_COUNT, HEIGHT, SEED, WIDTH, &SESSION_KEY);
-    card.enter_value(0);
-    card.enter_value(0);
+    #[test]
+    fn coordinates_regression() {
+        let content = include_str!("../tests/matrix_card/coordinates_regression.txt");
 
-    card.enter_value(0);
-    card.enter_value(0);
+        for line in content.lines() {
+            let mut line = line.split_whitespace();
 
-    card.enter_value(0);
-    card.enter_value(0);
+            let width: u8 = line.next().unwrap().parse().unwrap();
+            let height: u8 = line.next().unwrap().parse().unwrap();
+            let challenge_count: u8 = line.next().unwrap().parse().unwrap();
+            let seed: u64 = line.next().unwrap().parse().unwrap();
 
-    assert_eq!(card.get_matrix_coordinates(0), Some((7, 2)));
-    assert_eq!(card.get_matrix_coordinates(1), Some((0, 0)));
-    assert_eq!(card.get_matrix_coordinates(2), Some((4, 1)));
+            let expected = {
+                let mut v = Vec::new();
+                for l in line {
+                    let ex: u32 = l.parse().unwrap();
+                    v.push(ex);
+                }
+                v
+            };
 
-    let actual = card.into_proof();
+            let actual = generate_coordinates(width, height, challenge_count, seed).unwrap();
+            assert_eq!(expected, actual);
+        }
+    }
 
-    const EXPECTED: [u8; 20] = [
-        193, 75, 79, 43, 182, 117, 141, 123, 100, 155, 172, 137, 139, 67, 215, 195, 187, 55, 30,
-        231,
-    ];
-    assert_eq!(actual, EXPECTED);
+    #[test]
+    fn real_3_3_5_client() {
+        const SESSION_KEY: [u8; 40] = [
+            46, 167, 52, 11, 179, 156, 220, 26, 87, 175, 253, 222, 115, 66, 233, 19, 167, 238, 19,
+            84, 138, 175, 136, 247, 241, 239, 119, 140, 15, 202, 125, 85, 137, 178, 159, 127, 134,
+            58, 46, 126,
+        ];
+
+        const CHALLENGE_COUNT: u8 = 1;
+        const HEIGHT: u8 = 10;
+        const SEED: u64 = 0;
+        const WIDTH: u8 = 8;
+        let mut card =
+            MatrixCardVerifier::new(CHALLENGE_COUNT, HEIGHT, SEED, WIDTH, &SESSION_KEY).unwrap();
+        card.enter_value(0);
+        card.enter_value(0);
+
+        assert_eq!(card.get_matrix_coordinates(0), Some((0, 0)));
+
+        let actual = card.into_proof();
+
+        const EXPECTED: [u8; 20] = [
+            241, 196, 101, 128, 135, 11, 160, 192, 252, 108, 209, 242, 49, 157, 119, 131, 135, 191,
+            181, 153,
+        ];
+        assert_eq!(actual, EXPECTED);
+    }
+
+    #[test]
+    fn real_3_3_5_client_multiple_challenges() {
+        const SESSION_KEY: [u8; 40] = [
+            102, 94, 221, 27, 188, 90, 39, 16, 200, 68, 41, 48, 224, 105, 1, 102, 18, 212, 59, 119,
+            207, 76, 237, 37, 240, 225, 148, 192, 63, 31, 65, 98, 142, 197, 217, 88, 34, 85, 72,
+            158,
+        ];
+
+        const CHALLENGE_COUNT: u8 = 3;
+        const HEIGHT: u8 = 10;
+        const SEED: u64 = 14574472801782155463;
+        const WIDTH: u8 = 8;
+        let mut card =
+            MatrixCardVerifier::new(CHALLENGE_COUNT, HEIGHT, SEED, WIDTH, &SESSION_KEY).unwrap();
+        card.enter_value(0);
+        card.enter_value(0);
+
+        card.enter_value(0);
+        card.enter_value(0);
+
+        card.enter_value(0);
+        card.enter_value(0);
+
+        assert_eq!(card.get_matrix_coordinates(0), Some((7, 2)));
+        assert_eq!(card.get_matrix_coordinates(1), Some((0, 0)));
+        assert_eq!(card.get_matrix_coordinates(2), Some((4, 1)));
+
+        let actual = card.into_proof();
+
+        const EXPECTED: [u8; 20] = [
+            193, 75, 79, 43, 182, 117, 141, 123, 100, 155, 172, 137, 139, 67, 215, 195, 187, 55,
+            30, 231,
+        ];
+        assert_eq!(actual, EXPECTED);
+    }
 }
