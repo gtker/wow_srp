@@ -11,7 +11,7 @@ authors = ["Gtker <github@gtker.com"]
 edition = "2018"
 rust-version = "1.65.0"
 
-exclude = [".github", "release.toml"]
+exclude = [".github", "release.toml", "tests"]
 
 [features]
 default = ["srp-default-math", "tbc-header", "wrath-header", "integrity"]
