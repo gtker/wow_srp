@@ -1,8 +1,4 @@
 pub fn hex_encode(b: &[u8]) -> String {
-    hex_encode_upper(b).to_lowercase()
-}
-
-pub fn hex_encode_upper(b: &[u8]) -> String {
     let mut s = String::with_capacity(b.len() * 2);
 
     for i in b {
@@ -12,6 +8,24 @@ pub fn hex_encode_upper(b: &[u8]) -> String {
         let le_nibble = numbers_to_letters(i & 0xF);
         s.push(le_nibble);
     }
+
+    s
+}
+
+#[allow(unused)]
+pub fn hex_encode_zero_pad(b: &[u8], length: usize) -> String {
+    let length = length * 2;
+
+    let hex = hex_encode(b);
+
+    let extra_zeros = length - hex.len();
+
+    let mut s = String::with_capacity(length);
+    for _ in 0..extra_zeros {
+        s.push('0');
+    }
+
+    s.push_str(&hex);
 
     s
 }

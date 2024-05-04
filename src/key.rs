@@ -125,7 +125,7 @@ macro_rules! key_wrapper {
                 let mut key = self.key;
                 key.reverse();
 
-                hex_encode_upper(&key)
+                hex_encode(&key)
             }
 
             #[allow(dead_code)]

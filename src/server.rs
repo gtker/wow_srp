@@ -717,16 +717,16 @@ mod test {
         server_public_key.reverse();
         assert_eq!(
             hex_encode(&server_public_key),
-            "13ed2108a7c50c4aa451c05e3c8ba779c2201a9dbccc0841041c2466c5e24000"
+            "13ED2108A7C50C4AA451C05E3C8BA779C2201A9DBCCC0841041C2466C5E24000"
         );
 
         assert_eq!(
             hex_encode(s.salt()),
-            "3c817155ed2215bf1623b08ae339977c294e590a39c8f64e9fea0bb3131e7765"
+            "3C817155ED2215BF1623B08AE339977C294E590A39C8F64E9FEA0BB3131E7765"
         );
 
         let client_public_key = PublicKey::from_be_hex_str(
-            "2e071e645d60721d15e8290dac4a3672d87045c14d2bdac52f1e6c998c7b7efa",
+            "2E071E645D60721D15E8290DAC4A3672D87045C14D2BDAC52F1E6C998C7B7EFA",
         )
         .unwrap();
         let client_proof = Proof::from_be_hex_str("b91e6e0c8c06969c44585d9f66d73454f60a43e6");
