@@ -30,6 +30,7 @@
 //! * A [`normalized_string`] module used for all modules to correctly handle strings.
 //! * An [`integrity`] module used checking the integrity of local game files.
 //! * A [`pin`] module used for PIN related functionality.
+//! * A [`matrix_card`] module used Matrix Card related functionality.
 //!
 //! ## Examples and Tests
 //!

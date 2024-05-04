@@ -18,11 +18,6 @@
 //! use wow_srp::matrix_card::{get_matrix_card_seed, MatrixCard, MatrixCardVerifier, verify_matrix_card_hash};
 //! use wow_srp::{PROOF_LENGTH, SESSION_KEY_LENGTH};
 //!
-//! const DIGIT_COUNT: u8 = 2;
-//! const HEIGHT: u8 = 8;
-//! const WIDTH: u8 = 10;
-//!
-//! const CHALLENGE_COUNT: u8 = 1;
 //! let seed = get_matrix_card_seed();
 //! const SESSION_KEY: &[u8; SESSION_KEY_LENGTH as usize] = &[
 //!     102, 94, 221, 27, 188, 90, 39, 16, 200, 68, 41, 48, 224, 105, 1, 102, 18, 212, 59, 119,
@@ -34,9 +29,9 @@
 //!     231,
 //! ];
 //!
-//! let matrix_card = MatrixCard::new(DIGIT_COUNT, HEIGHT, WIDTH)?;
+//! let matrix_card = MatrixCard::new();
 //!
-//! if !verify_matrix_card_hash(&matrix_card, CHALLENGE_COUNT, seed, SESSION_KEY, CLIENT_PROOF) {
+//! if !verify_matrix_card_hash(&matrix_card, MatrixCardVerifier::DEFAULT_CHALLENGE_COUNT, seed, SESSION_KEY, CLIENT_PROOF) {
 //!     println!("Do not let this client log in.");
 //! }
 //!
@@ -71,9 +66,9 @@
 //!     231,
 //! ];
 //!
-//! let matrix_card = MatrixCard::new(DIGIT_COUNT, HEIGHT, WIDTH)?;
+//! let matrix_card = MatrixCard::new();
 //!
-//! let mut verifier = MatrixCardVerifier::new(CHALLENGE_COUNT, HEIGHT, seed, WIDTH, SESSION_KEY)?;
+//! let mut verifier = MatrixCardVerifier::new(seed, SESSION_KEY);
 //!
 //! let (x, y) = verifier.get_matrix_coordinates(0)?;
 //! let digits = matrix_card.get_number_at_coordinates(x, y);
@@ -120,7 +115,7 @@ pub fn verify_matrix_card_hash(
     session_key: &[u8; SESSION_KEY_LENGTH as usize],
     client_proof: &[u8; SHA1_HASH_LENGTH as usize],
 ) -> bool {
-    let Some(mut v) = MatrixCardVerifier::new(
+    let Some(mut v) = MatrixCardVerifier::with_specific_parameters(
         challenge_count,
         matrix_card.height(),
         seed,
@@ -146,6 +141,9 @@ pub fn verify_matrix_card_hash(
 
 /// Represents the physical card that would be given to clients.
 ///
+/// Use [`MatrixCard::new`] and [`MatrixCardVerifier::new`] unless you're very
+/// sure you know what you're doing.
+///
 /// Use [`Self::to_printer`] in order to have human-readable output.
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct MatrixCard {
@@ -156,8 +154,37 @@ pub struct MatrixCard {
 }
 
 impl MatrixCard {
-    /// Creates a new randomized Matrix Card.
-    pub fn new(digit_count: u8, height: u8, width: u8) -> Option<Self> {
+    /// Default digit count used for [`Self::new`].
+    pub const DEFAULT_DIGIT_COUNT: u8 = 3;
+    /// Default height used for [`Self::new`].
+    pub const DEFAULT_HEIGHT: u8 = 26;
+    /// Default width used for [`Self::new`].
+    pub const DEFAULT_WIDTH: u8 = 26;
+
+    /// Creates a new randomized Matrix Card with default parameters.
+    ///
+    /// When loading data from the database use [`Self::from_data`].
+    pub fn new() -> Self {
+        let digit_count = Self::DEFAULT_DIGIT_COUNT;
+        let width = Self::DEFAULT_WIDTH;
+        let height = Self::DEFAULT_HEIGHT;
+
+        let mut data = vec![0_u8; Self::get_matrix_card_size(digit_count, height, width)];
+
+        fill_matrix_card_values(&mut data);
+
+        Self {
+            digit_count,
+            width,
+            height,
+            data,
+        }
+    }
+
+    /// Creates a new randomized Matrix Card with specified parameters.
+    ///
+    /// When loading data from the database use [`Self::from_data_with_parameters`].
+    pub fn with_specific_parameters(digit_count: u8, height: u8, width: u8) -> Option<Self> {
         if digit_count == 0 || height == 0 || width == 0 {
             return None;
         }
@@ -197,8 +224,19 @@ impl MatrixCard {
     /// The randomized matrix card data itself.
     ///
     /// Store this in the database and use [`Self::from_data`] to recreate it.
+    ///
+    /// If you need the [`Vec`] directly use [`Self::into_data`] instead.
     pub fn data(&self) -> &[u8] {
         &self.data
+    }
+
+    /// The randomized matrix card data itself.
+    ///
+    /// Store this in the database and use [`Self::from_data`] to recreate it.
+    ///
+    /// If you don't need the [`Vec`] directly use [`Self::data`] instead.
+    pub fn into_data(self) -> Vec<u8> {
+        self.data
     }
 
     /// Recreate the Matrix Card from database values.
@@ -206,7 +244,26 @@ impl MatrixCard {
     /// `digit_count`, `height`, and `width` must not be `0`.
     /// `data` must be the length of `digit_count * height * width` and all `u8`s must
     /// be in the range `[0;9]`.
-    pub fn from_data(digit_count: u8, height: u8, width: u8, data: Vec<u8>) -> Option<Self> {
+    pub fn from_data(data: Vec<u8>) -> Self {
+        Self {
+            digit_count: Self::DEFAULT_DIGIT_COUNT,
+            width: Self::DEFAULT_WIDTH,
+            height: Self::DEFAULT_HEIGHT,
+            data,
+        }
+    }
+
+    /// Recreate the Matrix Card from database values.
+    ///
+    /// `digit_count`, `height`, and `width` must not be `0`.
+    /// `data` must be the length of `digit_count * height * width` and all `u8`s must
+    /// be in the range `[0;9]`.
+    pub fn from_data_with_parameters(
+        digit_count: u8,
+        height: u8,
+        width: u8,
+        data: Vec<u8>,
+    ) -> Option<Self> {
         if height == 0 || digit_count == 0 || width == 0 {
             return None;
         }
@@ -294,9 +351,27 @@ pub struct MatrixCardVerifier {
 }
 
 impl MatrixCardVerifier {
-    /// Create a new verifier.
+    /// Default challenge count (rounds) used for [`Self::new`].
+    pub const DEFAULT_CHALLENGE_COUNT: u8 = 2;
+
+    /// Creates a verifier with default parameters.
+    ///
+    /// Use this together with [`MatrixCard::new`], or the default parameters from [`MatrixCard`]
+    /// ([`MatrixCard::DEFAULT_HEIGHT`], [`MatrixCard::DEFAULT_WIDTH`], [`MatrixCard::DEFAULT_DIGIT_COUNT`]).
+    pub fn new(seed: u64, session_key: &[u8; SESSION_KEY_LENGTH as usize]) -> Self {
+        Self::with_specific_parameters(
+            Self::DEFAULT_CHALLENGE_COUNT,
+            MatrixCard::DEFAULT_HEIGHT,
+            seed,
+            MatrixCard::DEFAULT_WIDTH,
+            session_key,
+        )
+        .unwrap()
+    }
+
+    /// Create a new verifier with specific parameters.
     #[allow(clippy::missing_panics_doc)] // Can't actually panic
-    pub fn new(
+    pub fn with_specific_parameters(
         challenge_count: u8,
         height: u8,
         seed: u64,
@@ -412,9 +487,35 @@ fn create_matrix_indices(matrix_size: usize) -> Vec<u32> {
 #[cfg(test)]
 mod test {
     use crate::hex::hex_decode;
-    use crate::matrix_card::{generate_coordinates, MatrixCardVerifier};
+    use crate::matrix_card::{generate_coordinates, MatrixCard, MatrixCardVerifier};
     use crate::SESSION_KEY_LENGTH;
     use std::convert::TryInto;
+
+    #[test]
+    fn default_matrix_card() {
+        fn test(m: &MatrixCard, mut v: MatrixCardVerifier) -> [u8; 20] {
+            for _ in 0..MatrixCardVerifier::DEFAULT_CHALLENGE_COUNT {
+                let (x, y) = v.get_matrix_coordinates(0).unwrap();
+                for &digits in m.get_number_at_coordinates(x, y) {
+                    v.enter_value(digits);
+                }
+            }
+
+            v.into_proof()
+        }
+
+        let m = MatrixCard::new();
+        let session_key = [0_u8; SESSION_KEY_LENGTH as usize];
+        let seed = 0;
+        let v = MatrixCardVerifier::new(seed, &session_key);
+        let data = m.data().to_vec();
+
+        let first = test(&m, v);
+        let m = MatrixCard::from_data(data);
+        let v = MatrixCardVerifier::new(seed, &session_key);
+        let second = test(&m, v);
+        assert_eq!(first, second);
+    }
 
     #[test]
     fn proof_regression() {
@@ -437,8 +538,14 @@ mod test {
                 challenges.push(challenge);
             }
 
-            let mut v = MatrixCardVerifier::new(challenge_count, height, seed, width, &session_key)
-                .unwrap();
+            let mut v = MatrixCardVerifier::with_specific_parameters(
+                challenge_count,
+                height,
+                seed,
+                width,
+                &session_key,
+            )
+            .unwrap();
             for ch in challenges {
                 v.enter_value(ch);
             }
@@ -488,8 +595,14 @@ mod test {
             let session_key: [u8; SESSION_KEY_LENGTH as usize] =
                 hex_decode(line.next().unwrap()).try_into().unwrap();
 
-            let mut v = MatrixCardVerifier::new(challenge_count, height, seed, width, &session_key)
-                .unwrap();
+            let mut v = MatrixCardVerifier::with_specific_parameters(
+                challenge_count,
+                height,
+                seed,
+                width,
+                &session_key,
+            )
+            .unwrap();
 
             for round in 0..challenge_count {
                 let expected_x: u8 = line.next().unwrap().parse().unwrap();
@@ -515,8 +628,14 @@ mod test {
         const HEIGHT: u8 = 10;
         const SEED: u64 = 0;
         const WIDTH: u8 = 8;
-        let mut card =
-            MatrixCardVerifier::new(CHALLENGE_COUNT, HEIGHT, SEED, WIDTH, &SESSION_KEY).unwrap();
+        let mut card = MatrixCardVerifier::with_specific_parameters(
+            CHALLENGE_COUNT,
+            HEIGHT,
+            SEED,
+            WIDTH,
+            &SESSION_KEY,
+        )
+        .unwrap();
         card.enter_value(0);
         card.enter_value(0);
 
@@ -543,8 +662,14 @@ mod test {
         const HEIGHT: u8 = 10;
         const SEED: u64 = 14574472801782155463;
         const WIDTH: u8 = 8;
-        let mut card =
-            MatrixCardVerifier::new(CHALLENGE_COUNT, HEIGHT, SEED, WIDTH, &SESSION_KEY).unwrap();
+        let mut card = MatrixCardVerifier::with_specific_parameters(
+            CHALLENGE_COUNT,
+            HEIGHT,
+            SEED,
+            WIDTH,
+            &SESSION_KEY,
+        )
+        .unwrap();
         card.enter_value(0);
         card.enter_value(0);
 
