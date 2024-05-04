@@ -371,11 +371,11 @@ fn generate_coordinates(
     let mut matrix_indices = create_matrix_indices(matrix_size);
 
     let mut coordinates = vec![0_u32; challenge_count];
-    for i in 0..challenge_count {
+    for (i, coordinate) in coordinates.iter_mut().enumerate() {
         let count = matrix_size - i;
         let index = seed % count as u64;
 
-        coordinates[i] = matrix_indices[index as usize];
+        *coordinate = matrix_indices[index as usize];
 
         for j in index..(count as u64 - 1) {
             matrix_indices[j as usize] = matrix_indices[j as usize + 1];
