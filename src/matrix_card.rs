@@ -372,7 +372,7 @@ fn generate_coordinates(
 
     let mut coordinates = vec![0_u32; challenge_count];
     for (i, coordinate) in coordinates.iter_mut().enumerate() {
-        let count = matrix_size - i;
+        let count = matrix_indices.len() - i;
         let index = seed % count as u64;
 
         *coordinate = matrix_indices[index as usize];
