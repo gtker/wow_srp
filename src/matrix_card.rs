@@ -399,7 +399,10 @@ fn create_matrix_indices(matrix_size: usize) -> Vec<u32> {
 
 #[cfg(test)]
 mod test {
+    use crate::hex::hex_decode;
     use crate::matrix_card::{generate_coordinates, MatrixCardVerifier};
+    use crate::SESSION_KEY_LENGTH;
+    use std::convert::TryInto;
 
     #[test]
     fn coordinates_regression() {
@@ -424,6 +427,34 @@ mod test {
 
             let actual = generate_coordinates(width, height, challenge_count, seed).unwrap();
             assert_eq!(expected, actual);
+        }
+    }
+    #[test]
+    fn get_coordinate_regression() {
+        let content = include_str!("../tests/matrix_card/get_coordinate_regression.txt");
+
+        for line in content.lines() {
+            let mut line = line.split_whitespace();
+
+            let height: u8 = line.next().unwrap().parse().unwrap();
+            let width: u8 = line.next().unwrap().parse().unwrap();
+            let seed: u64 = line.next().unwrap().parse().unwrap();
+            let challenge_count: u8 = line.next().unwrap().parse().unwrap();
+            let session_key: [u8; SESSION_KEY_LENGTH as usize] =
+                hex_decode(line.next().unwrap()).try_into().unwrap();
+
+            let mut v = MatrixCardVerifier::new(challenge_count, height, seed, width, &session_key)
+                .unwrap();
+
+            for round in 0..challenge_count {
+                let expected_x: u8 = line.next().unwrap().parse().unwrap();
+                let expected_y: u8 = line.next().unwrap().parse().unwrap();
+
+                let (x, y) = v.get_matrix_coordinates(round).unwrap();
+
+                assert_eq!(x, expected_x);
+                assert_eq!(y, expected_y);
+            }
         }
     }
 
