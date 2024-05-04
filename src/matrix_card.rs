@@ -405,6 +405,39 @@ mod test {
     use std::convert::TryInto;
 
     #[test]
+    fn proof_regression() {
+        let content = include_str!("../tests/matrix_card/proof_regression.txt");
+
+        for line in content.lines() {
+            let mut line = line.split_whitespace();
+
+            let width: u8 = line.next().unwrap().parse().unwrap();
+            let height: u8 = line.next().unwrap().parse().unwrap();
+            let seed: u64 = line.next().unwrap().parse().unwrap();
+            let session_key: [u8; SESSION_KEY_LENGTH as usize] =
+                hex_decode(line.next().unwrap()).try_into().unwrap();
+            let expected: [u8; 20] = hex_decode(line.next().unwrap()).try_into().unwrap();
+            let challenge_count: u8 = line.next().unwrap().parse().unwrap();
+
+            let mut challenges = Vec::with_capacity(challenge_count as usize);
+            for _ in 0..challenge_count {
+                let challenge: u8 = line.next().unwrap().parse().unwrap();
+                challenges.push(challenge);
+            }
+
+            let mut v = MatrixCardVerifier::new(challenge_count, height, seed, width, &session_key)
+                .unwrap();
+            for ch in challenges {
+                v.enter_value(ch);
+            }
+
+            let actual = v.into_proof();
+
+            assert_eq!(actual, expected);
+        }
+    }
+
+    #[test]
     fn coordinates_regression() {
         let content = include_str!("../tests/matrix_card/coordinates_regression.txt");
 
