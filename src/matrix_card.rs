@@ -14,7 +14,7 @@
 //! 5. Retrieve the proof from the client and use [`verify_matrix_card_hash`] to verify that the hashes match.
 //!
 //! ```rust
-//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! # fn t() -> Option<()> {
 //! use wow_srp::matrix_card::{get_matrix_card_seed, MatrixCard, MatrixCardVerifier, verify_matrix_card_hash};
 //! use wow_srp::{PROOF_LENGTH, SESSION_KEY_LENGTH};
 //!
@@ -34,13 +34,13 @@
 //!     231,
 //! ];
 //!
-//! let matrix_card = MatrixCard::new(DIGIT_COUNT, HEIGHT, WIDTH);
+//! let matrix_card = MatrixCard::new(DIGIT_COUNT, HEIGHT, WIDTH)?;
 //!
 //! if !verify_matrix_card_hash(&matrix_card, CHALLENGE_COUNT, seed, SESSION_KEY, CLIENT_PROOF) {
 //!     println!("Do not let this client log in.");
 //! }
 //!
-//! # Ok(())
+//! # None
 //! # }
 //! ```
 //!
@@ -71,7 +71,7 @@
 //!     231,
 //! ];
 //!
-//! let matrix_card = MatrixCard::new(DIGIT_COUNT, HEIGHT, WIDTH);
+//! let matrix_card = MatrixCard::new(DIGIT_COUNT, HEIGHT, WIDTH)?;
 //!
 //! let mut verifier = MatrixCardVerifier::new(CHALLENGE_COUNT, HEIGHT, seed, WIDTH, SESSION_KEY)?;
 //!
@@ -157,17 +157,21 @@ pub struct MatrixCard {
 
 impl MatrixCard {
     /// Creates a new randomized Matrix Card.
-    pub fn new(digit_count: u8, height: u8, width: u8) -> Self {
+    pub fn new(digit_count: u8, height: u8, width: u8) -> Option<Self> {
+        if digit_count == 0 || height == 0 || width == 0 {
+            return None;
+        }
+
         let mut data = vec![0_u8; Self::get_matrix_card_size(digit_count, height, width)];
 
         fill_matrix_card_values(&mut data);
 
-        Self {
+        Some(Self {
             digit_count,
             width,
             height,
             data,
-        }
+        })
     }
 
     /// Returns the digits at the specified position.
@@ -198,7 +202,15 @@ impl MatrixCard {
     }
 
     /// Recreate the Matrix Card from database values.
+    ///
+    /// `digit_count`, `height`, and `width` must not be `0`.
+    /// `data` must be the length of `digit_count * height * width` and all `u8`s must
+    /// be in the range `[0;9]`.
     pub fn from_data(digit_count: u8, height: u8, width: u8, data: Vec<u8>) -> Option<Self> {
+        if height == 0 || digit_count == 0 || width == 0 {
+            return None;
+        }
+
         let expected_size = Self::get_matrix_card_size(digit_count, height, width);
         if data.len() != expected_size {
             return None;
