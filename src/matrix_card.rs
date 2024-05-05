@@ -74,7 +74,7 @@
 //! let digits = matrix_card.get_number_at_coordinates(x, y);
 //!
 //! for digit in digits {
-//!     verifier.enter_value(*digit);
+//!     verifier.enter_digit(*digit);
 //! }
 //!
 //! if !verify_matrix_card_hash(&matrix_card, CHALLENGE_COUNT, seed, SESSION_KEY, CLIENT_PROOF) {
@@ -131,7 +131,7 @@ pub fn verify_matrix_card_hash(
         };
 
         for digit in matrix_card.get_number_at_coordinates(x, y) {
-            v.enter_value(*digit);
+            v.enter_digit(*digit);
         }
     }
 
@@ -425,7 +425,7 @@ impl MatrixCardVerifier {
     ///
     /// Note that if the cell says `934`, you should first enter `9_u8`, then `3_u8`, and then `4_u8`.
     /// You do not need to do anything in between cells.
-    pub fn enter_value(&mut self, value: u8) {
+    pub fn enter_digit(&mut self, value: u8) {
         let value = &mut [value];
         self.rc4.apply_keystream(value.as_mut_slice());
         self.hmac.update(value);
@@ -499,7 +499,7 @@ mod test {
             for _ in 0..MatrixCardVerifier::DEFAULT_CHALLENGE_COUNT {
                 let (x, y) = v.get_matrix_coordinates(0).unwrap();
                 for &digits in m.get_number_at_coordinates(x, y) {
-                    v.enter_value(digits);
+                    v.enter_digit(digits);
                 }
             }
 
@@ -549,7 +549,7 @@ mod test {
             )
             .unwrap();
             for ch in challenges {
-                v.enter_value(ch);
+                v.enter_digit(ch);
             }
 
             let actual = v.into_proof();
@@ -638,8 +638,8 @@ mod test {
             &SESSION_KEY,
         )
         .unwrap();
-        card.enter_value(0);
-        card.enter_value(0);
+        card.enter_digit(0);
+        card.enter_digit(0);
 
         assert_eq!(card.get_matrix_coordinates(0), Some((0, 0)));
 
@@ -672,14 +672,14 @@ mod test {
             &SESSION_KEY,
         )
         .unwrap();
-        card.enter_value(0);
-        card.enter_value(0);
+        card.enter_digit(0);
+        card.enter_digit(0);
 
-        card.enter_value(0);
-        card.enter_value(0);
+        card.enter_digit(0);
+        card.enter_digit(0);
 
-        card.enter_value(0);
-        card.enter_value(0);
+        card.enter_digit(0);
+        card.enter_digit(0);
 
         assert_eq!(card.get_matrix_coordinates(0), Some((7, 2)));
         assert_eq!(card.get_matrix_coordinates(1), Some((0, 0)));
