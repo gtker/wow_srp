@@ -401,7 +401,9 @@ impl MatrixCardVerifier {
 
     /// Returns the coordinates required for a specific round.
     ///
-    /// This is in the for of `(x, y)`.
+    /// This is in the form of `(x, y)`.
+    ///
+    /// Round can not be greater than the challenge count.
     pub fn get_matrix_coordinates(&mut self, round: u8) -> Option<(u8, u8)> {
         if round > self.challenge_count {
             return None;
