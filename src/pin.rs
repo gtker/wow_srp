@@ -105,6 +105,16 @@ impl PinCode {
     pub fn digits(&mut self) -> &mut [u8] {
         &mut self.inner[..self.length as usize]
     }
+
+    /// Converts the PIN into the hash required by the implementation.
+    pub fn into_hash(
+        self,
+        pin_grid_seed: u32,
+        server_salt: &[u8; 16],
+        client_salt: &[u8; 16],
+    ) -> [u8; PIN_HASH_SIZE as usize] {
+        calculate_hash(self, pin_grid_seed, server_salt, client_salt)
+    }
 }
 
 impl Default for PinCode {
