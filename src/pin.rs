@@ -61,7 +61,7 @@ impl PinCode {
     /// The `pin` must be at least `1000` and no higher than `9999999999`.
     pub fn from_u64(pin: u64) -> Option<Self> {
         let mut pin_array = [0_u8; MAX_PIN_LENGTH as usize];
-        if pin < MIN_PIN_VALUE || pin > MAX_PIN_VALUE {
+        if !(MIN_PIN_VALUE..=MAX_PIN_VALUE).contains(&pin) {
             return None;
         }
 

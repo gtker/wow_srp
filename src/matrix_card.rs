@@ -304,6 +304,12 @@ impl MatrixCard {
     }
 }
 
+impl Default for MatrixCard {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Iterator over the cells as strings.
 #[derive(Debug, Clone)]
 pub struct MatrixCardPrinter<'a> {
@@ -358,6 +364,7 @@ impl MatrixCardVerifier {
     ///
     /// Use this together with [`MatrixCard::new`], or the default parameters from [`MatrixCard`]
     /// ([`MatrixCard::DEFAULT_HEIGHT`], [`MatrixCard::DEFAULT_WIDTH`], [`MatrixCard::DEFAULT_DIGIT_COUNT`]).
+    #[allow(clippy::missing_panics_doc)] // Can't actually panic
     pub fn new(seed: u64, session_key: &[u8; SESSION_KEY_LENGTH as usize]) -> Self {
         Self::with_specific_parameters(
             Self::DEFAULT_CHALLENGE_COUNT,
