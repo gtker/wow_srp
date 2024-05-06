@@ -13,6 +13,9 @@ const PIN_HASH_SIZE: u8 = 20;
 const MIN_PIN_LENGTH: u8 = 4;
 const MAX_PIN_LENGTH: u8 = 10;
 
+const MIN_PIN_VALUE: u64 = 1000;
+const MAX_PIN_VALUE: u64 = 9999999999;
+
 /// Represents a PIN code.
 ///
 /// This type upholds the invariants that the PIN must have at least 4 digits, but no more than 10.
@@ -55,9 +58,13 @@ impl PinCode {
     ///
     /// So `1234` represents the keypresses `1`, `2`, `3`, and `4`.
     ///
-    /// The `pin` must be at least `1000`.
-    pub fn from_u32(pin: u32) -> Option<Self> {
+    /// The `pin` must be at least `1000` and no higher than `9999999999`.
+    pub fn from_u64(pin: u64) -> Option<Self> {
         let mut pin_array = [0_u8; MAX_PIN_LENGTH as usize];
+        if pin < MIN_PIN_VALUE || pin > MAX_PIN_VALUE {
+            return None;
+        }
+
         let length = {
             let bytes = pin_to_bytes(pin, &mut pin_array);
             if bytes.len() < MIN_PIN_LENGTH as usize || bytes.len() > MAX_PIN_LENGTH as usize {
@@ -169,7 +176,7 @@ pub fn calculate_hash(
         .into()
 }
 
-fn pin_to_bytes(mut pin: u32, out_pin_array: &mut [u8; MAX_PIN_LENGTH as usize]) -> &mut [u8] {
+fn pin_to_bytes(mut pin: u64, out_pin_array: &mut [u8; MAX_PIN_LENGTH as usize]) -> &mut [u8] {
     let mut i = 0;
     while pin != 0 {
         out_pin_array[i] = (pin % 10) as u8;
@@ -237,20 +244,20 @@ mod test {
 
     #[test]
     fn test_pin_to_bytes() {
-        const MINIMUM_PIN: u32 = 1000;
+        const MINIMUM_PIN: u64 = 1000;
 
-        let _ = PinCode::from_u32(MINIMUM_PIN).unwrap();
-        assert!(PinCode::from_u32(MINIMUM_PIN - 1).is_none());
-        let _ = PinCode::from_u32(u32::MAX).unwrap();
+        let _ = PinCode::from_u64(MINIMUM_PIN).unwrap();
+        assert!(PinCode::from_u64(MINIMUM_PIN - 1).is_none());
+        assert!(PinCode::from_u64(u64::MAX).is_none());
 
         let mut buf = [0_u8; 10];
-        assert_eq!(pin_to_bytes(u32::MAX, &mut buf).len(), 10);
+        assert_eq!(pin_to_bytes(9999999999, &mut buf).len(), 10);
     }
 
     #[test]
     fn no_remapping() {
         // Numbers 1, 2, 3, 4
-        let pin = PinCode::from_u32(1234).unwrap();
+        let pin = PinCode::from_u64(1234).unwrap();
         // No switching
         const PIN_GRID_SEED: u32 = 0;
 
@@ -288,7 +295,7 @@ mod test {
     #[test]
     fn remap_1() {
         // Numbers 1, 2, 3, 4
-        let pin = PinCode::from_u32(1234).unwrap();
+        let pin = PinCode::from_u64(1234).unwrap();
 
         // No switching
         const PIN_GRID_SEED: u32 = 1;
@@ -313,7 +320,7 @@ mod test {
         let content = include_str!("../tests/pin/regression.txt");
         for line in content.lines() {
             let mut line = line.split_whitespace();
-            let pin = PinCode::from_u32(line.next().unwrap().parse().unwrap()).unwrap();
+            let pin = PinCode::from_u64(line.next().unwrap().parse().unwrap()).unwrap();
             let pin_grid_seed: u32 = line.next().unwrap().parse().unwrap();
             let server_salt: [u8; 16] = hex_decode(line.next().unwrap()).try_into().unwrap();
             let client_salt: [u8; 16] = hex_decode(line.next().unwrap()).try_into().unwrap();
