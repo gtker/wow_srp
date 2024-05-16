@@ -1095,11 +1095,11 @@ mod test {
 
         for line in contents.lines() {
             let mut line = line.split_whitespace();
-            let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
-            let mut data = hex_decode(line.next().unwrap());
+            let session_key = SessionKey::from_be_hex_str(line.next().unwrap());
+            let mut data = hex_decode_be(line.next().unwrap());
             let mut split_data = data.clone();
             let original_data = data.clone();
-            let expected = hex_decode(line.next().unwrap());
+            let expected = hex_decode_be(line.next().unwrap());
 
             let mut encryption = HeaderCrypto::new(*session_key.as_le_bytes());
 
