@@ -477,12 +477,9 @@ mod test {
 
             let username = line.next().unwrap();
             let session_key = SessionKey::from_be_hex_str(line.next().unwrap());
-            let server_seed =
-                u32::from_le_bytes(hex_decode(line.next().unwrap()).try_into().unwrap());
-            let client_seed = ProofSeed::from_specific_seed(u32::from_le_bytes(
-                hex_decode(line.next().unwrap()).try_into().unwrap(),
-            ));
-            let expected: [u8; 20] = hex_decode(line.next().unwrap()).try_into().unwrap();
+            let server_seed: u32 = line.next().unwrap().parse().unwrap();
+            let client_seed = ProofSeed::from_specific_seed(line.next().unwrap().parse().unwrap());
+            let expected: [u8; 20] = hex_decode_be(line.next().unwrap()).try_into().unwrap();
 
             let (proof, _) = client_seed.into_client_header_crypto(
                 &username.try_into().unwrap(),
