@@ -495,7 +495,7 @@ fn create_matrix_indices(matrix_size: usize) -> Vec<u32> {
 
 #[cfg(test)]
 mod test {
-    use crate::hex::hex_decode;
+    use crate::hex::hex_decode_be;
     use crate::matrix_card::{generate_coordinates, MatrixCard, MatrixCardVerifier};
     use crate::SESSION_KEY_LENGTH;
     use std::convert::TryInto;
@@ -537,8 +537,8 @@ mod test {
             let height: u8 = line.next().unwrap().parse().unwrap();
             let seed: u64 = line.next().unwrap().parse().unwrap();
             let session_key: [u8; SESSION_KEY_LENGTH as usize] =
-                hex_decode(line.next().unwrap()).try_into().unwrap();
-            let expected: [u8; 20] = hex_decode(line.next().unwrap()).try_into().unwrap();
+                hex_decode_be(line.next().unwrap()).try_into().unwrap();
+            let expected: [u8; 20] = hex_decode_be(line.next().unwrap()).try_into().unwrap();
             let challenge_count: u8 = line.next().unwrap().parse().unwrap();
 
             let mut challenges = Vec::with_capacity(challenge_count as usize);
@@ -602,7 +602,7 @@ mod test {
             let seed: u64 = line.next().unwrap().parse().unwrap();
             let challenge_count: u8 = line.next().unwrap().parse().unwrap();
             let session_key: [u8; SESSION_KEY_LENGTH as usize] =
-                hex_decode(line.next().unwrap()).try_into().unwrap();
+                hex_decode_be(line.next().unwrap()).try_into().unwrap();
 
             let mut v = MatrixCardVerifier::with_specific_parameters(
                 challenge_count,
