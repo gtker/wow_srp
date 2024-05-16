@@ -152,7 +152,7 @@ fn finalise(seed: &[u8], checksum: &[u8]) -> [u8; 20] {
 
 #[cfg(test)]
 mod test {
-    use crate::hex::hex_decode;
+    use crate::hex::hex_decode_be;
     use crate::integrity::{
         finalise, login_integrity_check_generic, login_integrity_check_mac,
         login_integrity_check_windows, reconnect_integrity_check,
@@ -198,8 +198,8 @@ mod test {
 
         for line in contents.lines() {
             let mut split = line.split_whitespace();
-            let key: [u8; 16] = hex_decode(split.next().unwrap()).try_into().unwrap();
-            let expected: [u8; 20] = hex_decode(split.next().unwrap()).try_into().unwrap();
+            let key: [u8; 16] = hex_decode_be(split.next().unwrap()).try_into().unwrap();
+            let expected: [u8; 20] = hex_decode_be(split.next().unwrap()).try_into().unwrap();
 
             let actual = reconnect_integrity_check(&key);
 
@@ -212,14 +212,14 @@ mod test {
         let contents = include_str!("../tests/integrity/mac_regression.txt");
         for line in contents.lines() {
             let mut line = line.split_whitespace();
-            let world_of_warcraft = hex_decode(line.next().unwrap());
-            let info_plist = hex_decode(line.next().unwrap());
-            let objects_xib = hex_decode(line.next().unwrap());
-            let wow_icns = hex_decode(line.next().unwrap());
-            let pkg_info = hex_decode(line.next().unwrap());
-            let checksum_salt = hex_decode(line.next().unwrap()).try_into().unwrap();
-            let client_public_key = hex_decode(line.next().unwrap()).try_into().unwrap();
-            let expected: [u8; 20] = hex_decode(line.next().unwrap()).try_into().unwrap();
+            let world_of_warcraft = hex_decode_be(line.next().unwrap());
+            let info_plist = hex_decode_be(line.next().unwrap());
+            let objects_xib = hex_decode_be(line.next().unwrap());
+            let wow_icns = hex_decode_be(line.next().unwrap());
+            let pkg_info = hex_decode_be(line.next().unwrap());
+            let checksum_salt = hex_decode_be(line.next().unwrap()).try_into().unwrap();
+            let client_public_key = hex_decode_be(line.next().unwrap()).try_into().unwrap();
+            let expected: [u8; 20] = hex_decode_be(line.next().unwrap()).try_into().unwrap();
 
             let actual = login_integrity_check_mac(
                 &world_of_warcraft,
@@ -240,14 +240,14 @@ mod test {
         let contents = include_str!("../tests/integrity/windows_regression.txt");
         for line in contents.lines() {
             let mut line = line.split_whitespace();
-            let wow_exe = hex_decode(line.next().unwrap());
-            let fmod_dll = hex_decode(line.next().unwrap());
-            let ijl15_dll = hex_decode(line.next().unwrap());
-            let dbghelp_dll = hex_decode(line.next().unwrap());
-            let unicows_dll = hex_decode(line.next().unwrap());
-            let checksum_salt = hex_decode(line.next().unwrap()).try_into().unwrap();
-            let client_public_key = hex_decode(line.next().unwrap()).try_into().unwrap();
-            let expected: [u8; 20] = hex_decode(line.next().unwrap()).try_into().unwrap();
+            let wow_exe = hex_decode_be(line.next().unwrap());
+            let fmod_dll = hex_decode_be(line.next().unwrap());
+            let ijl15_dll = hex_decode_be(line.next().unwrap());
+            let dbghelp_dll = hex_decode_be(line.next().unwrap());
+            let unicows_dll = hex_decode_be(line.next().unwrap());
+            let checksum_salt = hex_decode_be(line.next().unwrap()).try_into().unwrap();
+            let client_public_key = hex_decode_be(line.next().unwrap()).try_into().unwrap();
+            let expected: [u8; 20] = hex_decode_be(line.next().unwrap()).try_into().unwrap();
 
             let actual = login_integrity_check_windows(
                 &wow_exe,
@@ -268,10 +268,10 @@ mod test {
         let contents = include_str!("../tests/integrity/generic_regression.txt");
         for line in contents.lines() {
             let mut line = line.split_whitespace();
-            let all = hex_decode(line.next().unwrap());
-            let checksum_salt = hex_decode(line.next().unwrap()).try_into().unwrap();
-            let client_public_key = hex_decode(line.next().unwrap()).try_into().unwrap();
-            let expected: [u8; 20] = hex_decode(line.next().unwrap()).try_into().unwrap();
+            let all = hex_decode_be(line.next().unwrap());
+            let checksum_salt = hex_decode_be(line.next().unwrap()).try_into().unwrap();
+            let client_public_key = hex_decode_be(line.next().unwrap()).try_into().unwrap();
+            let expected: [u8; 20] = hex_decode_be(line.next().unwrap()).try_into().unwrap();
 
             let actual = login_integrity_check_generic(&all, &checksum_salt, &client_public_key);
 
