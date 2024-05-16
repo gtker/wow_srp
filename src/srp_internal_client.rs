@@ -87,7 +87,7 @@ mod test {
 
             let username = NormalizedString::new(line.next().unwrap()).unwrap();
 
-            let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
+            let session_key = SessionKey::from_be_hex_str(line.next().unwrap());
 
             let client_public_key = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
 

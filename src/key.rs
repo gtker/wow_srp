@@ -66,8 +66,7 @@ macro_rules! key_no_checks_initialization {
             #[cfg(test)]
             #[allow(dead_code)]
             pub fn from_be_hex_str(s: &str) -> Self {
-                let mut key = hex_decode(&s);
-                key.reverse();
+                let mut key = hex_decode_be(&s);
 
                 while key.len() < $size {
                     key.push(0);
