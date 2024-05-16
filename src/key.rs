@@ -126,16 +126,6 @@ macro_rules! key_wrapper {
 
                 hex_encode(&key)
             }
-
-            #[allow(dead_code)]
-            #[cfg(test)]
-            pub(crate) fn from_le_hex_str(s: &str) -> Self {
-                let key = hex_decode(&s);
-
-                let key = <[u8; $size]>::try_from(key).unwrap();
-
-                Self { key }
-            }
         }
     };
 }
