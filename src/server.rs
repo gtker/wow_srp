@@ -716,13 +716,13 @@ mod test {
         let mut server_public_key = *s.server_public_key();
         server_public_key.reverse();
         assert_eq!(
-            hex_encode(&server_public_key),
-            "13ED2108A7C50C4AA451C05E3C8BA779C2201A9DBCCC0841041C2466C5E24000"
+            hex_encode_be(&server_public_key),
+            "0040E2C566241C044108CCBC9D1A20C279A78B3C5EC051A44A0CC5A70821ED13"
         );
 
         assert_eq!(
-            hex_encode(s.salt()),
-            "3C817155ED2215BF1623B08AE339977C294E590A39C8F64E9FEA0BB3131E7765"
+            hex_encode_be(s.salt()),
+            "65771E13B30BEA9F4EF6C8390A594E297C9739E38AB02316BF1522ED5571813C"
         );
 
         let client_public_key = PublicKey::from_be_hex_str(

@@ -1,16 +1,4 @@
-#[allow(unused)]
 pub fn hex_encode_be(b: &[u8]) -> String {
-    let s = hex_encode(b);
-
-    s.chars()
-        .collect::<Vec<_>>()
-        .chunks(2)
-        .map(|a| a.iter().collect::<String>())
-        .rev()
-        .collect()
-}
-
-pub fn hex_encode(b: &[u8]) -> String {
     let mut s = String::with_capacity(b.len() * 2);
 
     for i in b {
@@ -21,25 +9,12 @@ pub fn hex_encode(b: &[u8]) -> String {
         s.push(le_nibble);
     }
 
-    s
-}
-
-#[allow(unused)]
-pub fn hex_encode_zero_pad(b: &[u8], length: usize) -> String {
-    let length = length * 2;
-
-    let hex = hex_encode(b);
-
-    let extra_zeros = length - hex.len();
-
-    let mut s = String::with_capacity(length);
-    for _ in 0..extra_zeros {
-        s.push('0');
-    }
-
-    s.push_str(&hex);
-
-    s
+    s.chars()
+        .collect::<Vec<_>>()
+        .chunks(2)
+        .map(|a| a.iter().collect::<String>())
+        .rev()
+        .collect()
 }
 
 pub fn hex_decode_be(s: &str) -> Vec<u8> {

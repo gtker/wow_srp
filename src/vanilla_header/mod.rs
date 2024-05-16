@@ -693,14 +693,14 @@ mod test {
             encryption.encrypt(&mut data);
 
             assert_eq!(
-                hex_encode(&expected),
-                hex_encode(&data),
+                hex_encode_be(&expected),
+                hex_encode_be(&data),
                 "Session Key: {},
                  data: {},
                  Got data: {}",
-                hex_encode(session_key.as_le_bytes()),
-                hex_encode(&original_data),
-                hex_encode(&data)
+                hex_encode_be(session_key.as_le_bytes()),
+                hex_encode_be(&original_data),
+                hex_encode_be(&data)
             );
 
             // Bypass checking seeds and proofs because they aren't there
@@ -710,14 +710,14 @@ mod test {
             enc.encrypt(&mut split_data);
 
             assert_eq!(
-                hex_encode(&expected),
-                hex_encode(&split_data),
+                hex_encode_be(&expected),
+                hex_encode_be(&split_data),
                 "Session Key: {},
                  data: {},
                  Got data: {}",
-                hex_encode(session_key.as_le_bytes()),
-                hex_encode(&original_data),
-                hex_encode(&split_data)
+                hex_encode_be(session_key.as_le_bytes()),
+                hex_encode_be(&original_data),
+                hex_encode_be(&split_data)
             );
         }
     }
@@ -1103,14 +1103,14 @@ mod test {
             encryption.decrypt(&mut data);
 
             assert_eq!(
-                hex_encode(&expected),
-                hex_encode(&data),
+                hex_encode_be(&expected),
+                hex_encode_be(&data),
                 "Session Key: {},
                  data: {},
                  Got data: {}",
-                hex_encode(session_key.as_le_bytes()),
-                hex_encode(&original_data),
-                hex_encode(&data)
+                hex_encode_be(session_key.as_le_bytes()),
+                hex_encode_be(&original_data),
+                hex_encode_be(&data)
             );
 
             let full = HeaderCrypto::new(*session_key.as_le_bytes());
@@ -1119,14 +1119,14 @@ mod test {
             dec.decrypt(&mut split_data);
 
             assert_eq!(
-                hex_encode(&expected),
-                hex_encode(&split_data),
+                hex_encode_be(&expected),
+                hex_encode_be(&split_data),
                 "Session Key: {},
                  data: {},
                  Got data: {}",
-                hex_encode(session_key.as_le_bytes()),
-                hex_encode(&original_data),
-                hex_encode(&split_data),
+                hex_encode_be(session_key.as_le_bytes()),
+                hex_encode_be(&original_data),
+                hex_encode_be(&split_data),
             );
         }
     }

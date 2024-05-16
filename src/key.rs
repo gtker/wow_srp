@@ -121,10 +121,8 @@ macro_rules! key_wrapper {
             #[allow(dead_code)]
             #[cfg(test)]
             pub(crate) fn as_be_hex_string(&self) -> String {
-                let mut key = self.key;
-                key.reverse();
-
-                hex_encode(&key)
+                let key = self.key;
+                hex_encode_be(&key)
             }
         }
     };
