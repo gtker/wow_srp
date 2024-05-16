@@ -575,7 +575,7 @@ mod test {
 
             let client_proof = Proof::from_be_hex_str(line.next().unwrap());
 
-            let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
+            let session_key = SessionKey::from_be_hex_str(line.next().unwrap());
 
             let expected = Proof::from_be_hex_str(line.next().unwrap());
 
