@@ -1,3 +1,15 @@
+#[allow(unused)]
+pub fn hex_encode_be(b: &[u8]) -> String {
+    let s = hex_encode(b);
+
+    s.chars()
+        .collect::<Vec<_>>()
+        .chunks(2)
+        .map(|a| a.iter().collect::<String>())
+        .rev()
+        .collect()
+}
+
 pub fn hex_encode(b: &[u8]) -> String {
     let mut s = String::with_capacity(b.len() * 2);
 
@@ -27,6 +39,12 @@ pub fn hex_encode_zero_pad(b: &[u8], length: usize) -> String {
 
     s.push_str(&hex);
 
+    s
+}
+
+pub fn hex_decode_be(s: &str) -> Vec<u8> {
+    let mut s = hex_decode(s);
+    s.reverse();
     s
 }
 

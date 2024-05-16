@@ -264,6 +264,7 @@ pub fn calculate_reconnect_proof(
 
 #[cfg(test)]
 mod test {
+    use crate::hex::hex_decode_be;
     use crate::key::{
         PrivateKey, Proof, PublicKey, ReconnectData, SKey, Salt, SessionKey, Sha1Hash, Verifier,
     };
@@ -468,6 +469,22 @@ mod test {
 
             // Normalize hex values to uppercase
             assert_eq!(expected, interleaved, "S: '{}'", &S.as_be_hex_string());
+        }
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn verify_split_s_key() {
+        let contents = include_str!("../tests/srp6_internal/calculate_split_s_key.txt");
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
+
+            let S = SKey::from_be_hex_str(line.next().unwrap());
+
+            let expected = hex_decode_be(line.next().unwrap());
+            let actual = S.as_equal_slice();
+
+            assert_eq!(actual, expected);
         }
     }
 
