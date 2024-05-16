@@ -184,8 +184,7 @@ impl PublicKey {
     #[cfg(test)]
     #[allow(dead_code)]
     pub(crate) fn from_be_hex_str(s: &str) -> Result<Self, InvalidPublicKeyError> {
-        let mut key = hex_decode(s);
-        key.reverse();
+        let mut key = hex_decode_be(s);
 
         if key.len() > PUBLIC_KEY_LENGTH as usize {
             panic!(

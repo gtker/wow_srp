@@ -466,7 +466,7 @@ mod test {
             .into_server_header_crypto(&username, session_key, client_proof, client_seed_value)
             .unwrap();
 
-        let original_data = hex_decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca");
+        let original_data = hex_decode_be("ca81d335f3fbf3b2e9d79bab2e0f23fd32df279bdb67e10baabe2d1ccf53b658fe68fe95ddf4b9a89edfe45b4fef96e19a3d");
         let mut data = original_data.clone();
 
         client_crypto.encrypt(&mut data);
@@ -762,8 +762,8 @@ mod test {
     #[test]
     fn verify_trait_helpers() {
         // Verify that the trait helpers do the same thing as manually encrypting/decrypting
-        let session_key = hex_decode(
-            "2EFEE7B0C177EBBDFF6676C56EFC2339BE9CAD14BF8B54BB5A86FBF81F6D424AA23CC9A3149FB175",
+        let session_key = hex_decode_be(
+            "75B19F14A3C93CA24A426D1FF8FB865ABB548BBF14AD9CBE3923FC6EC57666FFBDEB77C1B0E7FE2E",
         );
         let session_key: [u8; SESSION_KEY_LENGTH as usize] = session_key.try_into().unwrap();
 

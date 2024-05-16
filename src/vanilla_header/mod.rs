@@ -512,7 +512,7 @@ mod test {
             .into_server_header_crypto(&username, session_key, client_proof, client_seed_value)
             .unwrap();
 
-        let original_data = hex_decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca");
+        let original_data = hex_decode_be("ca81d335f3fbf3b2e9d79bab2e0f23fd32df279bdb67e10baabe2d1ccf53b658fe68fe95ddf4b9a89edfe45b4fef96e19a3d");
         let mut data = original_data.clone();
 
         client_crypto.encrypt(&mut data);
@@ -731,7 +731,7 @@ mod test {
             0x1F, 0x6D, 0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
         ];
 
-        let original_data = hex_decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca");
+        let original_data = hex_decode_be("ca81d335f3fbf3b2e9d79bab2e0f23fd32df279bdb67e10baabe2d1ccf53b658fe68fe95ddf4b9a89edfe45b4fef96e19a3d");
         let mut encrypt_data = original_data.clone();
         let mut decrypt_data = original_data.clone();
 
@@ -755,8 +755,8 @@ mod test {
             encryption.decrypt(&mut decrypt_data[i..(i) + STEP]);
         }
 
-        let expected_decrypt = hex_decode("13a3a0059817e73404d97cd455159b50d40af74a22f719aacb6a9a2e991982c61a6f0285f880cc8512ec2ef1c98fa923512f");
-        let expected_encrypt = hex_decode("13777da3d109b912322a08841e3ff5bc92f4e98b77bb03997da999b22ae0b926a3b1e56580314b3932499ee11b9f7deb6915");
+        let expected_decrypt = hex_decode_be("2f5123a98fc9f12eec1285cc80f885026f1ac68219992e9a6acbaa19f7224af70ad4509b1555d47cd90434e7179805a0a313");
+        let expected_encrypt = hex_decode_be("1569eb7d9f1be19e4932394b318065e5b1a326b9e02ab299a97d9903bb778be9f492bcf53f1e84082a3212b909d1a37d7713");
         assert_eq!(
             expected_decrypt, decrypt_data,
             "Original data: {:?}, expected: {:?}, got: {:?}",
@@ -776,7 +776,7 @@ mod test {
             0x1F, 0x6D, 0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
         ];
 
-        let original_data = hex_decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca");
+        let original_data = hex_decode_be("ca81d335f3fbf3b2e9d79bab2e0f23fd32df279bdb67e10baabe2d1ccf53b658fe68fe95ddf4b9a89edfe45b4fef96e19a3d");
         let mut encrypt_data = original_data.clone();
         let mut decrypt_data = original_data.clone();
 
@@ -799,8 +799,8 @@ mod test {
         let dec = encryption.decrypter();
         dec.decrypt(&mut decrypt_data);
 
-        let expected_decrypt = hex_decode("13a3a0059817e73404d97cd455159b50d40af74a22f719aacb6a9a2e991982c61a6f0285f880cc8512ec2ef1c98fa923512f");
-        let expected_encrypt = hex_decode("13777da3d109b912322a08841e3ff5bc92f4e98b77bb03997da999b22ae0b926a3b1e56580314b3932499ee11b9f7deb6915");
+        let expected_decrypt = hex_decode_be("2f5123a98fc9f12eec1285cc80f885026f1ac68219992e9a6acbaa19f7224af70ad4509b1555d47cd90434e7179805a0a313");
+        let expected_encrypt = hex_decode_be("1569eb7d9f1be19e4932394b318065e5b1a326b9e02ab299a97d9903bb778be9f492bcf53f1e84082a3212b909d1a37d7713");
         assert_eq!(
             expected_decrypt, decrypt_data,
             "Original data: {:?}, expected: {:?}, got: {:?}",
@@ -822,7 +822,7 @@ mod test {
             0x1F, 0x6D, 0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
         ];
 
-        let original_data = hex_decode("3d9ae196ef4f5be4df9ea8b9f4dd95fe68fe58b653cf1c2dbeaa0be167db9b27df32fd230f2eab9bd7e9b2f3fbf335d381ca");
+        let original_data = hex_decode_be("ca81d335f3fbf3b2e9d79bab2e0f23fd32df279bdb67e10baabe2d1ccf53b658fe68fe95ddf4b9a89edfe45b4fef96e19a3d");
         let mut encrypt_data = original_data.clone();
         let mut decrypt_data = original_data.clone();
 
@@ -853,8 +853,8 @@ mod test {
         encryption.encrypt(&mut encrypt_data[STEP * 2..]);
         encryption.decrypt(&mut decrypt_data[STEP * 2..]);
 
-        let expected_decrypt = hex_decode("13a3a0059817e73404d97cd455159b50d40af74a22f719aacb6a9a2e991982c61a6f0285f880cc8512ec2ef1c98fa923512f");
-        let expected_encrypt = hex_decode("13777da3d109b912322a08841e3ff5bc92f4e98b77bb03997da999b22ae0b926a3b1e56580314b3932499ee11b9f7deb6915");
+        let expected_decrypt = hex_decode_be("2f5123a98fc9f12eec1285cc80f885026f1ac68219992e9a6acbaa19f7224af70ad4509b1555d47cd90434e7179805a0a313");
+        let expected_encrypt = hex_decode_be("1569eb7d9f1be19e4932394b318065e5b1a326b9e02ab299a97d9903bb778be9f492bcf53f1e84082a3212b909d1a37d7713");
         assert_eq!(
             expected_decrypt, decrypt_data,
             "Original data: {:?}, expected: {:?}, got: {:?}",
