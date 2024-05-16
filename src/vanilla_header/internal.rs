@@ -24,11 +24,9 @@ pub(crate) fn calculate_world_server_proof(
 
 #[cfg(test)]
 mod test {
-    use crate::hex::*;
     use crate::key::{Proof, SessionKey};
     use crate::normalized_string::NormalizedString;
     use crate::vanilla_header::internal::calculate_world_server_proof;
-    use core::convert::TryInto;
 
     #[test]
     fn verify_world_server_proof() {
@@ -38,14 +36,12 @@ mod test {
 
             let username = NormalizedString::new(line.next().unwrap()).unwrap();
 
-            let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
+            let session_key = SessionKey::from_be_hex_str(line.next().unwrap());
 
-            let server_seed =
-                u32::from_le_bytes(hex_decode(line.next().unwrap()).try_into().unwrap());
-            let client_seed =
-                u32::from_le_bytes(hex_decode(line.next().unwrap()).try_into().unwrap());
+            let server_seed: u32 = line.next().unwrap().parse().unwrap();
+            let client_seed = line.next().unwrap().parse().unwrap();
 
-            let expected = Proof::from_le_hex_str(line.next().unwrap());
+            let expected = Proof::from_be_hex_str(line.next().unwrap());
 
             let result = calculate_world_server_proof(
                 &NormalizedString::new(username.to_string()).unwrap(),
