@@ -286,10 +286,10 @@ mod test {
         for line in contents.lines() {
             let mut line = line.split_whitespace();
             let username = NormalizedString::new(line.next().unwrap()).unwrap();
-            let client_data = ReconnectData::from_le_hex_str(line.next().unwrap());
-            let server_data = ReconnectData::from_le_hex_str(line.next().unwrap());
-            let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
-            let expected = Proof::from_le_hex_str(line.next().unwrap());
+            let client_data = ReconnectData::from_be_hex_str(line.next().unwrap());
+            let server_data = ReconnectData::from_be_hex_str(line.next().unwrap());
+            let session_key = SessionKey::from_be_hex_str(line.next().unwrap());
+            let expected = Proof::from_be_hex_str(line.next().unwrap());
 
             let proof =
                 calculate_reconnect_proof(&username, &client_data, &server_data, &session_key);
