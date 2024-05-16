@@ -461,9 +461,9 @@ mod test {
         for line in contents.lines() {
             let mut line = line.split_whitespace();
 
-            let S = SKey::from_le_hex_str(line.next().unwrap());
+            let S = SKey::from_be_hex_str(line.next().unwrap());
 
-            let expected = SessionKey::from_le_hex_str(line.next().unwrap());
+            let expected = SessionKey::from_be_hex_str(line.next().unwrap());
 
             let interleaved = calculate_interleaved(&S);
 
