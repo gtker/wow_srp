@@ -43,12 +43,6 @@ pub fn hex_encode_zero_pad(b: &[u8], length: usize) -> String {
 }
 
 pub fn hex_decode_be(s: &str) -> Vec<u8> {
-    let mut s = hex_decode(s);
-    s.reverse();
-    s
-}
-
-pub fn hex_decode(s: &str) -> Vec<u8> {
     assert_eq!(s.len() % 2, 0);
 
     let mut key = Vec::with_capacity(s.len() / 2);
@@ -59,6 +53,8 @@ pub fn hex_decode(s: &str) -> Vec<u8> {
         let value = (be_nibble << 4) | le_nibble;
         key.push(value);
     }
+
+    key.reverse();
 
     key
 }
