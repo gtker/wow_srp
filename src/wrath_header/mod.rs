@@ -796,10 +796,10 @@ mod test {
         for line in contents.lines() {
             let mut line = line.split_whitespace();
 
-            let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
-            let mut data = hex_decode(line.next().unwrap());
-            let expected_client = hex_decode(line.next().unwrap());
-            let expected_server = hex_decode(line.next().unwrap());
+            let session_key = SessionKey::from_be_hex_str(line.next().unwrap());
+            let mut data = hex_decode_be(line.next().unwrap());
+            let expected_client = hex_decode_be(line.next().unwrap());
+            let expected_server = hex_decode_be(line.next().unwrap());
 
             let original_data = data.clone();
 
@@ -827,10 +827,10 @@ mod test {
         for line in contents.lines() {
             let mut line = line.split_whitespace();
 
-            let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
-            let mut data = hex_decode(line.next().unwrap());
-            let expected_client = hex_decode(line.next().unwrap());
-            let expected_server = hex_decode(line.next().unwrap());
+            let session_key = SessionKey::from_be_hex_str(line.next().unwrap());
+            let mut data = hex_decode_be(line.next().unwrap());
+            let expected_client = hex_decode_be(line.next().unwrap());
+            let expected_server = hex_decode_be(line.next().unwrap());
 
             let original_data = data.clone();
 
@@ -860,10 +860,10 @@ mod test {
         for line in contents.lines() {
             let mut line = line.split_whitespace();
 
-            let session_key = SessionKey::from_le_hex_str(line.next().unwrap());
-            let mut data = hex_decode(line.next().unwrap());
-            let expected_client = hex_decode(line.next().unwrap());
-            let expected_server = hex_decode(line.next().unwrap());
+            let session_key = SessionKey::from_be_hex_str(line.next().unwrap());
+            let mut data = hex_decode_be(line.next().unwrap());
+            let expected_client = hex_decode_be(line.next().unwrap());
+            let expected_server = hex_decode_be(line.next().unwrap());
 
             let original_data = data.clone();
 
