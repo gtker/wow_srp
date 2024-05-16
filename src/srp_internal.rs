@@ -494,11 +494,11 @@ mod test {
 
         for line in contents.lines() {
             let mut line = line.split_whitespace();
-            let client_public_key = PublicKey::from_le_hex_str(line.next().unwrap());
-            let password_verifier = Verifier::from_le_hex_str(line.next().unwrap());
-            let server_private_key = PrivateKey::from_le_hex_str(line.next().unwrap());
+            let client_public_key = PublicKey::from_be_hex_str(line.next().unwrap()).unwrap();
+            let password_verifier = Verifier::from_be_hex_str(line.next().unwrap());
+            let server_private_key = PrivateKey::from_be_hex_str(line.next().unwrap());
 
-            let expected = SessionKey::from_le_hex_str(line.next().unwrap());
+            let expected = SessionKey::from_be_hex_str(line.next().unwrap());
 
             let server_public_key =
                 calculate_server_public_key(&password_verifier, &server_private_key).unwrap();
