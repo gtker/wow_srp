@@ -232,7 +232,7 @@ fn convert_pin_grid(bytes: &mut [u8], remapped_pin_grid: [u8; MAX_PIN_LENGTH as 
 
 #[cfg(test)]
 mod test {
-    use crate::hex::hex_decode;
+    use crate::hex::hex_decode_be;
     use crate::pin::{
         calculate_hash, convert_pin_grid, pin_to_bytes, remap_pin_grid, PinCode, MAX_PIN_LENGTH,
     };
@@ -243,9 +243,10 @@ mod test {
         let content = include_str!("../tests/pin/convert_regression.txt");
         for line in content.lines() {
             let mut line = line.split_whitespace();
-            let mut bytes: Vec<u8> = hex_decode(line.next().unwrap()).try_into().unwrap();
-            let remapped_pin_grid: [u8; 10] = hex_decode(line.next().unwrap()).try_into().unwrap();
-            let expected: Vec<u8> = hex_decode(line.next().unwrap()).try_into().unwrap();
+            let mut bytes: Vec<u8> = hex_decode_be(line.next().unwrap()).try_into().unwrap();
+            let remapped_pin_grid: [u8; 10] =
+                hex_decode_be(line.next().unwrap()).try_into().unwrap();
+            let expected: Vec<u8> = hex_decode_be(line.next().unwrap()).try_into().unwrap();
 
             convert_pin_grid(&mut bytes, remapped_pin_grid);
             assert_eq!(bytes, expected);
@@ -295,7 +296,7 @@ mod test {
         for line in content.lines() {
             let mut line = line.split_whitespace();
             let pin_grid_seed: u32 = line.next().unwrap().parse().unwrap();
-            let expected: [u8; 10] = hex_decode(line.next().unwrap()).try_into().unwrap();
+            let expected: [u8; 10] = hex_decode_be(line.next().unwrap()).try_into().unwrap();
 
             let actual = remap_pin_grid(pin_grid_seed);
             assert_eq!(actual, expected);
@@ -332,9 +333,9 @@ mod test {
             let mut line = line.split_whitespace();
             let pin = PinCode::from_u64(line.next().unwrap().parse().unwrap()).unwrap();
             let pin_grid_seed: u32 = line.next().unwrap().parse().unwrap();
-            let server_salt: [u8; 16] = hex_decode(line.next().unwrap()).try_into().unwrap();
-            let client_salt: [u8; 16] = hex_decode(line.next().unwrap()).try_into().unwrap();
-            let expected: [u8; 20] = hex_decode(line.next().unwrap()).try_into().unwrap();
+            let server_salt: [u8; 16] = hex_decode_be(line.next().unwrap()).try_into().unwrap();
+            let client_salt: [u8; 16] = hex_decode_be(line.next().unwrap()).try_into().unwrap();
+            let expected: [u8; 20] = hex_decode_be(line.next().unwrap()).try_into().unwrap();
 
             let actual = calculate_hash(pin, pin_grid_seed, &server_salt, &client_salt);
             assert_eq!(actual, expected);
