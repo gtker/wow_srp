@@ -52,11 +52,11 @@ use crate::key::{
 };
 use crate::normalized_string::NormalizedString;
 use crate::primes::{Generator, LargeSafePrime, LARGE_SAFE_PRIME_LENGTH};
-use crate::srp_internal::{
-    calculate_interleaved, calculate_reconnect_proof, calculate_server_proof, calculate_u,
+use crate::srp_internal::{calculate_reconnect_proof, calculate_server_proof};
+use crate::srp_internal_client;
+use crate::srp_internal_client::{
+    calculate_client_proof_with_custom_value, calculate_client_session_key,
 };
-use crate::srp_internal_client::{calculate_client_S, calculate_client_proof_with_custom_value};
-use crate::{srp_internal, srp_internal_client};
 
 /// Contains the challenge data and proof for reconnection.
 ///
@@ -190,19 +190,17 @@ impl SrpClientChallenge {
         .expect("Invalid public key generated for client. This is extremely unlikely.");
 
         let salt = Salt::from_le_bytes(salt);
-        let x = srp_internal::calculate_x(&username, &password, &salt);
 
-        let u = &calculate_u(&client_public_key, &server_public_key);
-        #[allow(non_snake_case)] // No better descriptor
-        let S = calculate_client_S(
+        let session_key = calculate_client_session_key(
+            &username,
+            &password,
             &server_public_key,
-            &x,
             &client_private_key,
-            u,
             &generator,
             &large_safe_prime,
+            &client_public_key,
+            &salt,
         );
-        let session_key = calculate_interleaved(&S);
 
         let client_proof = calculate_client_proof_with_custom_value(
             &username,
