@@ -20,6 +20,7 @@ pub(super) fn calculate_client_public_key(
     PublicKey::client_try_from_bigint(client_public_key, large_safe_prime)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn calculate_client_session_key(
     username: &NormalizedString,
     password: &NormalizedString,
@@ -30,20 +31,20 @@ pub(crate) fn calculate_client_session_key(
     client_public_key: &PublicKey,
     salt: &Salt,
 ) -> SessionKey {
-    let x = srp_internal::calculate_x(&username, &password, &salt);
+    let x = srp_internal::calculate_x(username, password, salt);
 
-    let u = &calculate_u(&client_public_key, &server_public_key);
+    let u = calculate_u(client_public_key, server_public_key);
     #[allow(non_snake_case)] // No better descriptor
     let S = calculate_client_S(
-        &server_public_key,
+        server_public_key,
         &x,
-        &client_private_key,
-        u,
-        &generator,
-        &large_safe_prime,
+        client_private_key,
+        &u,
+        generator,
+        large_safe_prime,
     );
-    let session_key = calculate_interleaved(&S);
-    session_key
+
+    calculate_interleaved(&S)
 }
 
 #[allow(non_snake_case)]
