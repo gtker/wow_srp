@@ -1,6 +1,3 @@
-#[cfg(test)]
-use core::convert::TryFrom;
-
 #[cfg(any(feature = "srp-default-math", feature = "srp-fast-math"))]
 use crate::bigint;
 
@@ -58,21 +55,13 @@ fn check_public_key(key: &[u8; PUBLIC_KEY_LENGTH as usize]) -> Result<(), Invali
 macro_rules! key_no_checks_initialization {
     ($name: ident; $size: expr) => {
         impl $name {
-            #[allow(dead_code)]
             pub const fn from_le_bytes(key: [u8; $size]) -> Self {
                 Self { key }
             }
 
             #[cfg(test)]
-            #[allow(dead_code)]
             pub fn from_be_hex_str(s: &str) -> Self {
-                let mut key = hex_decode_be(&s);
-
-                while key.len() < $size {
-                    key.push(0);
-                }
-
-                let key = <[u8; $size]>::try_from(key).unwrap();
+                let key = crate::hex::hex_decode_array::<{ $size }>(&s);
 
                 Self { key }
             }
@@ -118,7 +107,6 @@ macro_rules! key_wrapper {
                 &self.key
             }
 
-            #[allow(dead_code)]
             #[cfg(test)]
             pub(crate) fn as_be_hex_string(&self) -> String {
                 let key = self.key;
@@ -180,22 +168,8 @@ impl PublicKey {
     }
 
     #[cfg(test)]
-    #[allow(dead_code)]
     pub(crate) fn from_be_hex_str(s: &str) -> Result<Self, InvalidPublicKeyError> {
-        let mut key = hex_decode_be(s);
-
-        if key.len() > PUBLIC_KEY_LENGTH as usize {
-            panic!(
-                "PublicKey from_be_hex_str length is greater than {}",
-                PUBLIC_KEY_LENGTH
-            );
-        }
-
-        while key.len() < PUBLIC_KEY_LENGTH as usize {
-            key.push(0);
-        }
-
-        let key = <[u8; PUBLIC_KEY_LENGTH as usize]>::try_from(key).unwrap();
+        let key = crate::hex::hex_decode_array::<{ PUBLIC_KEY_LENGTH as usize }>(&s);
 
         Self::from_le_bytes(key)
     }

@@ -1,3 +1,5 @@
+use std::convert::TryFrom;
+
 pub fn hex_encode_be(b: &[u8]) -> String {
     let mut s = String::with_capacity(b.len() * 2);
 
@@ -32,6 +34,18 @@ pub fn hex_decode_be(s: &str) -> Vec<u8> {
     key.reverse();
 
     key
+}
+
+pub fn hex_decode_array<const N: usize>(s: &str) -> [u8; N] {
+    let mut key = hex_decode_be(&s);
+
+    while key.len() < N {
+        key.push(0);
+    }
+
+    let prime = <[u8; N]>::try_from(key).unwrap();
+
+    prime
 }
 
 const fn letters_to_numbers(c: char) -> u8 {

@@ -71,6 +71,14 @@ impl LargeSafePrime {
     pub fn to_bigint(&self) -> bigint::Integer {
         bigint::Integer::from_bytes_le(&self.prime)
     }
+
+    #[cfg(test)]
+    pub fn from_be_hex_str(s: &str) -> Self {
+        const SIZE: usize = LARGE_SAFE_PRIME_LENGTH as usize;
+        let prime = crate::hex::hex_decode_array::<SIZE>(&s);
+
+        Self { prime }
+    }
 }
 
 /// Called `g` in [RFC2945](https://tools.ietf.org/html/rfc2945).

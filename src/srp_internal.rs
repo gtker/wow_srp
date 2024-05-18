@@ -293,7 +293,16 @@ mod test {
 
             let proof =
                 calculate_reconnect_proof(&username, &client_data, &server_data, &session_key);
-            assert_eq!(proof, expected);
+            assert_eq!(
+                proof,
+                expected,
+                "username: {}\nclient_data: {}\nserver_data: {}\nsession_key: {}\n,expected: {}\n",
+                username,
+                client_data.as_be_hex_string(),
+                server_data.as_be_hex_string(),
+                session_key.as_be_hex_string(),
+                expected.as_be_hex_string(),
+            );
         }
     }
 
@@ -592,13 +601,21 @@ mod test {
             );
         }
     }
-
     #[test]
-    fn large_safe_prime_same_big_and_little_endian() {
-        let large_safe_prime = LARGE_SAFE_PRIME_BIG_ENDIAN;
-        let mut large_safe_prime_little_endian = LARGE_SAFE_PRIME_LITTLE_ENDIAN;
-        large_safe_prime_little_endian.reverse();
-        assert_eq!(large_safe_prime, large_safe_prime_little_endian);
+    fn verify_xor_hash() {
+        let contents = include_str!("../tests/srp6_internal/calculate_xor_hash.txt");
+
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
+
+            let generator = Generator::from(line.next().unwrap().parse::<u8>().unwrap());
+            let large_safe_prime = LargeSafePrime::from_be_hex_str(line.next().unwrap());
+            let expected = Sha1Hash::from_be_hex_str(line.next().unwrap());
+
+            let actual = calculate_xor_hash(&large_safe_prime, &generator);
+
+            assert_eq!(expected, actual);
+        }
     }
 
     #[test]
@@ -608,5 +625,13 @@ mod test {
         let xor_hash = calculate_xor_hash(&large_safe_prime, &generator);
 
         assert_eq!(xor_hash.as_le_bytes(), &PRECALCULATED_XOR_HASH);
+    }
+
+    #[test]
+    fn large_safe_prime_same_big_and_little_endian() {
+        let large_safe_prime = LARGE_SAFE_PRIME_BIG_ENDIAN;
+        let mut large_safe_prime_little_endian = LARGE_SAFE_PRIME_LITTLE_ENDIAN;
+        large_safe_prime_little_endian.reverse();
+        assert_eq!(large_safe_prime, large_safe_prime_little_endian);
     }
 }
