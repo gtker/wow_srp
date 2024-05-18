@@ -499,7 +499,7 @@ mod test {
 
     #[test]
     fn verify_session_key() {
-        let contents = include_str!("../tests/srp6_internal/calculate_session_key_values.txt");
+        let contents = include_str!("../tests/srp6_internal/calculate_server_session_key.txt");
 
         for line in contents.lines() {
             let mut line = line.split_whitespace();
