@@ -55,15 +55,16 @@ pub(crate) fn calculate_client_S(
     generator: &Generator,
     large_safe_prime: &LargeSafePrime,
 ) -> SKey {
+    let large_safe_prime = large_safe_prime.to_bigint();
     let k = KValue::bigint();
+    let x = x.as_bigint();
+
     // S = ((B - k) * (g^x % N))^(a + u * x) % N
     let S = (server_public_key.as_bigint()
-        - k * generator
-            .to_bigint()
-            .modpow(&x.as_bigint(), &large_safe_prime.to_bigint()))
+        - k * generator.to_bigint().modpow(&x, &large_safe_prime))
     .modpow(
-        &(client_private_key.as_bigint() + u.as_bigint() * x.as_bigint()),
-        &large_safe_prime.to_bigint(),
+        &(client_private_key.as_bigint() + u.as_bigint() * x),
+        &large_safe_prime,
     );
 
     SKey::from_le_bytes(S.to_padded_32_byte_array_le())
