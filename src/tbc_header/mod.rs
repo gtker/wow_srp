@@ -435,7 +435,7 @@ mod test {
     use crate::hex::*;
     use crate::key::SessionKey;
     use crate::normalized_string::NormalizedString;
-    use crate::tbc_header::{HeaderCrypto, ProofSeed};
+    use crate::tbc_header::{create_tbc_key, HeaderCrypto, ProofSeed};
     use crate::SESSION_KEY_LENGTH;
     use core::convert::TryInto;
 
@@ -631,6 +631,21 @@ mod test {
 
             client.decrypt(&mut data);
             assert_eq!(data, original_data);
+        }
+    }
+
+    #[test]
+    fn verify_create_tbc_key() {
+        let contents = include_str!("../../tests/encryption/create_tbc_key.txt");
+
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
+
+            let session_key = hex_decode_array(line.next().unwrap());
+            let expected = hex_decode_array(line.next().unwrap());
+            let actual = create_tbc_key(session_key);
+
+            assert_eq!(actual, expected);
         }
     }
 
