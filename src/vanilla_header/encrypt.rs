@@ -141,9 +141,9 @@ impl EncrypterHalf {
     }
 }
 
-pub(crate) fn encrypt(
+pub(crate) fn encrypt<const N: usize>(
     data: &mut [u8],
-    session_key: [u8; SESSION_KEY_LENGTH as usize],
+    session_key: [u8; N],
     index: &mut u8,
     previous_value: &mut u8,
 ) {
@@ -152,7 +152,7 @@ pub(crate) fn encrypt(
         let encrypted = (*unencrypted ^ session_key[*index as usize]).wrapping_add(*previous_value);
 
         // Use the session key as a circular buffer
-        *index = (*index + 1) % SESSION_KEY_LENGTH;
+        *index = (*index + 1) % N as u8;
 
         *unencrypted = encrypted;
         *previous_value = encrypted;

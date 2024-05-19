@@ -1,4 +1,5 @@
 use crate::tbc_header::{create_tbc_key, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH};
+use crate::vanilla_header::encrypt::encrypt;
 use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
 use std::io::Write;
 
@@ -103,23 +104,5 @@ impl EncrypterHalf {
             index: 0,
             previous_value: 0,
         }
-    }
-}
-
-pub(crate) fn encrypt(
-    data: &mut [u8],
-    session_key: [u8; PROOF_LENGTH as usize],
-    index: &mut u8,
-    previous_value: &mut u8,
-) {
-    for unencrypted in data {
-        // x = (d ^ session_key[index]) + previous_value
-        let encrypted = (*unencrypted ^ session_key[*index as usize]).wrapping_add(*previous_value);
-
-        // Use the session key as a circular buffer
-        *index = (*index + 1) % PROOF_LENGTH;
-
-        *unencrypted = encrypted;
-        *previous_value = encrypted;
     }
 }

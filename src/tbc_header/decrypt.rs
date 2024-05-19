@@ -1,6 +1,7 @@
 use crate::tbc_header::{
     create_tbc_key, ClientHeader, ServerHeader, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH,
 };
+use crate::vanilla_header::decrypt::decrypt;
 use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
 use std::io::Read;
 
@@ -84,23 +85,5 @@ impl DecrypterHalf {
             index: 0,
             previous_value: 0,
         }
-    }
-}
-
-pub(crate) fn decrypt(
-    data: &mut [u8],
-    session_key: &[u8; PROOF_LENGTH as usize],
-    index: &mut u8,
-    previous_value: &mut u8,
-) {
-    for encrypted in data {
-        // unencrypted = (encrypted - previous_value) ^ session_key[index]
-        let unencrypted = encrypted.wrapping_sub(*previous_value) ^ session_key[*index as usize];
-
-        // Use session key as circular buffer
-        *index = (*index + 1) % PROOF_LENGTH;
-
-        *previous_value = *encrypted;
-        *encrypted = unencrypted;
     }
 }

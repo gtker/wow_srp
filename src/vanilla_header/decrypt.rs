@@ -105,9 +105,9 @@ impl DecrypterHalf {
     }
 }
 
-pub(crate) fn decrypt(
+pub(crate) fn decrypt<const N: usize>(
     data: &mut [u8],
-    session_key: &[u8; SESSION_KEY_LENGTH as usize],
+    session_key: &[u8; N],
     index: &mut u8,
     previous_value: &mut u8,
 ) {
@@ -116,7 +116,7 @@ pub(crate) fn decrypt(
         let unencrypted = encrypted.wrapping_sub(*previous_value) ^ session_key[*index as usize];
 
         // Use session key as circular buffer
-        *index = (*index + 1) % SESSION_KEY_LENGTH;
+        *index = (*index + 1) % N as u8;
 
         *previous_value = *encrypted;
         *encrypted = unencrypted;
