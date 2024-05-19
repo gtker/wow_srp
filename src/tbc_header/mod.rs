@@ -110,8 +110,6 @@
 //! [`SMSG_AUTH_CHALLENGE`]: https://wowdev.wiki/SMSG_AUTH_CHALLENGE
 //! [`CMSG_AUTH_SESSION`]: https://wowdev.wiki/SMSG_AUTH_SESSION
 
-use hmac::{Hmac, Mac};
-use std::convert::TryInto;
 use std::io::{Read, Write};
 
 pub use decrypt::DecrypterHalf;
@@ -122,7 +120,6 @@ use crate::key::{Proof, SessionKey};
 use crate::normalized_string::NormalizedString;
 use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
 use rand::{thread_rng, RngCore};
-use sha1::Sha1;
 
 pub(crate) mod decrypt;
 pub(crate) mod encrypt;
@@ -131,6 +128,7 @@ use crate::vanilla_header::calculate_world_server_proof;
 
 pub use crate::vanilla_header::ClientHeader;
 pub use crate::vanilla_header::ServerHeader;
+use crate::wrath_header::inner_crypto::{create_wrath_hmac_key, KEY_LENGTH};
 
 /// Size in bytes of the client [world packet] header.
 ///
@@ -316,14 +314,11 @@ impl HeaderCrypto {
 pub(crate) fn create_tbc_key(
     session_key: [u8; SESSION_KEY_LENGTH as usize],
 ) -> [u8; PROOF_LENGTH as _] {
-    const SEED_KEY_SIZE: usize = 16;
-    let s: [u8; SEED_KEY_SIZE] = [
+    const S: &[u8; KEY_LENGTH as usize] = &[
         0x38, 0xA7, 0x83, 0x15, 0xF8, 0x92, 0x25, 0x30, 0x71, 0x98, 0x67, 0xB1, 0x8C, 0x4, 0xE2,
         0xAA,
     ];
-    let mut key: Hmac<Sha1> = Hmac::new_from_slice(s.as_slice()).unwrap();
-    key.update(&session_key);
-    key.finalize().into_bytes().as_slice().try_into().unwrap()
+    create_wrath_hmac_key(session_key, S)
 }
 
 /// Random Seed part of the calculation needed to verify

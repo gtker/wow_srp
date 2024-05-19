@@ -4,7 +4,6 @@ use crate::SESSION_KEY_LENGTH;
 use core::fmt::Debug;
 use hmac::{Hmac, Mac};
 use sha1::Sha1;
-use std::convert::TryInto;
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub(crate) struct InnerCrypto {
@@ -22,7 +21,7 @@ impl InnerCrypto {
         session_key: [u8; SESSION_KEY_LENGTH as usize],
         key: &[u8; KEY_LENGTH as usize],
     ) -> Self {
-        let mut inner = Rc4::new(&create_wrath_hmac_key(&session_key, key));
+        let mut inner = Rc4::new(&create_wrath_hmac_key(session_key, key));
 
         // This variant is actually RC4-drop1024
         let mut pad_data = [0_u8; 1024];
@@ -33,14 +32,14 @@ impl InnerCrypto {
     }
 }
 
-fn create_wrath_hmac_key(
-    session_key: &[u8; SESSION_KEY_LENGTH as usize],
+pub(crate) fn create_wrath_hmac_key(
+    session_key: [u8; SESSION_KEY_LENGTH as usize],
     key: &[u8; KEY_LENGTH as usize],
 ) -> [u8; SHA1_HASH_LENGTH as usize] {
     let mut hmac: Hmac<Sha1> = Hmac::<Sha1>::new_from_slice(key.as_slice()).unwrap();
     hmac.update(session_key.as_slice());
-    let hmac = hmac.finalize();
-    hmac.into_bytes().try_into().unwrap()
+
+    hmac.finalize().into_bytes().into()
 }
 
 #[cfg(test)]
@@ -58,7 +57,7 @@ mod test {
             let session_key = hex_decode_array(line.next().unwrap());
             let key = hex_decode_array(line.next().unwrap());
             let expected = hex_decode_array(line.next().unwrap());
-            let actual = create_wrath_hmac_key(&session_key, &key);
+            let actual = create_wrath_hmac_key(session_key, &key);
 
             assert_eq!(actual, expected);
         }
