@@ -1,8 +1,7 @@
-use crate::tbc_header::{ClientHeader, ServerHeader, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH};
+use crate::tbc_header::{
+    create_tbc_key, ClientHeader, ServerHeader, CLIENT_HEADER_LENGTH, SERVER_HEADER_LENGTH,
+};
 use crate::{PROOF_LENGTH, SESSION_KEY_LENGTH};
-use core::convert::TryInto;
-use hmac::{Hmac, Mac};
-use sha1::Sha1;
 use std::io::Read;
 
 /// Decryption part of a [`HeaderCrypto`](crate::tbc_header::HeaderCrypto).
@@ -80,17 +79,8 @@ impl DecrypterHalf {
     }
 
     pub(crate) fn new(session_key: [u8; SESSION_KEY_LENGTH as usize]) -> Self {
-        const SEED_KEY_SIZE: usize = 16;
-        let s: [u8; SEED_KEY_SIZE] = [
-            0x38, 0xA7, 0x83, 0x15, 0xF8, 0x92, 0x25, 0x30, 0x71, 0x98, 0x67, 0xB1, 0x8C, 0x4,
-            0xE2, 0xAA,
-        ];
-        let mut key: Hmac<Sha1> = Hmac::new_from_slice(s.as_slice()).unwrap();
-        key.update(&session_key);
-        let key = key.finalize().into_bytes().as_slice().try_into().unwrap();
-
         Self {
-            key,
+            key: create_tbc_key(session_key),
             index: 0,
             previous_value: 0,
         }
