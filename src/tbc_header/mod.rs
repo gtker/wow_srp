@@ -614,7 +614,7 @@ mod test {
             let session_key = SessionKey::from_be_hex_str(line.next().unwrap());
             let mut data = hex_decode_be(line.next().unwrap());
             let expected_client = hex_decode_be(line.next().unwrap());
-            let expected_server = hex_decode_be(line.next().unwrap());
+            let expected_server = expected_client.clone();
 
             let original_data = data.clone();
 
@@ -659,7 +659,7 @@ mod test {
             let session_key = SessionKey::from_be_hex_str(line.next().unwrap());
             let mut data = hex_decode_be(line.next().unwrap());
             let expected_client = hex_decode_be(line.next().unwrap());
-            let expected_server = hex_decode_be(line.next().unwrap());
+            let expected_server = expected_client.clone();
 
             let original_data = data.clone();
 
@@ -693,7 +693,7 @@ mod test {
             let session_key = SessionKey::from_be_hex_str(line.next().unwrap());
             let mut data = hex_decode_be(line.next().unwrap());
             let expected_client = hex_decode_be(line.next().unwrap());
-            let expected_server = hex_decode_be(line.next().unwrap());
+            let expected_server = expected_client.clone();
 
             let original_data = data.clone();
 
