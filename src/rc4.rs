@@ -21,7 +21,6 @@ impl Rc4 {
         state
     }
 
-    // Decode one without advancing keystream
     pub(crate) fn apply_keystream(&mut self, stream: &mut [u8]) {
         for s in stream {
             let v = self.pseudo_random_generation();
