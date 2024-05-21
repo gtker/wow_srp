@@ -438,6 +438,15 @@ impl MatrixCardVerifier {
         self.hmac.update(value);
     }
 
+    /// Enter multiple digits of a code.
+    ///
+    /// You do not need to do anything in between cells, they can just be entered directly.
+    pub fn enter_multiple_digits(&mut self, values: &[u8]) {
+        for value in values {
+            self.enter_digit(*value);
+        }
+    }
+
     /// Turns the verifier into the proof that is either sent to the server, or compared
     /// to the client proof.
     pub fn into_proof(self) -> [u8; SHA1_HASH_LENGTH as usize] {
