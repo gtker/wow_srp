@@ -102,7 +102,11 @@ impl PinCode {
     /// Gets the digits of the PIN as a slice.
     ///
     /// Every byte is in the range `[0;9]` and the length is always between 4 and 10.
-    pub fn digits(&mut self) -> &mut [u8] {
+    pub fn digits(&self) -> &[u8] {
+        &self.inner[..self.length as usize]
+    }
+
+    fn digits_mut(&mut self) -> &mut [u8] {
         &mut self.inner[..self.length as usize]
     }
 
@@ -162,7 +166,7 @@ pub fn calculate_hash(
     server_salt: &[u8; 16],
     client_salt: &[u8; 16],
 ) -> [u8; PIN_HASH_SIZE as usize] {
-    let bytes = pin.digits();
+    let bytes = pin.digits_mut();
 
     let remapped_pin_grid = remap_pin_grid(pin_grid_seed);
 
