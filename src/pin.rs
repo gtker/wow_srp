@@ -331,7 +331,7 @@ mod test {
         let content = include_str!("../tests/pin/regression.txt");
         for line in content.lines() {
             let mut line = line.split_whitespace();
-            let pin = PinCode::from_u64(line.next().unwrap().parse().unwrap()).unwrap();
+            let pin = PinCode::from_slice(&hex_decode_be(line.next().unwrap())).unwrap();
             let pin_grid_seed: u32 = line.next().unwrap().parse().unwrap();
             let server_salt: [u8; 16] = hex_decode_be(line.next().unwrap()).try_into().unwrap();
             let client_salt: [u8; 16] = hex_decode_be(line.next().unwrap()).try_into().unwrap();
