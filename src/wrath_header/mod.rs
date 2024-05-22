@@ -524,6 +524,92 @@ mod test {
     };
     use core::convert::TryInto;
 
+    const SESSION_KEY_REGRESSION: [u8; 40] = [
+        0x2E, 0xFE, 0xE7, 0xB0, 0xC1, 0x77, 0xEB, 0xBD, 0xFF, 0x66, 0x76, 0xC5, 0x6E, 0xFC, 0x23,
+        0x39, 0xBE, 0x9C, 0xAD, 0x14, 0xBF, 0x8B, 0x54, 0xBB, 0x5A, 0x86, 0xFB, 0xF8, 0x1F, 0x6D,
+        0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
+    ];
+
+    #[test]
+    fn server_helper() {
+        let contents = include_str!("../../tests/encryption/wrath_server.txt");
+
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
+
+            let mut data = hex_decode_be(line.next().unwrap());
+            let original_data = data.clone();
+            let size = line.next().unwrap().parse().unwrap();
+            let opcode = line.next().unwrap().parse().unwrap();
+
+            let (client_proof, mut dec) = ProofSeed::from_specific_seed(0xDEADBEEF)
+                .into_client_header_crypto(
+                    &NormalizedString::new("A").unwrap(),
+                    SESSION_KEY_REGRESSION,
+                    0xDEADBEEF,
+                );
+
+            let mut enc = ProofSeed::from_specific_seed(0xDEADBEEF)
+                .into_server_header_crypto(
+                    &NormalizedString::new("A").unwrap(),
+                    SESSION_KEY_REGRESSION,
+                    client_proof,
+                    0xDEADBEEF,
+                )
+                .unwrap();
+
+            let header = dec
+                .read_and_decrypt_server_header(&mut data.as_slice())
+                .unwrap();
+
+            assert_eq!(header.size, size);
+            assert_eq!(header.opcode, opcode);
+
+            enc.write_encrypted_server_header(data.as_mut_slice(), size, opcode)
+                .unwrap();
+
+            assert_eq!(data, original_data);
+        }
+    }
+
+    #[test]
+    fn client_helper() {
+        let contents = include_str!("../../tests/encryption/wrath_client.txt");
+
+        for line in contents.lines() {
+            let mut line = line.split_whitespace();
+            let mut data = hex_decode_be(line.next().unwrap());
+            let original_data = data.clone();
+            let size = line.next().unwrap().parse().unwrap();
+            let opcode = line.next().unwrap().parse().unwrap();
+
+            let (client_proof, mut dec) = ProofSeed::from_specific_seed(0xDEADBEEF)
+                .into_client_header_crypto(
+                    &NormalizedString::new("A").unwrap(),
+                    SESSION_KEY_REGRESSION,
+                    0xDEADBEEF,
+                );
+
+            let mut enc = ProofSeed::from_specific_seed(0xDEADBEEF)
+                .into_server_header_crypto(
+                    &NormalizedString::new("A").unwrap(),
+                    SESSION_KEY_REGRESSION,
+                    client_proof,
+                    0xDEADBEEF,
+                )
+                .unwrap();
+
+            let header = enc.read_and_decrypt_client_header(data.as_slice()).unwrap();
+
+            dec.write_encrypted_client_header(data.as_mut_slice(), size, opcode)
+                .unwrap();
+
+            assert_eq!(header.size, size);
+            assert_eq!(header.opcode, opcode);
+            assert_eq!(data, original_data);
+        }
+    }
+
     #[test]
     fn verify_seed_proof() {
         const FILE: &str = include_str!("../../tests/encryption/calculate_world_server_proof.txt");
