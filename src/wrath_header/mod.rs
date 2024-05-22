@@ -99,7 +99,7 @@ pub const CLIENT_HEADER_LENGTH: u8 =
 
 /// Minimum size in bytes of the server [world packet] header.
 ///
-/// The minimum is always 4 bytes because because the size is 2 bytes
+/// The minimum is always 4 bytes because the size is 2 bytes
 /// and the opcode is 2 bytes.
 ///
 /// The [maximum](SERVER_HEADER_MAXIMUM_LENGTH) is always 5 bytes.
@@ -110,7 +110,7 @@ pub const SERVER_HEADER_MINIMUM_LENGTH: u8 =
 
 /// Maximum size in bytes of the server [world packet] header.
 ///
-/// The maximum is always 5 bytes because because the size is 3 bytes
+/// The maximum is always 5 bytes because the size is 3 bytes
 /// and the opcode is 2 bytes.
 ///
 /// The [minimum](SERVER_HEADER_MAXIMUM_LENGTH) is always 4 bytes.

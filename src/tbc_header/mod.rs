@@ -66,8 +66,8 @@
 //! }
 //!
 //! fn decrypt_header<R: Read>(r: R, raw_data: &mut [u8], encryption: &mut HeaderCrypto) {
-//!     let client_header = encryption.read_and_decrypt_server_header(r);
-//!     match client_header {
+//!     let server_header = encryption.read_and_decrypt_server_header(r);
+//!     match server_header {
 //!         Ok(c) => {}
 //!         Err(_) => {
 //!             panic!("Reader error")
@@ -77,7 +77,7 @@
 //!     // OR
 //!
 //!     let header = raw_data[0..6].try_into().unwrap();
-//!     let client_header = encryption.decrypt_server_header(header);
+//!     let server_header = encryption.decrypt_server_header(header);
 //!
 //!     // OR
 //!
