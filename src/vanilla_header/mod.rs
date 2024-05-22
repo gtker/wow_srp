@@ -469,6 +469,15 @@ mod test {
     use crate::vanilla_header::{HeaderCrypto, ProofSeed};
     use core::convert::TryInto;
 
+    const SESSION_KEY: [u8; 40] = [
+        0x2E, 0xFE, 0xE7, 0xB0, 0xC1, 0x77, 0xEB, 0xBD, 0xFF, 0x66, 0x76, 0xC5, 0x6E, 0xFC, 0x23,
+        0x39, 0xBE, 0x9C, 0xAD, 0x14, 0xBF, 0x8B, 0x54, 0xBB, 0x5A, 0x86, 0xFB, 0xF8, 0x1F, 0x6D,
+        0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
+    ];
+    const CLIENT_PROOF: [u8; 20] = [
+        171, 16, 181, 52, 139, 193, 19, 213, 173, 100, 0, 37, 65, 184, 70, 148, 36, 169, 17, 228,
+    ];
+
     #[test]
     fn verify_seed_proof() {
         const FILE: &str = include_str!("../../tests/encryption/calculate_world_server_proof.txt");
@@ -725,26 +734,15 @@ mod test {
     #[test]
     fn verify_mixed_used() {
         // Verify that mixed use does not interfere with each other
-        let session_key = [
-            0x2E, 0xFE, 0xE7, 0xB0, 0xC1, 0x77, 0xEB, 0xBD, 0xFF, 0x66, 0x76, 0xC5, 0x6E, 0xFC,
-            0x23, 0x39, 0xBE, 0x9C, 0xAD, 0x14, 0xBF, 0x8B, 0x54, 0xBB, 0x5A, 0x86, 0xFB, 0xF8,
-            0x1F, 0x6D, 0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
-        ];
-
         let original_data = hex_decode_be("ca81d335f3fbf3b2e9d79bab2e0f23fd32df279bdb67e10baabe2d1ccf53b658fe68fe95ddf4b9a89edfe45b4fef96e19a3d");
         let mut encrypt_data = original_data.clone();
         let mut decrypt_data = original_data.clone();
 
-        let client_proof = [
-            171, 16, 181, 52, 139, 193, 19, 213, 173, 100, 0, 37, 65, 184, 70, 148, 36, 169, 17,
-            228,
-        ];
-
         let mut encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
             .into_server_header_crypto(
                 &NormalizedString::new("A").unwrap(),
-                session_key,
-                client_proof,
+                SESSION_KEY,
+                CLIENT_PROOF,
                 0,
             )
             .unwrap();
@@ -770,26 +768,15 @@ mod test {
     }
     #[test]
     fn verify_inner_access() {
-        let session_key = [
-            0x2E, 0xFE, 0xE7, 0xB0, 0xC1, 0x77, 0xEB, 0xBD, 0xFF, 0x66, 0x76, 0xC5, 0x6E, 0xFC,
-            0x23, 0x39, 0xBE, 0x9C, 0xAD, 0x14, 0xBF, 0x8B, 0x54, 0xBB, 0x5A, 0x86, 0xFB, 0xF8,
-            0x1F, 0x6D, 0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
-        ];
-
         let original_data = hex_decode_be("ca81d335f3fbf3b2e9d79bab2e0f23fd32df279bdb67e10baabe2d1ccf53b658fe68fe95ddf4b9a89edfe45b4fef96e19a3d");
         let mut encrypt_data = original_data.clone();
         let mut decrypt_data = original_data.clone();
 
-        let client_proof = [
-            171, 16, 181, 52, 139, 193, 19, 213, 173, 100, 0, 37, 65, 184, 70, 148, 36, 169, 17,
-            228,
-        ];
-
         let mut encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
             .into_server_header_crypto(
                 &NormalizedString::new("A").unwrap(),
-                session_key,
-                client_proof,
+                SESSION_KEY,
+                CLIENT_PROOF,
                 0,
             )
             .unwrap();
@@ -816,26 +803,16 @@ mod test {
     #[test]
     fn verify_splitting() {
         // Verify that splitting and combining again works
-        let session_key = [
-            0x2E, 0xFE, 0xE7, 0xB0, 0xC1, 0x77, 0xEB, 0xBD, 0xFF, 0x66, 0x76, 0xC5, 0x6E, 0xFC,
-            0x23, 0x39, 0xBE, 0x9C, 0xAD, 0x14, 0xBF, 0x8B, 0x54, 0xBB, 0x5A, 0x86, 0xFB, 0xF8,
-            0x1F, 0x6D, 0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
-        ];
 
         let original_data = hex_decode_be("ca81d335f3fbf3b2e9d79bab2e0f23fd32df279bdb67e10baabe2d1ccf53b658fe68fe95ddf4b9a89edfe45b4fef96e19a3d");
         let mut encrypt_data = original_data.clone();
         let mut decrypt_data = original_data.clone();
 
-        let client_proof = [
-            171, 16, 181, 52, 139, 193, 19, 213, 173, 100, 0, 37, 65, 184, 70, 148, 36, 169, 17,
-            228,
-        ];
-
         let mut encryption = ProofSeed::from_specific_seed(0xDEADBEEF)
             .into_server_header_crypto(
                 &NormalizedString::new("A").unwrap(),
-                session_key,
-                client_proof,
+                SESSION_KEY,
+                CLIENT_PROOF,
                 0,
             )
             .unwrap();
@@ -869,15 +846,8 @@ mod test {
 
     #[test]
     fn verify_unsplit_errors() {
-        let session_key1 = [
-            0x2E, 0xFE, 0xE7, 0xB0, 0xC1, 0x77, 0xEB, 0xBD, 0xFF, 0x66, 0x76, 0xC5, 0x6E, 0xFC,
-            0x23, 0x39, 0xBE, 0x9C, 0xAD, 0x14, 0xBF, 0x8B, 0x54, 0xBB, 0x5A, 0x86, 0xFB, 0xF8,
-            0x1F, 0x6D, 0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
-        ];
-        let client_proof1 = [
-            171, 16, 181, 52, 139, 193, 19, 213, 173, 100, 0, 37, 65, 184, 70, 148, 36, 169, 17,
-            228,
-        ];
+        let session_key1 = SESSION_KEY;
+        let client_proof1 = CLIENT_PROOF;
 
         let session_key2 = [
             115, 0, 100, 222, 18, 15, 156, 194, 27, 1, 216, 229, 165, 207, 78, 233, 183, 241, 248,
@@ -915,15 +885,12 @@ mod test {
 
     #[test]
     fn verify_errors() {
-        let mut session_key = [
-            0x2E, 0xFE, 0xE7, 0xB0, 0xC1, 0x77, 0xEB, 0xBD, 0xFF, 0x66, 0x76, 0xC5, 0x6E, 0xFC,
-            0x23, 0x39, 0xBE, 0x9C, 0xAD, 0x14, 0xBF, 0x8B, 0x54, 0xBB, 0x5A, 0x86, 0xFB, 0xF8,
-            0x1F, 0x6D, 0x42, 0x4A, 0xA2, 0x3C, 0xC9, 0xA3, 0x14, 0x9F, 0xB1, 0x75,
-        ];
         let mut client_proof = [
             171, 16, 181, 52, 139, 193, 19, 213, 173, 100, 0, 37, 65, 184, 70, 148, 36, 169, 17,
             228,
         ];
+
+        let mut session_key = SESSION_KEY;
 
         assert!(ProofSeed::from_specific_seed(0xDEADBEEF)
             .into_server_header_crypto(
